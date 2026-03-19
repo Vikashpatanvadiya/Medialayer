@@ -108,8 +108,13 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
     return;
   }
 
+  if (!video.storedFilename) {
+    res.status(400).json({ error: "No file stored for this video. The editor must re-upload the file." });
+    return;
+  }
+
   const uploadDir = path.join(process.cwd(), "uploads");
-  const filePath = path.join(uploadDir, video.videoUrl);
+  const filePath = path.join(uploadDir, video.storedFilename);
 
   if (!fs.existsSync(filePath)) {
     res.status(400).json({ error: "Video file not found on server. It may have been deleted." });

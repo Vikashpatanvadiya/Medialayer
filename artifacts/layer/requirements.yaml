@@ -1,0 +1,19 @@
+packages:
+  "framer-motion": "For page transitions, smooth modal appearances, and interactive hover effects"
+  "react-hook-form": "For robust form state management"
+  "@hookform/resolvers": "Zod integration for form validation"
+  "date-fns": "For formatting human-readable timestamps"
+  "clsx": "For conditional class name merging"
+  "tailwind-merge": "For merging Tailwind CSS classes safely"
+
+images:
+  - path: "artifacts/layer/public/images/hero-bg.png"
+    description: "Abstract minimal gradient mesh background in deep purple, indigo, and subtle coral with soft studio lighting and a clean, professional SaaS aesthetic."
+    aspect_ratio: "16:9"
+  - path: "artifacts/layer/public/images/logo.png"
+    description: "Minimalist geometric overlapping layers logo mark in deep indigo and bright vibrant purple on a fully transparent background."
+    aspect_ratio: "1:1"
+
+notes:
+  - "The app intercepts global fetch to inject the 'layer_token' from localStorage into the Authorization header."
+  - "The UI relies on standard Shadcn UI components located in src/components/ui/ but heavily overrides them via index.css variables for a premium look."

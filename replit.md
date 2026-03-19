@@ -15,25 +15,63 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
+- **Auth**: JWT (jsonwebtoken + bcryptjs)
+
+## Project: Layer
+
+Layer is a SaaS platform for YouTubers and video editors to collaborate on uploads. Editors submit videos for creator approval before publishing to YouTube.
+
+### Features
+- Creator and Editor roles
+- Video submission workflow (Pending → Approved/Rejected → Uploaded)
+- In-app notifications
+- Landing page with pricing
+
+### Key Routes
+- `/` — Landing page
+- `/login`, `/register` — Auth pages
+- `/dashboard/creator` — Creator review dashboard
+- `/dashboard/editor` — Editor submission dashboard
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── api-server/         # Express API server (auth, videos, notifications)
+│   └── layer/              # React + Vite frontend (Layer SaaS app)
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── tsconfig.json
+└── package.json
 ```
+
+## Database Schema
+
+- `users` — id, email, password_hash, name, role (creator|editor), created_at
+- `videos` — id, title, description, tags, video_url, thumbnail_url, status, creator_id, editor_id, rejection_feedback, file_size, duration, created_at, updated_at
+- `notifications` — id, user_id, title, message, type, read, video_id, created_at
+
+## API Endpoints
+
+All under `/api`:
+- `POST /auth/register` — register with role
+- `POST /auth/login` — login
+- `GET /auth/me` — get current user
+- `GET /videos` — list videos (role-filtered)
+- `POST /videos` — submit video (editor only)
+- `GET /videos/:id` — video detail
+- `POST /videos/:id/approve` — approve (creator only)
+- `POST /videos/:id/reject` — reject with feedback (creator only)
+- `GET /users/creators` — list all creators
+- `GET /notifications` — list notifications
+- `POST /notifications/:id/read` — mark as read
 
 ## TypeScript & Composite Projects
 
@@ -56,41 +94,26 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
+- Auth: `src/lib/auth.ts` — JWT signing/verifying, requireAuth middleware
+- Routes: auth, videos, users, notifications
 - Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+
+### `artifacts/layer` (`@workspace/layer`)
+
+React + Vite frontend for the Layer SaaS platform.
+
+- Landing page, auth pages, creator/editor dashboards
+- JWT stored in localStorage as `layer_token`
+- Uses generated React Query hooks from `@workspace/api-client-react`
 
 ### `lib/db` (`@workspace/db`)
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+Database layer using Drizzle ORM with PostgreSQL.
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+- `pnpm --filter @workspace/db run push` — push schema changes
 
 ### `lib/api-spec` (`@workspace/api-spec`)
 
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
+OpenAPI 3.1 spec and Orval codegen config.
 
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate client hooks and Zod schemas

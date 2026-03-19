@@ -1,0 +1,79 @@
+You are a product builder and startup engineer. Help me design and build an MVP for a SaaS platform called “Layer”.
+🎯 Goal
+Build a platform that allows YouTubers to collaborate with editors without downloading and re-uploading large video files, while maintaining full control through an approval system.
+
+❗ Problem
+Creators working with editors currently:
+* Receive large video files (1–5GB)
+* Download and re-upload them manually
+* Face slow internet issues
+* Avoid giving full YouTube access due to security concerns
+
+💡 Solution
+Build a system where:
+* Editors upload videos to a platform
+* Creators review and approve/reject
+* Only after approval → video uploads to YouTube
+
+⚙️ Core Features (MVP)
+1. Authentication
+* Creator and Editor roles
+* Secure login/signup system
+2. YouTube Integration
+* Use YouTube Data API for uploads
+* OAuth-based authentication
+* Scoped permissions (no full access)
+3. Editor Dashboard
+* Upload video file
+* Input title, description, tags
+* Submit for approval
+4. Creator Dashboard
+* View pending uploads
+* Preview video (mock preview is fine)
+* Approve or reject
+5. Approval Workflow
+* Editor submits → status = “Pending”
+* Creator receives notification
+* On approval → trigger upload to YouTube
+* On rejection → send feedback
+6. Notifications
+* Email or in-app notifications
+* “Video ready for approval”
+7. Storage
+* Temporary storage for uploaded videos
+* Delete after successful upload
+
+🔐 Security Requirements
+* Use OAuth (no password storage)
+* Encrypt API tokens
+* Role-based access control
+* No upload without explicit creator approval
+
+🎨 UI/UX Requirements
+* Clean, minimal dashboard design
+* Simple flow (3–4 steps max)
+* Focus on usability, not complex visuals
+
+💰 Business Model
+* Subscription per channel:
+    * $29–$49/month (individual creators)
+    * $79–$99/month (teams)
+
+🧪 MVP Constraints
+* No need for full backend (can mock API)
+* Focus on workflow simulation
+* Clickable prototype is acceptable
+
+📦 Deliverables
+Please generate:
+1. Product architecture (high-level)
+2. UI screens (wireframe or component breakdown)
+3. User flow diagram
+4. Backend logic (pseudo or real)
+5. Database schema (basic)
+6. API structure (endpoints)
+7. Step-by-step build plan
+
+🎯 Goal of Output
+Make this feel like a real startup MVP that could be built and launched quickly. Focus on clarity, simplicity, and real-world feasibility.
+Avoid overengineering. Prioritize speed and usability.

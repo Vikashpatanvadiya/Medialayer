@@ -147,6 +147,27 @@ router.post("/:id/approve", requireAuth, requireRole("creator"), async (req, res
   res.json(formatVideo(updated, creator, editor));
 });
 
+router.delete("/:id", requireAuth, requireRole("editor"), async (req, res) => {
+  const { id } = req.params;
+  const [video] = await db.select().from(videosTable).where(eq(videosTable.id, id)).limit(1);
+
+  if (!video) { res.status(404).json({ error: "Video not found" }); return; }
+  if (video.editorId !== req.user!.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (video.status === "uploaded") { res.status(400).json({ error: "Cannot delete a video that has already been uploaded to YouTube" }); return; }
+
+  if (video.storedFilename) {
+    const { default: fs } = await import("fs");
+    const { default: path } = await import("path");
+    const filePath = path.join(process.cwd(), "uploads", video.storedFilename);
+    fs.unlink(filePath, () => {});
+  }
+
+  await db.delete(notificationsTable).where(eq(notificationsTable.videoId, id));
+  await db.delete(videosTable).where(eq(videosTable.id, id));
+
+  res.json({ message: "Video deleted successfully" });
+});
+
 router.post("/:id/reject", requireAuth, requireRole("creator"), async (req, res) => {
   const { id } = req.params;
   const parsed = RejectVideoBody.safeParse(req.body);

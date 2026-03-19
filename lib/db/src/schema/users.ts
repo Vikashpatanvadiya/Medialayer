@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -8,6 +8,12 @@ export const usersTable = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   role: text("role", { enum: ["creator", "editor"] }).notNull(),
+  youtubeTokens: jsonb("youtube_tokens").$type<{
+    access_token: string;
+    refresh_token: string;
+    expiry_date: number;
+  } | null>().default(null),
+  youtubeChannelName: text("youtube_channel_name"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

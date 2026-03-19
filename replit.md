@@ -58,6 +58,30 @@ artifacts-monorepo/
 - `videos` — id, title, description, tags, video_url, thumbnail_url, status, creator_id, editor_id, rejection_feedback, file_size, duration, created_at, updated_at
 - `notifications` — id, user_id, title, message, type, read, video_id, created_at
 
+## YouTube Integration
+
+YouTube OAuth flow uses Google OAuth 2.0:
+1. Creator clicks "Connect YouTube Channel" → opens popup → redirects to Google consent screen
+2. Google redirects back to `/api/youtube/oauth-callback` with auth code
+3. Server exchanges code for tokens, stores in DB, closes popup
+4. Creator can now click "Upload to YouTube" on any approved video
+5. Video uploads as **private** — creator can change visibility in YouTube Studio
+
+**Required Google Cloud Console setup:**
+- Add Authorized Redirect URI: `https://b50317e7-c230-4010-92d9-f52df6ac55d8-00-lo729yefp8vy.picard.replit.dev/api/youtube/oauth-callback`
+- Enable: YouTube Data API v3
+
+**New API Endpoints:**
+- `GET /youtube/auth-url` — get OAuth URL (creator only)
+- `GET /youtube/oauth-callback` — OAuth callback handler
+- `GET /youtube/status` — check YouTube connection status
+- `POST /youtube/upload/:videoId` — upload approved video to YouTube
+
+**File Upload:**
+- `POST /upload/video` — upload video file (editor only, multipart/form-data)
+- Files stored in `uploads/` directory, deleted after YouTube upload
+- Files served at `/api/stream/:filename` for in-browser preview
+
 ## API Endpoints
 
 All under `/api`:

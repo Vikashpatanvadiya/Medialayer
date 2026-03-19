@@ -9,6 +9,7 @@ export const videosTable = pgTable("videos", {
   description: text("description").notNull(),
   tags: json("tags").$type<string[]>().default([]),
   videoUrl: text("video_url").notNull(),
+  storedFilename: text("stored_filename"),
   thumbnailUrl: text("thumbnail_url"),
   status: text("status", { enum: ["pending", "approved", "rejected", "uploaded"] })
     .notNull()
@@ -22,6 +23,8 @@ export const videosTable = pgTable("videos", {
   rejectionFeedback: text("rejection_feedback"),
   fileSize: real("file_size"),
   duration: real("duration"),
+  youtubeVideoId: text("youtube_video_id"),
+  youtubeUrl: text("youtube_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -32,6 +35,8 @@ export const insertVideoSchema = createInsertSchema(videosTable).omit({
   updatedAt: true,
   status: true,
   rejectionFeedback: true,
+  youtubeVideoId: true,
+  youtubeUrl: true,
 });
 export type InsertVideo = z.infer<typeof insertVideoSchema>;
 export type Video = typeof videosTable.$inferSelect;

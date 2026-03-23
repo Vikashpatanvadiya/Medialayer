@@ -21,6 +21,7 @@ const schema = z.object({
 export default function NewSubmissionModal({ onClose, linkedCreators }: { onClose: () => void; linkedCreators: LinkedCreator[] }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isSubmittingRef = useRef(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -107,6 +108,9 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
       toast({ title: "No video", description: "Please select a video file to upload.", variant: "destructive" });
       return;
     }
+    // Guard against double-submit
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
     try {
       // Always upload first (or reuse already-uploaded result)
@@ -144,6 +148,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
       toast({ title: "Submitted!", description: "Video sent for creator review." });
       onClose();
     } catch (err: any) {
+      isSubmittingRef.current = false;
       toast({ title: "Error", description: err.message || "Submission failed", variant: "destructive" });
     }
   };
@@ -315,7 +320,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           <Button
             type="submit"
             form="submission-form"
-            disabled={isUploading || uploadStage === "processing" || !selectedFile}
+            disabled={isUploading || uploadStage === "processing" || !selectedFile || form.formState.isSubmitting}
             className="rounded-xl px-8"
           >
             {isUploading ? (

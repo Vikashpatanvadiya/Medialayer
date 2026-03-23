@@ -82,22 +82,37 @@ export default function VideoDetail() {
 
   const approveMutation = useApproveVideo({
     mutation: {
-      onSuccess: () => {
-        toast({ title: "Video Approved!", description: "The editor has been notified." });
-        queryClient.invalidateQueries({ queryKey: [`/api/videos/${id}`] });
+      onMutate: () => {
+        // Optimistic update — immediately show approved status
+        queryClient.setQueryData([`/api/videos/${id}`], (old: any) =>
+          old ? { ...old, status: "approved" } : old
+        );
+      },
+      onSuccess: (data) => {
+        // Update cache with real server response
+        queryClient.setQueryData([`/api/videos/${id}`], data);
         queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+        toast({ title: "Video Approved!", description: "The editor has been notified." });
+      },
+      onError: () => {
+        // Revert on error
+        queryClient.invalidateQueries({ queryKey: [`/api/videos/${id}`] });
+        toast({ title: "Approve failed", description: "Please try again.", variant: "destructive" });
       },
     },
   });
 
   const rejectMutation = useRejectVideo({
     mutation: {
-      onSuccess: () => {
-        toast({ title: "Feedback sent", description: "The editor has been notified." });
-        queryClient.invalidateQueries({ queryKey: [`/api/videos/${id}`] });
+      onSuccess: (data) => {
+        queryClient.setQueryData([`/api/videos/${id}`], data);
         queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+        toast({ title: "Feedback sent", description: "The editor has been notified." });
         setShowRejectForm(false);
         setRejectFeedback("");
+      },
+      onError: () => {
+        toast({ title: "Reject failed", description: "Please try again.", variant: "destructive" });
       },
     },
   });
@@ -110,15 +125,35 @@ export default function VideoDetail() {
     const { url } = await res.json();
     const popup = window.open(url, "youtube-auth", "width=500,height=650,scrollbars=yes");
 
+    // Listen for postMessage from the popup
     const handler = async (e: MessageEvent) => {
       if (e.data?.type === "YOUTUBE_CONNECTED") {
         window.removeEventListener("message", handler);
+        clearInterval(pollInterval);
         popup?.close();
         await refetchYt();
         toast({ title: "YouTube connected!", description: `Channel: ${e.data.channelName}` });
       }
     };
     window.addEventListener("message", handler);
+
+    // Fallback: poll every 2s in case postMessage is blocked (cross-origin popup)
+    const pollInterval = setInterval(async () => {
+      try {
+        if (popup?.closed) {
+          clearInterval(pollInterval);
+          window.removeEventListener("message", handler);
+          // Popup closed — check if YouTube is now connected
+          await refetchYt();
+        }
+      } catch {}
+    }, 2000);
+
+    // Clean up after 5 minutes
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      window.removeEventListener("message", handler);
+    }, 5 * 60 * 1000);
   };
 
   const uploadToYouTube = async () => {
@@ -133,6 +168,12 @@ export default function VideoDetail() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
 
+      // Optimistic update — immediately show uploaded state
+      queryClient.setQueryData([`/api/videos/${id}`], (old: any) =>
+        old ? { ...old, status: "uploaded", youtubeUrl: data.youtubeUrl } : old
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+
       toast({
         title: "Uploaded to YouTube!",
         description: (
@@ -141,8 +182,6 @@ export default function VideoDetail() {
           </a>
         ) as any,
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/videos/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {

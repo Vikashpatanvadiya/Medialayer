@@ -1,0 +1,32 @@
+# compiled output
+dist
+tmp
+*.tsbuildinfo
+
+# dependencies
+node_modules
+
+# env files
+.env
+.env.local
+.env.production
+
+# IDEs
+.idea
+.vscode/*
+!.vscode/settings.json
+
+# misc
+.DS_Store
+Thumbs.db
+npm-debug.log
+coverage
+
+# uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# local tooling
+.cache/
+.local/
+.agents/

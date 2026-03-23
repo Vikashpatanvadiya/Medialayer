@@ -1,0 +1,287 @@
+import { useState, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { motion } from "framer-motion";
+import { X, Loader2, Image as ImageIcon, Upload, Film, CheckCircle2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+
+type LinkedCreator = { id: string; name: string; email: string };
+
+const schema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().min(10, "Provide a brief description"),
+  thumbnailUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  tags: z.string().optional(),
+  creatorId: z.string().min(1, "Please select a creator"),
+});
+
+export default function NewSubmissionModal({ onClose, linkedCreators }: { onClose: () => void; linkedCreators: LinkedCreator[] }) {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFilename, setUploadedFilename] = useState<string | null>(null);
+
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: { title: "", description: "", thumbnailUrl: "", tags: "", creatorId: linkedCreators.length === 1 ? linkedCreators[0].id : "" },
+  });
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("video/")) {
+      toast({ title: "Invalid file", description: "Please select a video file.", variant: "destructive" });
+      return;
+    }
+    setSelectedFile(file);
+    setUploadedFilename(null);
+    setUploadProgress(0);
+  };
+
+  const uploadFile = async (): Promise<string> => {
+    if (!selectedFile) throw new Error("No file selected");
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append("video", selectedFile);
+
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+      });
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const res = JSON.parse(xhr.responseText);
+          setUploadedFilename(res.filename);
+          setIsUploading(false);
+          resolve(res.filename);
+        } else {
+          setIsUploading(false);
+          reject(new Error("Upload failed"));
+        }
+      });
+      xhr.addEventListener("error", () => { setIsUploading(false); reject(new Error("Upload failed")); });
+
+      const token = localStorage.getItem("layer_token");
+      xhr.open("POST", "/api/upload/video");
+      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.send(formData);
+    });
+  };
+
+  const handleRealSubmit = async (data: z.infer<typeof schema>) => {
+    if (!selectedFile) {
+      toast({ title: "No video", description: "Please select a video file to upload.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      let filename = uploadedFilename;
+      if (!filename) filename = await uploadFile();
+
+      const token = localStorage.getItem("layer_token");
+      const res = await fetch("/api/videos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
+          videoUrl: `/api/stream/${filename}`,
+          storedFilename: filename,
+          thumbnailUrl: data.thumbnailUrl || undefined,
+          fileSize: selectedFile.size,
+          creatorId: data.creatorId,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to submit");
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      toast({ title: "Submitted!", description: "Video sent for creator review." });
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Submission failed", variant: "destructive" });
+    }
+  };
+
+  const fileSizeMB = selectedFile ? (selectedFile.size / (1024 * 1024)).toFixed(1) : null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="relative bg-card w-full max-w-2xl rounded-3xl shadow-2xl border border-border/50 overflow-hidden flex flex-col max-h-[90vh]"
+      >
+        <div className="flex items-center justify-between p-6 border-b border-border/50 bg-secondary/30">
+          <h2 className="text-xl font-bold">New Video Submission</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto">
+          <form id="submission-form" onSubmit={form.handleSubmit(handleRealSubmit)} className="space-y-6">
+
+            {/* Video File Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Video File</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors ${
+                  selectedFile ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/50 hover:bg-secondary/50"
+                }`}
+              >
+                <input ref={fileInputRef} type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
+                {!selectedFile ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center">
+                      <Upload className="w-7 h-7 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Click to upload video</p>
+                      <p className="text-sm text-muted-foreground mt-1">MP4, MOV — up to 2GB</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Film className="w-7 h-7 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground truncate max-w-xs">{selectedFile.name}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{fileSizeMB} MB — click to change</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {isUploading && (
+                <div className="space-y-2 mt-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Uploading to server…</span>
+                    <span className="font-medium text-primary">{uploadProgress}%</span>
+                  </div>
+                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {uploadedFilename && !isUploading && (
+                <div className="flex items-center gap-2 text-sm text-emerald-600 mt-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Video uploaded — ready to submit</span>
+                </div>
+              )}
+            </div>
+
+            {/* Creator picker */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-foreground">Send to Creator</label>
+              {linkedCreators.length === 0 ? (
+                <div className="px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-amber-700">
+                  No creators linked yet. Go back and add a creator first.
+                </div>
+              ) : linkedCreators.length === 1 ? (
+                <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  Submitting to <span className="font-semibold">{linkedCreators[0].name}</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {linkedCreators.map(c => (
+                    <label key={c.id} className={`cursor-pointer border rounded-xl p-3 flex items-center gap-2 transition-all ${form.watch("creatorId") === c.id ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:bg-secondary"}`}>
+                      <input type="radio" value={c.id} {...form.register("creatorId")} className="hidden" />
+                      <CheckCircle2 className={`w-4 h-4 shrink-0 ${form.watch("creatorId") === c.id ? "text-primary" : "text-muted-foreground opacity-30"}`} />
+                      <span className="text-sm font-medium truncate">{c.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {form.formState.errors.creatorId && <p className="text-sm text-destructive">{form.formState.errors.creatorId.message}</p>}
+            </div>
+
+            {/* Title */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-foreground">Video Title</label>
+              <input
+                {...form.register("title")}
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground"
+                placeholder="e.g. VLOG: My trip to Japan"
+              />
+              {form.formState.errors.title && <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>}
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-foreground">Description</label>
+              <textarea
+                {...form.register("description")}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground resize-none"
+                placeholder="YouTube description, notes for creator..."
+              />
+              {form.formState.errors.description && <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>}
+            </div>
+
+            {/* Tags & Thumbnail */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-foreground">
+                  Tags <span className="text-xs font-normal text-muted-foreground">(comma separated)</span>
+                </label>
+                <input
+                  {...form.register("tags")}
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground"
+                  placeholder="vlog, travel, 4k"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4" /> Thumbnail URL
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  {...form.register("thumbnailUrl")}
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground"
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <div className="p-6 border-t border-border/50 bg-secondary/30 flex justify-end gap-3">
+          <Button variant="outline" onClick={onClose} className="rounded-xl px-6">Cancel</Button>
+          <Button
+            type="submit"
+            form="submission-form"
+            disabled={isUploading || !selectedFile}
+            className="rounded-xl px-8"
+          >
+            {isUploading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Uploading…</> : "Submit for Review"}
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

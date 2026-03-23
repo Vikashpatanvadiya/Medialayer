@@ -18,6 +18,11 @@ export async function uploadToCloudinary(filePath: string, filename: string): Pr
 
 export function getSignedUrl(filename: string): string {
   const publicId = `medialayer/${filename.replace(/\.[^/.]+$/, "")}`;
+  return getSignedUrlFromPublicId(publicId);
+}
+
+// Use when you already have the full public_id (e.g. extracted from a legacy videoUrl)
+export function getSignedUrlFromPublicId(publicId: string): string {
   return cloudinary.url(publicId, {
     resource_type: "video",
     secure: true,

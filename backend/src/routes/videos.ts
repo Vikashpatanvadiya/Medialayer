@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db, videosTable, usersTable, notificationsTable, editorCreatorsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { requireAuth, requireRole } from "../lib/auth.js";
 import { CreateVideoBody, RejectVideoBody } from "@workspace/api-zod";
 import { logAction } from "../lib/logger.js";
 import { sendEmail, emailTemplates } from "../lib/mailer.js";
+import { deleteFromCloudinary } from "../lib/cloudinary.js";
 
 const router = Router();
 
@@ -18,8 +19,8 @@ function formatVideo(
     title: video.title,
     description: video.description,
     tags: video.tags || [],
-    videoUrl: video.videoUrl,
-    storedFilename: video.storedFilename ?? undefined,
+    // Only expose videoUrl if it's a YouTube URL — never expose raw Cloudinary URLs
+    videoUrl: video.youtubeUrl || (video.videoUrl?.includes("youtube") ? video.videoUrl : ""),
     thumbnailUrl: video.thumbnailUrl ?? undefined,
     status: video.status,
     creatorId: video.creatorId,
@@ -29,6 +30,8 @@ function formatVideo(
     duration: video.duration ?? undefined,
     youtubeVideoId: video.youtubeVideoId ?? undefined,
     youtubeUrl: video.youtubeUrl ?? undefined,
+    // hasFile: true if we have a storedFilename OR if videoUrl is a Cloudinary URL (legacy uploads)
+    hasFile: !!video.storedFilename || video.videoUrl?.includes("cloudinary.com"),
     createdAt: video.createdAt,
     updatedAt: video.updatedAt,
     creator: creator
@@ -54,12 +57,15 @@ router.get("/", requireAuth, async (req, res) => {
     return true;
   });
 
-  const enriched = await Promise.all(
-    filtered.map(async (video) => {
-      const [creator] = await db.select().from(usersTable).where(eq(usersTable.id, video.creatorId)).limit(1);
-      const [editor] = await db.select().from(usersTable).where(eq(usersTable.id, video.editorId)).limit(1);
-      return formatVideo(video, creator, editor);
-    }),
+  if (filtered.length === 0) { res.json({ videos: [] }); return; }
+
+  // Batch fetch all users in 2 queries instead of 2 per video (N+1 fix)
+  const userIds = [...new Set([...filtered.map(v => v.creatorId), ...filtered.map(v => v.editorId)])];
+  const users = await db.select().from(usersTable).where(inArray(usersTable.id, userIds));
+  const userMap = new Map(users.map(u => [u.id, u]));
+
+  const enriched = filtered.map(video =>
+    formatVideo(video, userMap.get(video.creatorId), userMap.get(video.editorId))
   );
 
   res.json({ videos: enriched });
@@ -198,10 +204,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
   if (video.status === "uploaded") { res.status(400).json({ error: "Cannot delete a video that has already been uploaded to YouTube" }); return; }
 
   if (video.storedFilename) {
-    const { default: fs } = await import("fs");
-    const { default: path } = await import("path");
-    const filePath = path.join(process.cwd(), "uploads", video.storedFilename);
-    fs.unlink(filePath, () => {});
+    await deleteFromCloudinary(video.storedFilename).catch(() => {});
   }
 
   await db.delete(notificationsTable).where(eq(notificationsTable.videoId, id));

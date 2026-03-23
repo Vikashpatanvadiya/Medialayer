@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { requireAuth } from "../lib/auth.js";
 import { db, videosTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { getSignedUrl } from "../lib/cloudinary.js";
+import { getSignedUrl, getSignedUrlFromPublicId } from "../lib/cloudinary.js";
 
 const router: IRouter = Router();
 
@@ -15,7 +15,6 @@ router.use((req, _res, next) => {
 });
 
 // GET /api/stream/:videoId/url — returns a short-lived signed URL as JSON
-// The frontend uses this to set the <video src> directly, avoiding CORS issues
 router.get("/:videoId/url", requireAuth, async (req, res) => {
   const { videoId } = req.params as { videoId: string };
   const user = req.user!;
@@ -29,13 +28,25 @@ router.get("/:videoId/url", requireAuth, async (req, res) => {
     return;
   }
 
-  if (!video.storedFilename) {
-    res.status(404).json({ error: "No video file" });
+  let url: string | null = null;
+
+  if (video.storedFilename) {
+    // Normal case: use storedFilename to build signed URL
+    url = getSignedUrl(video.storedFilename);
+  } else if (video.videoUrl?.includes("cloudinary.com")) {
+    // Legacy case: extract public_id from the stored Cloudinary URL
+    // URL format: https://res.cloudinary.com/<cloud>/video/upload/<transformations>/<public_id>.<ext>
+    const match = video.videoUrl.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
+    if (match?.[1]) {
+      url = getSignedUrlFromPublicId(match[1]);
+    }
+  }
+
+  if (!url) {
+    res.status(404).json({ error: "No video file available" });
     return;
   }
 
-  const url = getSignedUrl(video.storedFilename);
-  // Return as JSON — frontend sets this as <video src>
   res.json({ url });
 });
 

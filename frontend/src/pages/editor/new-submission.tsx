@@ -24,6 +24,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStage, setUploadStage] = useState<"idle" | "uploading" | "processing" | "done">("idle");
   const [uploadedFilename, setUploadedFilename] = useState<string | null>(null);
   const [uploadedCloudinaryUrl, setUploadedCloudinaryUrl] = useState<string | null>(null);
 
@@ -41,12 +42,16 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
     }
     setSelectedFile(file);
     setUploadedFilename(null);
+    setUploadedCloudinaryUrl(null);
     setUploadProgress(0);
+    setUploadStage("idle");
   };
 
-  const uploadFile = async (): Promise<string> => {
-    if (!selectedFile) throw new Error("No file selected");
+  // Returns { filename, cloudinaryUrl } — waits for full Cloudinary upload
+  const uploadFile = (): Promise<{ filename: string; cloudinaryUrl: string }> => {
+    if (!selectedFile) return Promise.reject(new Error("No file selected"));
     setIsUploading(true);
+    setUploadStage("uploading");
     setUploadProgress(0);
 
     return new Promise((resolve, reject) => {
@@ -55,21 +60,40 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
 
       const xhr = new XMLHttpRequest();
       xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
-      });
-      xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const res = JSON.parse(xhr.responseText);
-          setUploadedFilename(res.filename);
-          if (res.cloudinaryUrl) setUploadedCloudinaryUrl(res.cloudinaryUrl);
-          setIsUploading(false);
-          resolve(res.filename);
-        } else {
-          setIsUploading(false);
-          reject(new Error("Upload failed"));
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          setUploadProgress(pct);
+          // Once file reaches server, show "processing" (Cloudinary upload happening)
+          if (pct === 100) setUploadStage("processing");
         }
       });
-      xhr.addEventListener("error", () => { setIsUploading(false); reject(new Error("Upload failed")); });
+      xhr.addEventListener("load", () => {
+        setIsUploading(false);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const res = JSON.parse(xhr.responseText);
+          if (!res.cloudinaryUrl) {
+            reject(new Error("Cloudinary upload failed on server — check Render env vars"));
+            return;
+          }
+          setUploadedFilename(res.filename);
+          setUploadedCloudinaryUrl(res.cloudinaryUrl);
+          setUploadStage("done");
+          resolve({ filename: res.filename, cloudinaryUrl: res.cloudinaryUrl });
+        } else {
+          setUploadStage("idle");
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.error || "Upload failed"));
+          } catch {
+            reject(new Error(`Upload failed (${xhr.status})`));
+          }
+        }
+      });
+      xhr.addEventListener("error", () => {
+        setIsUploading(false);
+        setUploadStage("idle");
+        reject(new Error("Network error during upload"));
+      });
 
       const token = localStorage.getItem("layer_token");
       xhr.open("POST", `${import.meta.env.VITE_API_URL || ""}/api/upload/video`);
@@ -85,8 +109,15 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
     }
 
     try {
+      // Always upload first (or reuse already-uploaded result)
       let filename = uploadedFilename;
-      if (!filename) filename = await uploadFile();
+      let cloudinaryUrl = uploadedCloudinaryUrl;
+
+      if (!filename || !cloudinaryUrl) {
+        const result = await uploadFile();
+        filename = result.filename;
+        cloudinaryUrl = result.cloudinaryUrl;
+      }
 
       const token = localStorage.getItem("layer_token");
       const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/videos`, {
@@ -96,7 +127,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           title: data.title,
           description: data.description,
           tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
-          videoUrl: uploadedCloudinaryUrl || `/api/stream/${filename}`,
+          videoUrl: cloudinaryUrl,
           storedFilename: filename,
           thumbnailUrl: data.thumbnailUrl || undefined,
           fileSize: selectedFile.size,
@@ -175,19 +206,26 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
                 )}
               </div>
 
-              {isUploading && (
+              {(isUploading || uploadStage === "processing") && (
                 <div className="space-y-2 mt-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Uploading to server…</span>
-                    <span className="font-medium text-primary">{uploadProgress}%</span>
+                    <span className="text-muted-foreground">
+                      {uploadStage === "processing" ? "Saving to cloud storage…" : "Uploading to server…"}
+                    </span>
+                    <span className="font-medium text-primary">
+                      {uploadStage === "processing" ? <Loader2 className="w-4 h-4 animate-spin inline" /> : `${uploadProgress}%`}
+                    </span>
                   </div>
                   <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
+                    <div
+                      className={`h-full rounded-full transition-all duration-200 ${uploadStage === "processing" ? "bg-primary animate-pulse w-full" : "bg-primary"}`}
+                      style={{ width: uploadStage === "processing" ? "100%" : `${uploadProgress}%` }}
+                    />
                   </div>
                 </div>
               )}
 
-              {uploadedFilename && !isUploading && (
+              {uploadStage === "done" && (
                 <div className="flex items-center gap-2 text-sm text-emerald-600 mt-2">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Video uploaded — ready to submit</span>
@@ -277,10 +315,16 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           <Button
             type="submit"
             form="submission-form"
-            disabled={isUploading || !selectedFile}
+            disabled={isUploading || uploadStage === "processing" || !selectedFile}
             className="rounded-xl px-8"
           >
-            {isUploading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Uploading…</> : "Submit for Review"}
+            {isUploading ? (
+              <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Uploading…</>
+            ) : uploadStage === "processing" ? (
+              <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving to cloud…</>
+            ) : (
+              "Submit for Review"
+            )}
           </Button>
         </div>
       </motion.div>

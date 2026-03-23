@@ -88,18 +88,23 @@ router.post("/", requireAuth, requireRole("editor"), async (req, res) => {
     return;
   }
 
-  const { title, description, tags, videoUrl, thumbnailUrl, fileSize, duration } = parsed.data;
+  const { title, description, tags, thumbnailUrl, fileSize, duration } = parsed.data;
   const storedFilename = req.body.storedFilename as string | undefined;
+  const cloudinaryUrl = req.body.videoUrl as string | undefined;
 
   // creatorId comes from the request body (editor picks from their linked creators)
   const creatorId = req.body.creatorId as string;
   if (!creatorId) { res.status(400).json({ error: "creatorId is required" }); return; }
+  if (!storedFilename) { res.status(400).json({ error: "storedFilename is required — upload the video first" }); return; }
 
   // Verify editor is actually linked to this creator
   const [validLink] = await db.select().from(editorCreatorsTable)
     .where(and(eq(editorCreatorsTable.editorId, req.user!.userId), eq(editorCreatorsTable.creatorId, creatorId)))
     .limit(1);
   if (!validLink) { res.status(403).json({ error: "You are not linked to this creator" }); return; }
+
+  // videoUrl must be the Cloudinary URL — reject local paths
+  const videoUrl = cloudinaryUrl?.includes("cloudinary.com") ? cloudinaryUrl : `pending:${storedFilename}`;
 
   const [video] = await db
     .insert(videosTable)

@@ -70,7 +70,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
       xhr.addEventListener("error", () => { setIsUploading(false); reject(new Error("Upload failed")); });
 
       const token = localStorage.getItem("layer_token");
-      xhr.open("POST", "/api/upload/video");
+      xhr.open("POST", `${import.meta.env.VITE_API_URL || ""}/api/upload/video`);
       if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
       xhr.send(formData);
     });
@@ -87,7 +87,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
       if (!filename) filename = await uploadFile();
 
       const token = localStorage.getItem("layer_token");
-      const res = await fetch("/api/videos", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/videos`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({

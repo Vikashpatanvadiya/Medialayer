@@ -13,6 +13,7 @@ import { getStatusColor, getThumbnailUrl } from "@/components/ui/video-card";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { apiUrl } from "@/lib/api";
 
 function Play(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -31,7 +32,7 @@ function useYouTubeStatus(enabled: boolean) {
     if (!token || !enabled) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/youtube/status", {
+      const res = await fetch(apiUrl("/api/youtube/status"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) setStatus(await res.json());
@@ -86,7 +87,7 @@ export default function VideoDetail() {
 
   const connectYouTube = async () => {
     const token = localStorage.getItem("layer_token");
-    const res = await fetch("/api/youtube/auth-url", {
+    const res = await fetch(apiUrl("/api/youtube/auth-url"), {
       headers: { Authorization: `Bearer ${token}` },
     });
     const { url } = await res.json();
@@ -108,7 +109,7 @@ export default function VideoDetail() {
     setIsUploading(true);
     try {
       const token = localStorage.getItem("layer_token");
-      const res = await fetch(`/api/youtube/upload/${video.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/youtube/upload/${video.id}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -137,7 +138,7 @@ export default function VideoDetail() {
     setIsRollingBack(true);
     try {
       const token = localStorage.getItem("layer_token");
-      const res = await fetch(`/api/videos/${video.id}/rollback`, {
+      const res = await fetch(apiUrl(`/api/videos/${video.id}/rollback`), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -4,6 +4,7 @@ import { Loader2, Users, Video, CheckCircle2, Clock, Upload, UserMinus } from "l
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { apiUrl } from "@/lib/api";
 
 interface EditorStats {
   id: string;
@@ -28,7 +29,7 @@ export default function MyEditors() {
     if (!confirm(`Remove ${editorName} from your workspace?`)) return;
     setRemoving(editorId);
     try {
-      const res = await fetch(`/api/users/remove-editor/${editorId}`, {
+      const res = await fetch(apiUrl(`/api/users/remove-editor/${editorId}`), {
         method: "DELETE",
       });
       const data = await res.json();
@@ -51,7 +52,7 @@ export default function MyEditors() {
       const token = localStorage.getItem("layer_token");
       if (!token) return;
       try {
-        const res = await fetch("/api/users/my-editors", {
+        const res = await fetch(apiUrl("/api/users/my-editors"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

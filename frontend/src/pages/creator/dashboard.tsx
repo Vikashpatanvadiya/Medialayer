@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
+import { apiUrl } from "@/lib/api";
 
 export default function CreatorDashboard() {
   const { user } = useAuth();
@@ -20,7 +21,7 @@ export default function CreatorDashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem("layer_token");
-    fetch("/api/users/invite-code", { headers: { Authorization: `Bearer ${token}` } })
+    fetch(apiUrl("/api/users/invite-code"), { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => setInviteCode(d.inviteCode))
       .catch(() => {});
@@ -61,7 +62,7 @@ export default function CreatorDashboard() {
     setIsDeleting(true);
     try {
       const token = localStorage.getItem("layer_token");
-      const res = await fetch(`/api/videos/${deleteTarget.id}`, {
+      const res = await fetch(apiUrl(`/api/videos/${deleteTarget.id}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

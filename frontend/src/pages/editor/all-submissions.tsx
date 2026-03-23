@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import NewSubmissionModal from "./new-submission";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 
 export default function AllSubmissions() {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export default function AllSubmissions() {
     setIsDeleting(true);
     try {
       const token = localStorage.getItem("layer_token");
-      const res = await fetch(`/api/videos/${deleteTarget.id}`, {
+      const res = await fetch(apiUrl(`/api/videos/${deleteTarget.id}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

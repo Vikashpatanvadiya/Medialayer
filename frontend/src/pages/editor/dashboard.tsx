@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import NewSubmissionModal from "./new-submission";
 import { Link } from "wouter";
 import { toast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 
 type LinkedCreator = { id: string; name: string; email: string };
 
@@ -24,7 +25,7 @@ export default function EditorDashboard() {
     if (!confirm(`Unlink from ${creatorName}?`)) return;
     setRemovingCreator(creatorId);
     try {
-      const res = await fetch(`/api/users/unlink-creator/${creatorId}`, {
+      const res = await fetch(apiUrl(`/api/users/unlink-creator/${creatorId}`), {
         method: "DELETE",
       });
       const data = await res.json();
@@ -41,7 +42,7 @@ export default function EditorDashboard() {
   const fetchLinkedCreators = async () => {
     const token = localStorage.getItem("layer_token");
     try {
-      const res = await fetch("/api/users/my-creators", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(apiUrl("/api/users/my-creators"), { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setLinkedCreators(data.creators || []);
     } catch {}
@@ -55,7 +56,7 @@ export default function EditorDashboard() {
     setIsLinking(true);
     try {
       const token = localStorage.getItem("layer_token");
-      const res = await fetch("/api/users/link-creator", {
+      const res = await fetch(apiUrl("/api/users/link-creator"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ inviteCode: inviteCode.trim() }),

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 
 export default function AllVideos() {
   const { user } = useAuth();
@@ -31,7 +32,7 @@ export default function AllVideos() {
     setIsDeleting(true);
     try {
       const token = localStorage.getItem("layer_token");
-      const res = await fetch(`/api/videos/${deleteTarget.id}`, {
+      const res = await fetch(apiUrl(`/api/videos/${deleteTarget.id}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

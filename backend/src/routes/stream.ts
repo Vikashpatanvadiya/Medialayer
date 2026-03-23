@@ -1,11 +1,10 @@
-import { Router } from "express";
+import { Router, type IRouter } from "express";
 import { requireAuth } from "../lib/auth.js";
 import { db, videosTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { getSignedUrl } from "../lib/cloudinary.js";
-import https from "https";
 
-const router = Router();
+const router: IRouter = Router();
 
 // Allow token via query param for video streaming (browser video tag can't set headers)
 router.use((req, _res, next) => {
@@ -16,7 +15,7 @@ router.use((req, _res, next) => {
 });
 
 router.get("/:videoId", requireAuth, async (req, res) => {
-  const { videoId } = req.params;
+  const { videoId } = req.params as { videoId: string };
   const user = req.user!;
 
   const [video] = await db.select().from(videosTable).where(eq(videosTable.id, videoId)).limit(1);
@@ -33,28 +32,11 @@ router.get("/:videoId", requireAuth, async (req, res) => {
     return;
   }
 
+  // Redirect to a short-lived signed Cloudinary URL (1 hour expiry).
+  // This avoids piping issues and lets the browser stream directly from Cloudinary.
+  // The signed URL is not guessable and expires, so security is maintained.
   const signedUrl = getSignedUrl(video.storedFilename);
-
-  const headers: Record<string, string> = {};
-  if (req.headers.range) headers["Range"] = req.headers.range;
-
-  const cloudinaryReq = https.get(signedUrl, { headers }, (stream) => {
-    const status = stream.statusCode || 200;
-    const responseHeaders: Record<string, string> = {
-      "Content-Type": stream.headers["content-type"] || "video/mp4",
-      "Accept-Ranges": "bytes",
-      "Cache-Control": "no-store",
-    };
-    if (stream.headers["content-length"]) responseHeaders["Content-Length"] = stream.headers["content-length"] as string;
-    if (stream.headers["content-range"]) responseHeaders["Content-Range"] = stream.headers["content-range"] as string;
-
-    res.writeHead(status, responseHeaders);
-    stream.pipe(res);
-  });
-
-  cloudinaryReq.on("error", (err) => {
-    if (!res.headersSent) res.status(500).json({ error: `Stream failed: ${err.message}` });
-  });
+  res.redirect(302, signedUrl);
 });
 
 export default router;

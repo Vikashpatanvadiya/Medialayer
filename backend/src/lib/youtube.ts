@@ -5,6 +5,9 @@ const CLIENT_ID = process.env.YOUTUBE_CLIENT_ID!;
 const CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET!;
 
 export function getRedirectUri(): string {
+  if (process.env.BACKEND_URL) {
+    return `${process.env.BACKEND_URL}/api/youtube/oauth-callback`;
+  }
   const domain = (process.env.REPLIT_DOMAINS || "").split(",")[0]?.trim();
   return domain
     ? `https://${domain}/api/youtube/oauth-callback`

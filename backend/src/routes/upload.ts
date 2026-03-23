@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { requireAuth, requireRole } from "../lib/auth.js";
 import { logAction } from "../lib/logger.js";
+import { uploadToCloudinary } from "../lib/cloudinary.js";
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -36,7 +37,6 @@ const upload = multer({
 const router = Router();
 
 router.post("/video", requireAuth, requireRole("editor"), (req, res, next) => {
-  // Log upload started before multer processes the file
   logAction(req.user!.userId, "upload_started");
   next();
 }, upload.single("video"), async (req, res) => {
@@ -45,19 +45,31 @@ router.post("/video", requireAuth, requireRole("editor"), (req, res, next) => {
     return;
   }
 
-  await logAction(req.user!.userId, "upload_completed", undefined, {
-    filename: req.file.filename,
-    originalName: req.file.originalname,
-    size: req.file.size,
-    mimetype: req.file.mimetype,
-  });
+  try {
+    // Upload to Cloudinary for persistent storage
+    const cloudinaryUrl = await uploadToCloudinary(req.file.path, req.file.filename);
 
-  res.json({
-    filename: req.file.filename,
-    originalName: req.file.originalname,
-    size: req.file.size,
-    mimetype: req.file.mimetype,
-  });
+    // Delete local temp file
+    fs.unlink(req.file.path, () => {});
+
+    await logAction(req.user!.userId, "upload_completed", undefined, {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+    });
+
+    res.json({
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      cloudinaryUrl,
+    });
+  } catch (err: any) {
+    fs.unlink(req.file.path, () => {});
+    res.status(500).json({ error: `Upload failed: ${err.message}` });
+  }
 });
 
 export default router;

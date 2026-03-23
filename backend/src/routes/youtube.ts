@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { requireAuth, requireRole } from "../lib/auth.js";
 import { getAuthUrl, createOAuth2Client, uploadVideoToYouTube } from "../lib/youtube.js";
 import { sendEmail, emailTemplates } from "../lib/mailer.js";
+import { downloadFromCloudinary } from "../lib/cloudinary.js";
 import path from "path";
 import fs from "fs";
 
@@ -117,9 +118,19 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
   const uploadDir = path.join(process.cwd(), "uploads");
   const filePath = path.join(uploadDir, video.storedFilename);
 
+  // Download from Cloudinary if file doesn't exist locally
   if (!fs.existsSync(filePath)) {
-    res.status(400).json({ error: "Video file not found on server. It may have been deleted." });
-    return;
+    if (!video.videoUrl || !video.videoUrl.includes("cloudinary")) {
+      res.status(400).json({ error: "Video file not found on server. It may have been deleted." });
+      return;
+    }
+    try {
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      await downloadFromCloudinary(video.videoUrl, filePath);
+    } catch (err: any) {
+      res.status(500).json({ error: `Failed to retrieve video file: ${err.message}` });
+      return;
+    }
   }
 
   try {

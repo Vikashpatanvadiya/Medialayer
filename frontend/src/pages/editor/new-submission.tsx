@@ -25,6 +25,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFilename, setUploadedFilename] = useState<string | null>(null);
+  const [uploadedCloudinaryUrl, setUploadedCloudinaryUrl] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -60,6 +61,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         if (xhr.status >= 200 && xhr.status < 300) {
           const res = JSON.parse(xhr.responseText);
           setUploadedFilename(res.filename);
+          if (res.cloudinaryUrl) setUploadedCloudinaryUrl(res.cloudinaryUrl);
           setIsUploading(false);
           resolve(res.filename);
         } else {
@@ -94,7 +96,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           title: data.title,
           description: data.description,
           tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
-          videoUrl: `/api/stream/${filename}`,
+          videoUrl: uploadedCloudinaryUrl || `/api/stream/${filename}`,
           storedFilename: filename,
           thumbnailUrl: data.thumbnailUrl || undefined,
           fileSize: selectedFile.size,

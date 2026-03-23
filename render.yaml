@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: layer-backend
+    runtime: node
+    region: oregon
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build
+    startCommand: node backend/dist/index.cjs
+    envVars:
+      - key: NODE_ENV
+        value: production

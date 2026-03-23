@@ -120,7 +120,7 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
 
   // Download from Cloudinary if file doesn't exist locally
   if (!fs.existsSync(filePath)) {
-    if (!video.videoUrl || !video.videoUrl.includes("cloudinary")) {
+    if (!video.videoUrl || !video.videoUrl.includes("cloudinary.com")) {
       res.status(400).json({ error: "Video file not found on server. It may have been deleted." });
       return;
     }

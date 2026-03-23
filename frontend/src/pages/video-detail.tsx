@@ -180,7 +180,7 @@ export default function VideoDetail() {
     return null;
   })();
 
-  const isServerFile = video.videoUrl.startsWith("/api/stream/");
+  const isServerFile = video.videoUrl.startsWith("/api/stream/") || video.videoUrl.includes("cloudinary.com");
   const backPath = `/dashboard/${user?.role}`;
 
   return (

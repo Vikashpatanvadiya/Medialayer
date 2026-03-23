@@ -45,11 +45,12 @@ router.get("/oauth-callback", async (req, res) => {
       })
       .where(eq(usersTable.id, userId));
 
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     res.send(`
       <html>
         <body>
           <script>
-            window.opener && window.opener.postMessage({ type: 'YOUTUBE_CONNECTED', channelName: '${channelName}' }, '*');
+            window.opener && window.opener.postMessage({ type: 'YOUTUBE_CONNECTED', channelName: '${channelName}' }, '${frontendUrl}');
             window.close();
           </script>
           <p>YouTube connected! You can close this window.</p>
@@ -76,103 +77,82 @@ router.get("/status", requireAuth, requireRole("creator"), async (req, res) => {
 });
 
 router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req, res) => {
-  const { videoId } = req.params;
+  const { videoId } = req.params as { videoId: string };
 
-  const [user] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, req.user!.userId))
-    .limit(1);
-
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user!.userId)).limit(1);
   if (!user?.youtubeTokens) {
     res.status(400).json({ error: "YouTube account not connected. Please connect first." });
     return;
   }
 
-  const [video] = await db
-    .select()
-    .from(videosTable)
-    .where(eq(videosTable.id, videoId))
-    .limit(1);
-
-  if (!video) {
-    res.status(404).json({ error: "Video not found" });
-    return;
-  }
-
-  if (video.creatorId !== req.user!.userId) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-
+  const [video] = await db.select().from(videosTable).where(eq(videosTable.id, videoId)).limit(1);
+  if (!video) { res.status(404).json({ error: "Video not found" }); return; }
+  if (video.creatorId !== req.user!.userId) { res.status(403).json({ error: "Forbidden" }); return; }
   if (video.status !== "approved" && video.status !== "uploaded") {
     res.status(400).json({ error: "Video must be approved before uploading to YouTube" });
     return;
   }
-
   if (!video.storedFilename) {
     res.status(400).json({ error: "No file stored for this video. The editor must re-upload the file." });
     return;
   }
 
-  const uploadDir = path.join(process.cwd(), "uploads");
-  const filePath = path.join(uploadDir, video.storedFilename);
+  // Respond immediately — upload runs in background
+  res.json({ success: true, status: "uploading", message: "YouTube upload started. Check back in a moment." });
 
-  // Download from Cloudinary if file doesn't exist locally
-  if (!fs.existsSync(filePath)) {
-    if (!video.videoUrl || !video.videoUrl.includes("cloudinary.com")) {
-      res.status(400).json({ error: "Video file not found on server. It may have been deleted." });
-      return;
-    }
+  // Background upload (don't await)
+  (async () => {
+    const uploadDir = path.join(process.cwd(), "uploads");
+    const filePath = path.join(uploadDir, video.storedFilename!);
+
     try {
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-      await downloadFromCloudinary(video.videoUrl, filePath);
+      // Download from Cloudinary if not cached locally
+      if (!fs.existsSync(filePath)) {
+        if (!video.videoUrl?.includes("cloudinary.com")) {
+          console.error("YT upload: no cloudinary URL for", videoId);
+          return;
+        }
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        await downloadFromCloudinary(video.videoUrl, filePath);
+      }
+
+      const result = await uploadVideoToYouTube(
+        user.youtubeTokens!,
+        filePath,
+        video.title,
+        video.description,
+        (video.tags as string[]) || [],
+      );
+
+      await db.update(videosTable)
+        .set({ status: "uploaded", youtubeVideoId: result.youtubeVideoId, youtubeUrl: result.youtubeUrl, updatedAt: new Date() })
+        .where(eq(videosTable.id, videoId));
+
+      await db.insert(notificationsTable).values({
+        userId: video.editorId,
+        title: "Video uploaded to YouTube!",
+        message: `"${video.title}" has been uploaded to YouTube: ${result.youtubeUrl}`,
+        type: "video_uploaded",
+        videoId: video.id,
+      });
+
+      const [editor] = await db.select().from(usersTable).where(eq(usersTable.id, video.editorId)).limit(1);
+      if (editor?.email) {
+        const tpl = emailTemplates.videoUploaded(video.title, result.youtubeUrl);
+        await sendEmail(editor.email, tpl.subject, tpl.html);
+      }
+
+      fs.unlink(filePath, () => {});
+      console.log("YT upload complete:", result.youtubeUrl);
     } catch (err: any) {
-      res.status(500).json({ error: `Failed to retrieve video file: ${err.message}` });
-      return;
+      console.error("YT upload failed:", err?.message || err);
+      // Mark as failed so frontend can show error on next poll
+      await db.update(videosTable)
+        .set({ youtubeUrl: `error:${err?.message || "upload failed"}`, updatedAt: new Date() })
+        .where(eq(videosTable.id, videoId))
+        .catch(() => {});
     }
-  }
-
-  try {
-    const result = await uploadVideoToYouTube(
-      user.youtubeTokens,
-      filePath,
-      video.title,
-      video.description,
-      (video.tags as string[]) || [],
-    );
-
-    await db
-      .update(videosTable)
-      .set({ status: "uploaded", updatedAt: new Date() })
-      .where(eq(videosTable.id, videoId));
-
-    await db.insert(notificationsTable).values({
-      userId: video.editorId,
-      title: "Video uploaded to YouTube!",
-      message: `"${video.title}" has been uploaded to YouTube: ${result.youtubeUrl}`,
-      type: "video_uploaded",
-      videoId: video.id,
-    });
-
-    // Email notification to editor
-    const [editor] = await db.select().from(usersTable).where(eq(usersTable.id, video.editorId)).limit(1);
-    if (editor?.email) {
-      const tpl = emailTemplates.videoUploaded(video.title, result.youtubeUrl);
-      await sendEmail(editor.email, tpl.subject, tpl.html);
-    }
-
-    fs.unlink(filePath, () => {});
-
-    res.json({
-      success: true,
-      youtubeVideoId: result.youtubeVideoId,
-      youtubeUrl: result.youtubeUrl,
-    });
-  } catch (err: any) {
-    console.error("YouTube upload error:", err);
-    res.status(500).json({ error: `YouTube upload failed: ${err.message}` });
-  }
+  })();
 });
 
 export default router;

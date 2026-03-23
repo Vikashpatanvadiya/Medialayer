@@ -125,7 +125,22 @@ export default function VideoDetail() {
     const { url } = await res.json();
     const popup = window.open(url, "youtube-auth", "width=500,height=650,scrollbars=yes");
 
-    // Listen for postMessage from the popup
+    // Poll every 1.5s — when popup closes, refetch YouTube status
+    const pollInterval = setInterval(async () => {
+      try {
+        if (!popup || popup.closed) {
+          clearInterval(pollInterval);
+          const prev = ytStatus?.connected;
+          await refetchYt();
+          // Small delay to let state update, then check
+          setTimeout(async () => {
+            await refetchYt();
+          }, 500);
+        }
+      } catch {}
+    }, 1500);
+
+    // postMessage listener (works if same origin or CORS allows)
     const handler = async (e: MessageEvent) => {
       if (e.data?.type === "YOUTUBE_CONNECTED") {
         window.removeEventListener("message", handler);
@@ -137,23 +152,11 @@ export default function VideoDetail() {
     };
     window.addEventListener("message", handler);
 
-    // Fallback: poll every 2s in case postMessage is blocked (cross-origin popup)
-    const pollInterval = setInterval(async () => {
-      try {
-        if (popup?.closed) {
-          clearInterval(pollInterval);
-          window.removeEventListener("message", handler);
-          // Popup closed — check if YouTube is now connected
-          await refetchYt();
-        }
-      } catch {}
-    }, 2000);
-
-    // Clean up after 5 minutes
+    // Clean up after 10 minutes
     setTimeout(() => {
       clearInterval(pollInterval);
       window.removeEventListener("message", handler);
-    }, 5 * 60 * 1000);
+    }, 10 * 60 * 1000);
   };
 
   const uploadToYouTube = async () => {
@@ -168,24 +171,46 @@ export default function VideoDetail() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
 
-      // Optimistic update — immediately show uploaded state
-      queryClient.setQueryData([`/api/videos/${id}`], (old: any) =>
-        old ? { ...old, status: "uploaded", youtubeUrl: data.youtubeUrl } : old
-      );
-      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      // Upload started in background — show uploading state and poll
+      toast({ title: "Uploading to YouTube…", description: "This may take a minute. We'll update when done." });
 
-      toast({
-        title: "Uploaded to YouTube!",
-        description: (
-          <a href={data.youtubeUrl} target="_blank" rel="noreferrer" className="underline">
-            View on YouTube →
-          </a>
-        ) as any,
-      });
+      // Poll every 5s for up to 10 minutes
+      const pollStart = Date.now();
+      const poll = setInterval(async () => {
+        try {
+          const r = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/videos/${video.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!r.ok) return;
+          const updated = await r.json();
+
+          if (updated.status === "uploaded" && updated.youtubeUrl && !updated.youtubeUrl.startsWith("error:")) {
+            clearInterval(poll);
+            setIsUploading(false);
+            queryClient.setQueryData([`/api/videos/${id}`], updated);
+            queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+            toast({
+              title: "Uploaded to YouTube!",
+              description: (
+                <a href={updated.youtubeUrl} target="_blank" rel="noreferrer" className="underline">
+                  View on YouTube →
+                </a>
+              ) as any,
+            });
+          } else if (updated.youtubeUrl?.startsWith("error:")) {
+            clearInterval(poll);
+            setIsUploading(false);
+            toast({ title: "YouTube upload failed", description: updated.youtubeUrl.replace("error:", ""), variant: "destructive" });
+          } else if (Date.now() - pollStart > 10 * 60 * 1000) {
+            clearInterval(poll);
+            setIsUploading(false);
+            toast({ title: "Upload timed out", description: "Check YouTube Studio to see if it appeared.", variant: "destructive" });
+          }
+        } catch {}
+      }, 5000);
     } catch (err: any) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally {
       setIsUploading(false);
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     }
   };
 
@@ -444,6 +469,12 @@ export default function VideoDetail() {
                   >
                     <Youtube className="w-4 h-4 mr-2" /> Connect YouTube Channel
                   </Button>
+                  <button
+                    onClick={() => refetchYt()}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                  >
+                    Already connected? Click to refresh ↻
+                  </button>
                 </div>
               )}
             </div>

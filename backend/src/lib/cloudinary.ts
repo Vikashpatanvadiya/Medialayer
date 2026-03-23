@@ -9,15 +9,25 @@ cloudinary.config({
 export async function uploadToCloudinary(filePath: string, filename: string): Promise<string> {
   const result = await cloudinary.uploader.upload(filePath, {
     resource_type: "video",
-    public_id: filename,
+    public_id: filename.replace(/\.[^/.]+$/, ""), // strip extension
     folder: "medialayer",
     overwrite: true,
   });
   return result.secure_url;
 }
 
-export async function deleteFromCloudinary(publicId: string): Promise<void> {
-  await cloudinary.uploader.destroy(`medialayer/${publicId}`, { resource_type: "video" });
+export function getSignedUrl(filename: string): string {
+  const publicId = `medialayer/${filename.replace(/\.[^/.]+$/, "")}`;
+  return cloudinary.url(publicId, {
+    resource_type: "video",
+    sign_url: true,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+  });
+}
+
+export async function deleteFromCloudinary(filename: string): Promise<void> {
+  const publicId = `medialayer/${filename.replace(/\.[^/.]+$/, "")}`;
+  await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
 }
 
 export async function downloadFromCloudinary(url: string, destPath: string): Promise<void> {
@@ -26,6 +36,10 @@ export async function downloadFromCloudinary(url: string, destPath: string): Pro
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(destPath);
     https.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        reject(new Error(`Cloudinary returned ${res.statusCode}`));
+        return;
+      }
       res.pipe(file);
       file.on("finish", () => { file.close(); resolve(); });
     }).on("error", (err) => {

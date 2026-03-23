@@ -35,36 +35,25 @@ router.get("/:videoId", requireAuth, async (req, res) => {
 
   const signedUrl = getSignedUrl(video.storedFilename);
 
-  // Forward range header for video seeking support
   const headers: Record<string, string> = {};
-  if (req.headers.range) {
-    headers["Range"] = req.headers.range;
-  }
+  if (req.headers.range) headers["Range"] = req.headers.range;
 
   const cloudinaryReq = https.get(signedUrl, { headers }, (stream) => {
     const status = stream.statusCode || 200;
-    const responseHeaders: Record<string, string | string[]> = {
+    const responseHeaders: Record<string, string> = {
       "Content-Type": stream.headers["content-type"] || "video/mp4",
       "Accept-Ranges": "bytes",
       "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": "*",
     };
-
-    if (stream.headers["content-length"]) {
-      responseHeaders["Content-Length"] = stream.headers["content-length"];
-    }
-    if (stream.headers["content-range"]) {
-      responseHeaders["Content-Range"] = stream.headers["content-range"];
-    }
+    if (stream.headers["content-length"]) responseHeaders["Content-Length"] = stream.headers["content-length"] as string;
+    if (stream.headers["content-range"]) responseHeaders["Content-Range"] = stream.headers["content-range"] as string;
 
     res.writeHead(status, responseHeaders);
     stream.pipe(res);
   });
 
   cloudinaryReq.on("error", (err) => {
-    if (!res.headersSent) {
-      res.status(500).json({ error: `Stream failed: ${err.message}` });
-    }
+    if (!res.headersSent) res.status(500).json({ error: `Stream failed: ${err.message}` });
   });
 });
 

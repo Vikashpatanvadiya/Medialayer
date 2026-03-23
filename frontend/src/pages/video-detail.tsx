@@ -437,22 +437,20 @@ export default function VideoDetail() {
                   <Loader2 className="w-4 h-4 animate-spin" /> Uploading to YouTube…
                 </div>
               ) : video.status === "uploaded" ? (
-                // Uploaded status but no youtubeUrl yet — still processing or failed
+                // status=uploaded but youtubeUrl missing or errored — video is on YT, just no link stored
                 <div className="space-y-3">
-                  {video.youtubeUrl?.startsWith("error:") ? (
-                    <p className="text-sm text-destructive">Upload failed: {video.youtubeUrl.replace("error:", "")}</p>
-                  ) : (
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Processing…
-                    </div>
-                  )}
-                  <Button
-                    onClick={uploadToYouTube}
-                    disabled={isUploading}
-                    className="w-full rounded-xl bg-red-500 hover:bg-red-600 text-white border-none"
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span className="font-medium text-sm">Uploaded to YouTube</span>
+                  </div>
+                  <a
+                    href="https://studio.youtube.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 w-full justify-center px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors"
                   >
-                    <Youtube className="w-4 h-4 mr-2" /> Retry Upload
-                  </Button>
+                    <ExternalLink className="w-4 h-4" /> Open YouTube Studio
+                  </a>
                 </div>
               ) : ytLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">

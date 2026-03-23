@@ -15,9 +15,6 @@ router.use((req, _res, next) => {
   next();
 });
 
-const router = Router();
-
-// Proxy video stream through backend so Cloudinary URL is never exposed
 router.get("/:videoId", requireAuth, async (req, res) => {
   const { videoId } = req.params;
   const user = req.user!;
@@ -26,7 +23,6 @@ router.get("/:videoId", requireAuth, async (req, res) => {
 
   if (!video) { res.status(404).json({ error: "Video not found" }); return; }
 
-  // Only creator or editor of this video can stream it
   if (video.creatorId !== user.userId && video.editorId !== user.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
@@ -39,16 +35,36 @@ router.get("/:videoId", requireAuth, async (req, res) => {
 
   const signedUrl = getSignedUrl(video.storedFilename);
 
-  // Proxy the stream
-  https.get(signedUrl, (stream) => {
-    res.setHeader("Content-Type", "video/mp4");
-    res.setHeader("Cache-Control", "no-store");
+  // Forward range header for video seeking support
+  const headers: Record<string, string> = {};
+  if (req.headers.range) {
+    headers["Range"] = req.headers.range;
+  }
+
+  const cloudinaryReq = https.get(signedUrl, { headers }, (stream) => {
+    const status = stream.statusCode || 200;
+    const responseHeaders: Record<string, string | string[]> = {
+      "Content-Type": stream.headers["content-type"] || "video/mp4",
+      "Accept-Ranges": "bytes",
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*",
+    };
+
     if (stream.headers["content-length"]) {
-      res.setHeader("Content-Length", stream.headers["content-length"]);
+      responseHeaders["Content-Length"] = stream.headers["content-length"];
     }
+    if (stream.headers["content-range"]) {
+      responseHeaders["Content-Range"] = stream.headers["content-range"];
+    }
+
+    res.writeHead(status, responseHeaders);
     stream.pipe(res);
-  }).on("error", (err) => {
-    res.status(500).json({ error: `Stream failed: ${err.message}` });
+  });
+
+  cloudinaryReq.on("error", (err) => {
+    if (!res.headersSent) {
+      res.status(500).json({ error: `Stream failed: ${err.message}` });
+    }
   });
 });
 

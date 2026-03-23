@@ -7,6 +7,7 @@ import notificationsRouter from "./notifications.js";
 import youtubeRouter from "./youtube.js";
 import uploadRouter from "./upload.js";
 import logsRouter from "./logs.js";
+import streamRouter from "./stream.js";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/notifications", notificationsRouter);
 router.use("/youtube", youtubeRouter);
 router.use("/upload", uploadRouter);
 router.use("/logs", logsRouter);
+router.use("/stream", streamRouter);
 
 export default router;

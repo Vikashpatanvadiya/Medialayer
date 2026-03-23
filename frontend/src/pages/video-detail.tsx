@@ -181,6 +181,10 @@ export default function VideoDetail() {
   })();
 
   const isServerFile = video.videoUrl.startsWith("/api/stream/") || video.videoUrl.includes("cloudinary.com");
+  const token = localStorage.getItem("layer_token");
+  const videoSrc = video.videoUrl.includes("cloudinary.com")
+    ? `${import.meta.env.VITE_API_URL || ""}/api/stream/${video.id}?token=${token}`
+    : video.videoUrl;
   const backPath = `/dashboard/${user?.role}`;
 
   return (
@@ -254,10 +258,11 @@ export default function VideoDetail() {
               <iframe src={embedUrl} className="w-full h-full" allowFullScreen title="Video Player" />
             ) : isServerFile ? (
               <video
-                src={video.videoUrl}
+                src={videoSrc}
                 controls
                 className="w-full h-full"
                 preload="metadata"
+                controlsList="nodownload"
               >
                 Your browser does not support the video tag.
               </video>

@@ -36,14 +36,36 @@ export async function deleteFromCloudinary(filename: string): Promise<void> {
   await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
 }
 
-export async function downloadFromCloudinary(url: string, destPath: string): Promise<void> {
+export async function downloadFromCloudinary(filenameOrUrl: string, destPath: string): Promise<void> {
+  // If it looks like a full URL, use it directly; otherwise derive from storedFilename
+  let downloadUrl: string;
+  if (filenameOrUrl.startsWith("http")) {
+    downloadUrl = filenameOrUrl;
+  } else {
+    // Build a plain (unsigned) URL — Cloudinary serves public videos without signing
+    const publicId = `medialayer/${filenameOrUrl.replace(/\.[^/.]+$/, "")}`;
+    downloadUrl = cloudinary.url(publicId, {
+      resource_type: "video",
+      secure: true,
+    });
+  }
+
   const https = await import("https");
+  const http = await import("http");
   const fs = await import("fs");
-  return new Promise((resolve, reject) => {
+
+  const download = (url: string): Promise<void> => new Promise((resolve, reject) => {
     const file = fs.createWriteStream(destPath);
-    https.get(url, (res) => {
+    const protocol = url.startsWith("https") ? https : http;
+    protocol.get(url, (res) => {
+      // Follow redirects
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        file.close();
+        fs.unlink(destPath, () => {});
+        return download(res.headers.location!).then(resolve).catch(reject);
+      }
       if (res.statusCode !== 200) {
-        reject(new Error(`Cloudinary returned ${res.statusCode}`));
+        reject(new Error(`Cloudinary download returned ${res.statusCode} for ${url}`));
         return;
       }
       res.pipe(file);
@@ -53,6 +75,8 @@ export async function downloadFromCloudinary(url: string, destPath: string): Pro
       reject(err);
     });
   });
+
+  return download(downloadUrl);
 }
 
 export default cloudinary;

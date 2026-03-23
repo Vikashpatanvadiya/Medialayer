@@ -98,26 +98,34 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
   }
 
   // Respond immediately — upload runs in background
+  // Reset youtubeUrl so polling knows it's in progress
+  await db.update(videosTable)
+    .set({ youtubeUrl: null, updatedAt: new Date() })
+    .where(eq(videosTable.id, videoId));
+
   res.json({ success: true, status: "uploading", message: "YouTube upload started. Check back in a moment." });
+
+  // Capture values needed in background (don't close over mutable request state)
+  const videoId_ = videoId;
+  const storedFilename_ = video.storedFilename!;
+  const videoUrl_ = video.videoUrl;
+  const userTokens = user.youtubeTokens!;
 
   // Background upload (don't await)
   (async () => {
     const uploadDir = path.join(process.cwd(), "uploads");
-    const filePath = path.join(uploadDir, video.storedFilename!);
+    const filePath = path.join(uploadDir, storedFilename_);
 
     try {
-      // Download from Cloudinary if not cached locally
+      // Download from Cloudinary using storedFilename (most reliable)
       if (!fs.existsSync(filePath)) {
-        if (!video.videoUrl?.includes("cloudinary.com")) {
-          console.error("YT upload: no cloudinary URL for", videoId);
-          return;
-        }
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        await downloadFromCloudinary(video.videoUrl, filePath);
+        // Use storedFilename to derive Cloudinary URL — more reliable than stored videoUrl
+        await downloadFromCloudinary(storedFilename_, filePath);
       }
 
       const result = await uploadVideoToYouTube(
-        user.youtubeTokens!,
+        userTokens,
         filePath,
         video.title,
         video.description,
@@ -126,7 +134,7 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
 
       await db.update(videosTable)
         .set({ status: "uploaded", youtubeVideoId: result.youtubeVideoId, youtubeUrl: result.youtubeUrl, updatedAt: new Date() })
-        .where(eq(videosTable.id, videoId));
+        .where(eq(videosTable.id, videoId_));
 
       await db.insert(notificationsTable).values({
         userId: video.editorId,
@@ -146,10 +154,9 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
       console.log("YT upload complete:", result.youtubeUrl);
     } catch (err: any) {
       console.error("YT upload failed:", err?.message || err);
-      // Mark as failed so frontend can show error on next poll
       await db.update(videosTable)
         .set({ youtubeUrl: `error:${err?.message || "upload failed"}`, updatedAt: new Date() })
-        .where(eq(videosTable.id, videoId))
+        .where(eq(videosTable.id, videoId_))
         .catch(() => {});
     }
   })();

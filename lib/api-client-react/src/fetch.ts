@@ -1,5 +1,7 @@
+const BASE_URL = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) || "";
+
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, options);
+  const res = await fetch(`${BASE_URL}${url}`, options);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err: any = new Error(data?.error || res.statusText);

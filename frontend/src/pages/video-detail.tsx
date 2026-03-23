@@ -417,7 +417,7 @@ export default function VideoDetail() {
                 <Youtube className="w-5 h-5 text-red-500" /> YouTube Upload
               </h3>
 
-              {video.status === "uploaded" && video.youtubeUrl ? (
+              {video.status === "uploaded" && video.youtubeUrl && !video.youtubeUrl.startsWith("error:") ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-emerald-600">
                     <CheckCircle2 className="w-5 h-5" />
@@ -427,10 +427,32 @@ export default function VideoDetail() {
                     href={video.youtubeUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    className="inline-flex items-center gap-2 w-full justify-center px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" /> View on YouTube
                   </a>
+                </div>
+              ) : video.status === "uploaded" && isUploading ? (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Uploading to YouTube…
+                </div>
+              ) : video.status === "uploaded" ? (
+                // Uploaded status but no youtubeUrl yet — still processing or failed
+                <div className="space-y-3">
+                  {video.youtubeUrl?.startsWith("error:") ? (
+                    <p className="text-sm text-destructive">Upload failed: {video.youtubeUrl.replace("error:", "")}</p>
+                  ) : (
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Processing…
+                    </div>
+                  )}
+                  <Button
+                    onClick={uploadToYouTube}
+                    disabled={isUploading}
+                    className="w-full rounded-xl bg-red-500 hover:bg-red-600 text-white border-none"
+                  >
+                    <Youtube className="w-4 h-4 mr-2" /> Retry Upload
+                  </Button>
                 </div>
               ) : ytLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">

@@ -59,7 +59,7 @@ export async function uploadVideoToYouTube(
         part: ["snippet", "status"],
         requestBody: {
           snippet: { title, description, tags, categoryId: "22" },
-          status: { privacyStatus: "private" },
+          status: { privacyStatus: "public" },
         },
         media: { body: fs.createReadStream(filePath) },
       });

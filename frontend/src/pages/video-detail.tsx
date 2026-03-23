@@ -474,7 +474,7 @@ export default function VideoDetail() {
                     )}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    Video will be uploaded as private. You can change visibility in YouTube Studio.
+                    Video will be uploaded as public on YouTube.
                   </p>
                 </div>
               ) : (

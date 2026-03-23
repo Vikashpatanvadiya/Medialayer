@@ -20,6 +20,7 @@ export function getSignedUrl(filename: string): string {
   const publicId = `medialayer/${filename.replace(/\.[^/.]+$/, "")}`;
   return cloudinary.url(publicId, {
     resource_type: "video",
+    secure: true,
     sign_url: true,
     expires_at: Math.floor(Date.now() / 1000) + 3600,
   });

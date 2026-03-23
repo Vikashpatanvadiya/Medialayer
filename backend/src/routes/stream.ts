@@ -6,7 +6,7 @@ import { getSignedUrl } from "../lib/cloudinary.js";
 
 const router: IRouter = Router();
 
-// Allow token via query param for video streaming (browser video tag can't set headers)
+// Allow token via query param (browser video tag can't set headers)
 router.use((req, _res, next) => {
   if (req.query.token && !req.headers.authorization) {
     req.headers.authorization = `Bearer ${req.query.token}`;
@@ -14,7 +14,9 @@ router.use((req, _res, next) => {
   next();
 });
 
-router.get("/:videoId", requireAuth, async (req, res) => {
+// GET /api/stream/:videoId/url — returns a short-lived signed URL as JSON
+// The frontend uses this to set the <video src> directly, avoiding CORS issues
+router.get("/:videoId/url", requireAuth, async (req, res) => {
   const { videoId } = req.params as { videoId: string };
   const user = req.user!;
 
@@ -32,11 +34,9 @@ router.get("/:videoId", requireAuth, async (req, res) => {
     return;
   }
 
-  // Redirect to a short-lived signed Cloudinary URL (1 hour expiry).
-  // This avoids piping issues and lets the browser stream directly from Cloudinary.
-  // The signed URL is not guessable and expires, so security is maintained.
-  const signedUrl = getSignedUrl(video.storedFilename);
-  res.redirect(302, signedUrl);
+  const url = getSignedUrl(video.storedFilename);
+  // Return as JSON — frontend sets this as <video src>
+  res.json({ url });
 });
 
 export default router;

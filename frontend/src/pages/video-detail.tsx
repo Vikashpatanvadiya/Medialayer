@@ -55,6 +55,8 @@ export default function VideoDetail() {
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isRollingBack, setIsRollingBack] = useState(false);
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [videoSrcLoading, setVideoSrcLoading] = useState(false);
 
   const isCreator = user?.role === "creator";
   const { status: ytStatus, loading: ytLoading, refetch: refetchYt } = useYouTubeStatus(isCreator);
@@ -62,6 +64,21 @@ export default function VideoDetail() {
   const { data: video, isLoading, error } = useGetVideo(id, {
     query: { enabled: !!id && !!user },
   });
+
+  // Fetch a short-lived signed URL from the backend once we know the video has a file
+  useEffect(() => {
+    if (!video?.hasFile || !id) return;
+    const token = localStorage.getItem("layer_token");
+    if (!token) return;
+    setVideoSrcLoading(true);
+    fetch(apiUrl(`/api/stream/${id}/url?token=${token}`), {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => setVideoSrc(data.url))
+      .catch(() => setVideoSrc(null))
+      .finally(() => setVideoSrcLoading(false));
+  }, [video?.id, video?.hasFile]);
 
   const approveMutation = useApproveVideo({
     mutation: {
@@ -175,16 +192,12 @@ export default function VideoDetail() {
   }
 
   const embedUrl = (() => {
-    const ytMatch = video.videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/);
+    const ytMatch = video.youtubeUrl?.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/);
     if (ytMatch?.[1]) return `https://www.youtube.com/embed/${ytMatch[1]}`;
     return null;
   })();
 
-  const isServerFile = video.videoUrl.startsWith("/api/stream/") || video.videoUrl.includes("cloudinary.com");
-  const token = localStorage.getItem("layer_token");
-  const videoSrc = video.videoUrl.includes("cloudinary.com")
-    ? `${import.meta.env.VITE_API_URL || ""}/api/stream/${video.id}?token=${token}`
-    : video.videoUrl;
+  // videoSrc is fetched via useEffect above — a short-lived signed Cloudinary URL
   const backPath = `/dashboard/${user?.role}`;
 
   return (
@@ -256,8 +269,13 @@ export default function VideoDetail() {
           <div className="bg-black rounded-3xl overflow-hidden shadow-2xl aspect-video border border-border/50">
             {embedUrl ? (
               <iframe src={embedUrl} className="w-full h-full" allowFullScreen title="Video Player" />
-            ) : isServerFile ? (
+            ) : videoSrcLoading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              </div>
+            ) : videoSrc ? (
               <video
+                key={videoSrc}
                 src={videoSrc}
                 controls
                 className="w-full h-full"
@@ -267,23 +285,8 @@ export default function VideoDetail() {
                 Your browser does not support the video tag.
               </video>
             ) : (
-              <div className="w-full h-full relative flex flex-col items-center justify-center">
-                <img
-                  src={getThumbnailUrl(video.thumbnailUrl, video.videoUrl)}
-                  alt="Thumbnail"
-                  className="absolute inset-0 w-full h-full object-cover opacity-40"
-                />
-                <div className="relative z-10 text-center">
-                  <a
-                    href={video.videoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/90 text-white shadow-xl hover:scale-110 transition-transform mb-4"
-                  >
-                    <Play className="w-8 h-8 ml-1 fill-white" />
-                  </a>
-                  <p className="text-white font-medium">Click to open external link</p>
-                </div>
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                No video available
               </div>
             )}
           </div>

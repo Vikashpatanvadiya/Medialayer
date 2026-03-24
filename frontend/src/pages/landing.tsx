@@ -11,7 +11,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer" className="w-8 h-8 rounded-lg shadow-sm" />
+            <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer" className="w-10 h-10 rounded-lg shadow-sm object-contain bg-white p-0.5" />
             <span className="text-xl font-display font-bold tracking-tight">MediaLayer</span>
           </div>
           <div className="flex items-center gap-4">

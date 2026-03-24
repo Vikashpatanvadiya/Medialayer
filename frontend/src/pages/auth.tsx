@@ -49,7 +49,7 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
       {/* Left side - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24 xl:px-32 relative z-10">
         <Link href="/" className="absolute top-8 left-8 sm:left-16 lg:left-24 flex items-center gap-2 group">
-           <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer" className="w-6 h-6 rounded" />
+           <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer" className="w-8 h-8 rounded-lg object-contain bg-white p-0.5" />
            <span className="font-display font-bold text-lg group-hover:text-primary transition-colors">MediaLayer</span>
         </Link>
 

@@ -58,7 +58,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-sidebar border-r border-sidebar-border h-full relative z-20">
         <div className="p-6 flex items-center gap-3">
-          <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer Logo" className="w-8 h-8 rounded-lg" />
+          <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer Logo" className="w-10 h-10 rounded-lg object-contain bg-white p-0.5" />
           <span className="text-xl font-display font-bold text-sidebar-foreground tracking-tight">MediaLayer</span>
         </div>
 
@@ -197,7 +197,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           >
              <div className="p-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer Logo" className="w-8 h-8 rounded-lg" />
+                  <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer Logo" className="w-10 h-10 rounded-lg object-contain bg-white p-0.5" />
                   <span className="text-xl font-display font-bold text-sidebar-foreground">MediaLayer</span>
                 </div>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="text-sidebar-foreground/50 hover:text-sidebar-foreground">

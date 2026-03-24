@@ -137,6 +137,7 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
         video.title,
         video.description,
         (video.tags as string[]) || [],
+        video.thumbnailUrl || null,
       );
 
       await db.update(videosTable)

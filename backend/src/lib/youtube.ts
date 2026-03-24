@@ -101,15 +101,18 @@ async function setYouTubeThumbnail(
   const path = await import("path");
 
   // Determine mime type from URL extension
-  const ext = thumbnailUrl.split("?")[0].split(".").pop()?.toLowerCase() || "jpg";
+  const urlPath = thumbnailUrl.split("?")[0];
+  const ext = urlPath.split(".").pop()?.toLowerCase() || "jpg";
   const mimeMap: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp" };
   const mimeType = mimeMap[ext] || "image/jpeg";
 
-  const tmpPath = path.join(os.tmpdir(), `thumb-${videoId}.${ext}`);
+  // Use only videoId for temp filename — never use URL as path
+  const tmpPath = path.join(os.tmpdir(), `thumb-${videoId}.${mimeType === "image/png" ? "png" : "jpg"}`);
 
   // Download thumbnail to temp file (10s timeout)
   await new Promise<void>((resolve, reject) => {
     const dest = fs.createWriteStream(tmpPath);
+    dest.on("error", reject); // catch WriteStream errors before piping
     const protocol = thumbnailUrl.startsWith("https") ? https : http;
     const req = protocol.get(thumbnailUrl, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {

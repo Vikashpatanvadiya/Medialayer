@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from "../lib/auth.js";
 import { getAuthUrl, createOAuth2Client, uploadVideoToYouTube } from "../lib/youtube.js";
 import { sendEmail, emailTemplates } from "../lib/mailer.js";
 import { downloadFromCloudinary } from "../lib/cloudinary.js";
+import { encrypt, decrypt } from "../lib/crypto.js";
 import path from "path";
 import fs from "fs";
 
@@ -37,8 +38,8 @@ router.get("/oauth-callback", async (req, res) => {
       .update(usersTable)
       .set({
         youtubeTokens: {
-          access_token: tokens.access_token!,
-          refresh_token: tokens.refresh_token!,
+          access_token: encrypt(tokens.access_token!),
+          refresh_token: encrypt(tokens.refresh_token!),
           expiry_date: tokens.expiry_date as number,
         },
         youtubeChannelName: channelName,
@@ -109,7 +110,13 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
   const videoId_ = videoId;
   const storedFilename_ = video.storedFilename!;
   const videoUrl_ = video.videoUrl;
-  const userTokens = user.youtubeTokens!;
+  const rawTokens = user.youtubeTokens!;
+  // Decrypt tokens for use — they are stored encrypted in DB
+  const userTokens = {
+    access_token: decrypt(rawTokens.access_token),
+    refresh_token: decrypt(rawTokens.refresh_token),
+    expiry_date: rawTokens.expiry_date,
+  };
 
   // Background upload (don't await)
   (async () => {

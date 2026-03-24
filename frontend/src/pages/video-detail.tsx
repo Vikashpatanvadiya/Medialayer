@@ -5,7 +5,7 @@ import { useGetVideo, useApproveVideo, useRejectVideo } from "@workspace/api-cli
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Check, X, Loader2, ExternalLink, Calendar, User as UserIcon,
-  Tag, Youtube, CheckCircle2, AlertCircle, RotateCcw
+  Tag, Youtube, CheckCircle2, AlertCircle, RotateCcw, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BeautifulBadge } from "@/components/ui/beautiful-badge";
@@ -55,6 +55,7 @@ export default function VideoDetail() {
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isRollingBack, setIsRollingBack] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [videoSrcLoading, setVideoSrcLoading] = useState(false);
 
@@ -214,8 +215,7 @@ export default function VideoDetail() {
     }
   };
 
-  const rollback = async () => {
-    if (!video) return;
+  const rollback = async () => {    if (!video) return;
     setIsRollingBack(true);
     try {
       const token = localStorage.getItem("layer_token");
@@ -232,6 +232,28 @@ export default function VideoDetail() {
       toast({ title: "Rollback failed", description: err.message, variant: "destructive" });
     } finally {
       setIsRollingBack(false);
+    }
+  };
+
+  const deleteVideo = async () => {
+    if (!video) return;
+    if (!window.confirm(`Delete "${video.title}"? This cannot be undone.`)) return;
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("layer_token");
+      const res = await fetch(apiUrl(`/api/videos/${video.id}`), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Delete failed");
+      toast({ title: "Video deleted" });
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      setLocation(backPath);
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -323,6 +345,17 @@ export default function VideoDetail() {
               Resubmit for Review
             </Button>
           )}
+
+          {/* Delete button — available to both roles on any status */}
+          <Button
+            variant="outline"
+            onClick={deleteVideo}
+            disabled={isDeleting}
+            className="rounded-xl border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground px-6"
+          >
+            {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+            Delete
+          </Button>
         </div>
       </div>
 

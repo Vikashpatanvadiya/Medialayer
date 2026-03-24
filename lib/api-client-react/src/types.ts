@@ -13,7 +13,7 @@ export interface Video {
   description: string;
   tags: string[];
   videoUrl: string;
-  storedFilename?: string;
+  hasFile?: boolean;
   thumbnailUrl?: string;
   status: "pending" | "approved" | "rejected" | "uploaded";
   creatorId: string;

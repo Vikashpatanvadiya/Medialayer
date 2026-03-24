@@ -12,6 +12,7 @@ export async function uploadToCloudinary(filePath: string, filename: string): Pr
     public_id: filename.replace(/\.[^/.]+$/, ""), // strip extension
     folder: "medialayer",
     overwrite: true,
+    type: "authenticated", // blocks direct URL access without a valid signature
   });
   return result.secure_url;
 }
@@ -25,6 +26,7 @@ export function getSignedUrl(filename: string): string {
 export function getSignedUrlFromPublicId(publicId: string): string {
   return cloudinary.url(publicId, {
     resource_type: "video",
+    type: "authenticated",
     secure: true,
     sign_url: true,
     expires_at: Math.floor(Date.now() / 1000) + 3600,
@@ -46,7 +48,9 @@ export async function downloadFromCloudinary(filenameOrUrl: string, destPath: st
     const publicId = `medialayer/${filenameOrUrl.replace(/\.[^/.]+$/, "")}`;
     downloadUrl = cloudinary.url(publicId, {
       resource_type: "video",
+      type: "authenticated",
       secure: true,
+      sign_url: true, // authenticated type requires signing even for internal downloads
     });
   }
 

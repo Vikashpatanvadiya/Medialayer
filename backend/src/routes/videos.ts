@@ -206,7 +206,6 @@ router.delete("/:id", requireAuth, async (req, res) => {
   // Editors can only delete their own videos; creators can only delete videos submitted to them
   if (user.role === "editor" && video.editorId !== user.userId) { res.status(403).json({ error: "Forbidden" }); return; }
   if (user.role === "creator" && video.creatorId !== user.userId) { res.status(403).json({ error: "Forbidden" }); return; }
-  if (video.status === "uploaded") { res.status(400).json({ error: "Cannot delete a video that has already been uploaded to YouTube" }); return; }
 
   if (video.storedFilename) {
     await deleteFromCloudinary(video.storedFilename).catch(() => {});

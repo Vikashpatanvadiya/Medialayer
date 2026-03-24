@@ -49,8 +49,28 @@ export async function uploadVideoToYouTube(
   tags: string[],
   thumbnailUrl?: string | null,
   retries = 3,
-): Promise<UploadResult> {
+): Promise<UploadResult & { refreshedTokens?: { access_token: string; refresh_token: string; expiry_date: number } }> {
   const auth = createOAuth2Client(tokens);
+  let refreshedTokens: { access_token: string; refresh_token: string; expiry_date: number } | undefined;
+
+  // Force refresh if token is expired or expires within 5 minutes
+  const expiresIn = tokens.expiry_date - Date.now();
+  if (expiresIn < 5 * 60 * 1000) {
+    try {
+      const { credentials } = await auth.refreshAccessToken();
+      auth.setCredentials(credentials);
+      refreshedTokens = {
+        access_token: credentials.access_token!,
+        refresh_token: credentials.refresh_token || tokens.refresh_token,
+        expiry_date: credentials.expiry_date as number,
+      };
+      console.log("[youtube] Access token refreshed");
+    } catch (refreshErr: any) {
+      console.error("[youtube] Token refresh failed:", refreshErr?.message);
+      throw new Error("Unauthorized — YouTube token expired. Please reconnect YouTube.");
+    }
+  }
+
   const youtube = google.youtube({ version: "v3", auth });
 
   let lastError: Error | null = null;
@@ -77,6 +97,7 @@ export async function uploadVideoToYouTube(
       return {
         youtubeVideoId: videoId,
         youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
+        refreshedTokens,
       };
     } catch (err: any) {
       lastError = err;

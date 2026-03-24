@@ -145,6 +145,19 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
         .set({ status: "uploaded", youtubeVideoId: result.youtubeVideoId, youtubeUrl: result.youtubeUrl, updatedAt: new Date() })
         .where(eq(videosTable.id, videoId_));
 
+      // Save refreshed tokens back to DB if they were updated
+      if (result.refreshedTokens) {
+        const { encrypt } = await import("../lib/crypto.js");
+        await db.update(usersTable).set({
+          youtubeTokens: {
+            access_token: encrypt(result.refreshedTokens.access_token),
+            refresh_token: encrypt(result.refreshedTokens.refresh_token),
+            expiry_date: result.refreshedTokens.expiry_date,
+          }
+        }).where(eq(usersTable.id, video.creatorId));
+        console.log("[yt-upload] Refreshed tokens saved to DB");
+      }
+
       await db.insert(notificationsTable).values({
         userId: video.editorId,
         title: "Video uploaded to YouTube!",

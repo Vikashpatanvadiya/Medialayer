@@ -26,7 +26,12 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.some(o => origin.startsWith(o))) return callback(null, true);
+    // Allow exact match, or any Vercel preview deployment for this project
+    const isAllowed =
+      allowedOrigins.some(o => origin === o) ||
+      /^https:\/\/layer-frontend-[a-z0-9-]+-vpatanvadiya2022[a-z0-9-]*\.vercel\.app$/.test(origin) ||
+      /^https:\/\/medialayer[a-z0-9-]*\.vercel\.app$/.test(origin);
+    if (isAllowed) return callback(null, true);
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,

@@ -39,18 +39,17 @@ export async function deleteFromCloudinary(filename: string): Promise<void> {
 }
 
 export async function downloadFromCloudinary(filenameOrUrl: string, destPath: string): Promise<void> {
-  // If it looks like a full URL, use it directly; otherwise derive from storedFilename
   let downloadUrl: string;
   if (filenameOrUrl.startsWith("http")) {
     downloadUrl = filenameOrUrl;
   } else {
-    // Build a plain (unsigned) URL — Cloudinary serves public videos without signing
     const publicId = `medialayer/${filenameOrUrl.replace(/\.[^/.]+$/, "")}`;
     downloadUrl = cloudinary.url(publicId, {
       resource_type: "video",
       type: "authenticated",
       secure: true,
-      sign_url: true, // authenticated type requires signing even for internal downloads
+      sign_url: true,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
     });
   }
 
@@ -61,22 +60,35 @@ export async function downloadFromCloudinary(filenameOrUrl: string, destPath: st
   const download = (url: string): Promise<void> => new Promise((resolve, reject) => {
     const file = fs.createWriteStream(destPath);
     const protocol = url.startsWith("https") ? https : http;
-    protocol.get(url, (res) => {
-      // Follow redirects
+
+    const req = protocol.get(url, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         file.close();
         fs.unlink(destPath, () => {});
         return download(res.headers.location!).then(resolve).catch(reject);
       }
       if (res.statusCode !== 200) {
-        reject(new Error(`Cloudinary download returned ${res.statusCode} for ${url}`));
+        reject(new Error(`Cloudinary download returned ${res.statusCode}`));
         return;
       }
+      const total = parseInt(res.headers["content-length"] || "0", 10);
+      let received = 0;
+      res.on("data", (chunk) => {
+        received += chunk.length;
+        if (total) process.stdout.write(`\r[cloudinary] Download: ${Math.round(received / total * 100)}%`);
+      });
       res.pipe(file);
-      file.on("finish", () => { file.close(); resolve(); });
+      file.on("finish", () => { file.close(); console.log("\n[cloudinary] Download complete"); resolve(); });
     }).on("error", (err) => {
       fs.unlink(destPath, () => {});
       reject(err);
+    });
+
+    // 10 minute timeout for large video files
+    req.setTimeout(10 * 60 * 1000, () => {
+      req.destroy();
+      fs.unlink(destPath, () => {});
+      reject(new Error("Cloudinary download timed out after 10 minutes"));
     });
   });
 

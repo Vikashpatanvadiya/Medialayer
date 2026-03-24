@@ -127,8 +127,9 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
       // Download from Cloudinary using storedFilename (most reliable)
       if (!fs.existsSync(filePath)) {
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        // Use storedFilename to derive Cloudinary URL — more reliable than stored videoUrl
+        console.log(`[yt-upload] Downloading from Cloudinary: ${storedFilename_}`);
         await downloadFromCloudinary(storedFilename_, filePath);
+        console.log(`[yt-upload] Download complete, starting YouTube upload`);
       }
 
       const result = await uploadVideoToYouTube(

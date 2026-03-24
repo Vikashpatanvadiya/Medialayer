@@ -68,14 +68,10 @@ export async function uploadVideoToYouTube(
 
       const videoId = res.data.id!;
 
-      // Set custom thumbnail if provided — requires downloading the image first
+      // Set thumbnail in background — don't block the upload result
       if (thumbnailUrl) {
-        try {
-          await setYouTubeThumbnail(youtube, videoId, thumbnailUrl);
-        } catch (thumbErr: any) {
-          // Non-fatal — video is uploaded, thumbnail just won't be set
-          console.warn("[youtube] Thumbnail set failed:", thumbErr?.message);
-        }
+        setYouTubeThumbnail(youtube, videoId, thumbnailUrl)
+          .catch((e: any) => console.warn("[youtube] Thumbnail set failed:", e?.message));
       }
 
       return {
@@ -111,15 +107,14 @@ async function setYouTubeThumbnail(
 
   const tmpPath = path.join(os.tmpdir(), `thumb-${videoId}.${ext}`);
 
-  // Download thumbnail to temp file
+  // Download thumbnail to temp file (10s timeout)
   await new Promise<void>((resolve, reject) => {
     const dest = fs.createWriteStream(tmpPath);
     const protocol = thumbnailUrl.startsWith("https") ? https : http;
-    protocol.get(thumbnailUrl, (res) => {
+    const req = protocol.get(thumbnailUrl, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         dest.close();
         fs.unlink(tmpPath, () => {});
-        // Follow redirect
         setYouTubeThumbnail(youtube, videoId, res.headers.location!).then(resolve).catch(reject);
         return;
       }
@@ -127,6 +122,7 @@ async function setYouTubeThumbnail(
       res.pipe(dest);
       dest.on("finish", () => { dest.close(); resolve(); });
     }).on("error", reject);
+    req.setTimeout(10000, () => { req.destroy(); reject(new Error("Thumbnail download timed out")); });
   });
 
   // Upload to YouTube thumbnails API

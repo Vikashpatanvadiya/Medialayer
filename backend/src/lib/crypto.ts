@@ -16,9 +16,18 @@ export function encrypt(plaintext: string): string {
 }
 
 export function decrypt(ciphertext: string): string {
-  const [ivHex, encHex] = ciphertext.split(":");
-  if (!ivHex || !encHex) throw new Error("Invalid encrypted format");
-  const decipher = createDecipheriv("aes-256-cbc", getKey(), Buffer.from(ivHex, "hex"));
-  const decrypted = Buffer.concat([decipher.update(Buffer.from(encHex, "hex")), decipher.final()]);
-  return decrypted.toString("utf8");
+  const parts = ciphertext.split(":");
+  // If it doesn't look like iv:ciphertext hex format, it's a legacy plain text token
+  if (parts.length !== 2 || parts[0].length !== 32) {
+    return ciphertext; // return as-is (plain text legacy token)
+  }
+  const [ivHex, encHex] = parts;
+  try {
+    const decipher = createDecipheriv("aes-256-cbc", getKey(), Buffer.from(ivHex, "hex"));
+    const decrypted = Buffer.concat([decipher.update(Buffer.from(encHex, "hex")), decipher.final()]);
+    return decrypted.toString("utf8");
+  } catch {
+    // Decryption failed — treat as plain text legacy token
+    return ciphertext;
+  }
 }

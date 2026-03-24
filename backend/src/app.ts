@@ -7,6 +7,9 @@ import router from "./routes/index.js";
 
 const app: Express = express();
 
+// Trust Render's proxy (fixes X-Forwarded-For rate limit warning)
+app.set("trust proxy", 1);
+
 // Security headers
 app.use(helmet());
 

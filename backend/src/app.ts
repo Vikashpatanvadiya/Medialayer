@@ -41,10 +41,10 @@ app.use(rateLimit({
   message: { error: "Too many requests, please try again later." },
 }));
 
-// Stricter limit on auth routes — 15 req / 15 min per IP
+// Stricter limit on auth routes — 50 req / 15 min per IP
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many auth attempts, please try again later." },

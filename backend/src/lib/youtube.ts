@@ -54,6 +54,10 @@ export async function uploadVideoToYouTube(
   let refreshedTokens: { access_token: string; refresh_token: string; expiry_date: number } | undefined;
 
   // Always try to refresh — access tokens expire after 1hr and expiry_date may be unreliable
+  if (!tokens.refresh_token || tokens.refresh_token === "__missing__") {
+    throw new Error("No refresh token — please disconnect and reconnect YouTube to re-authorize.");
+  }
+
   try {
     const { credentials } = await auth.refreshAccessToken();
     auth.setCredentials(credentials);

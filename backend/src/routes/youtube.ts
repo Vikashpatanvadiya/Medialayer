@@ -39,7 +39,8 @@ router.get("/oauth-callback", async (req, res) => {
       .set({
         youtubeTokens: {
           access_token: encrypt(tokens.access_token!),
-          refresh_token: encrypt(tokens.refresh_token!),
+          // Google only returns refresh_token on first auth — keep existing if not returned
+          refresh_token: tokens.refresh_token ? encrypt(tokens.refresh_token) : "__missing__",
           expiry_date: tokens.expiry_date as number,
         },
         youtubeChannelName: channelName,

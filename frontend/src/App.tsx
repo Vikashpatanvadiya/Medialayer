@@ -20,6 +20,7 @@ import VideoDetail from "./pages/video-detail";
 import NotFound from "@/pages/not-found";
 import PrivacyPolicy from "@/pages/privacy";
 import TermsOfService from "@/pages/terms";
+import GoogleAuthSuccess from "@/pages/auth-google-success";
 
 // Initialize the global fetch interceptor once
 setupFetchInterceptor();
@@ -100,6 +101,10 @@ function Router() {
         <ProtectedRoute>
           <VideoDetail />
         </ProtectedRoute>
+      </Route>
+
+      <Route path="/auth/google/success">
+        <GoogleAuthSuccess />
       </Route>
 
       <Route path="/privacy">

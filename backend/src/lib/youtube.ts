@@ -29,7 +29,6 @@ export function getAuthUrl(stateUserId: string): string {
     prompt: "consent",
     scope: [
       "https://www.googleapis.com/auth/youtube.upload",
-      "https://www.googleapis.com/auth/youtube",
       "https://www.googleapis.com/auth/youtube.readonly",
     ],
     state: stateUserId,
@@ -102,7 +101,8 @@ export async function uploadVideoToYouTube(
       };
     } catch (err: any) {
       lastError = err;
-      console.error(`[youtube] Upload attempt ${attempt}/${retries} failed:`, err?.message);
+      const detail = err?.response?.data || err?.message || err;
+      console.error(`[youtube] Upload attempt ${attempt}/${retries} failed:`, JSON.stringify(detail));
       if (attempt < retries) {
         await new Promise((r) => setTimeout(r, 2000 * attempt));
       }

@@ -61,7 +61,6 @@ export function useAuth() {
       }
     }
   });
-
   const logoutMutation = useLogout({
     mutation: {
       onSettled: () => {

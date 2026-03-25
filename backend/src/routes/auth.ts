@@ -50,16 +50,14 @@ router.post("/register", async (req, res) => {
     })
     .returning();
 
-  // Send verification email
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  // Send verification email (non-blocking — don't await)
   const verifyUrl = `${process.env.BACKEND_URL || "http://localhost:3000"}/api/auth/verify-email?token=${verificationToken}`;
-  await sendEmail(email, "Verify your MediaLayer email", `
+  sendEmail(email, "Verify your MediaLayer email", `
     <p>Hi ${name},</p>
     <p>Welcome to MediaLayer! Please verify your email address to activate your account.</p>
     <p><a href="${verifyUrl}" style="background:#6366f1;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Verify Email</a></p>
     <p>Or copy this link: ${verifyUrl}</p>
-    <p>This link expires in 24 hours.</p>
-  `);
+  `).catch(() => {});
 
   res.status(201).json({ message: "Account created. Please check your email to verify your account." });
 });

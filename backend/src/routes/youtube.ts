@@ -78,6 +78,13 @@ router.get("/status", requireAuth, requireRole("creator"), async (req, res) => {
   });
 });
 
+router.post("/disconnect", requireAuth, requireRole("creator"), async (req, res) => {
+  await db.update(usersTable)
+    .set({ youtubeTokens: null, youtubeChannelName: null })
+    .where(eq(usersTable.id, req.user!.userId));
+  res.json({ success: true });
+});
+
 router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req, res) => {
   const { videoId } = req.params as { videoId: string };
 

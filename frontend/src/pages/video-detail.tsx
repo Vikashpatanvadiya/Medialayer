@@ -491,9 +491,22 @@ export default function VideoDetail() {
                 </div>
               ) : ytStatus?.connected ? (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="text-muted-foreground">Connected as <span className="font-medium text-foreground">{ytStatus.channelName}</span></span>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span className="text-muted-foreground">Connected as <span className="font-medium text-foreground">{ytStatus.channelName}</span></span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const token = localStorage.getItem("layer_token");
+                        await fetch(apiUrl("/api/youtube/disconnect"), { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+                        await refetchYt();
+                        toast({ title: "YouTube disconnected" });
+                      }}
+                      className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      Disconnect
+                    </button>
                   </div>
                   <Button
                     onClick={uploadToYouTube}

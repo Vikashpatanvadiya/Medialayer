@@ -443,13 +443,33 @@ export default function VideoDetail() {
             </div>
           )}
 
+          {/* YouTube Account Status — always visible to creators */}
+          {isCreator && ytStatus?.connected && (
+            <div className="bg-card border border-border/50 rounded-3xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Youtube className="w-4 h-4 text-red-500" />
+                <span className="text-muted-foreground">Connected as <span className="font-medium text-foreground">{ytStatus.channelName}</span></span>
+              </div>
+              <button
+                onClick={async () => {
+                  const token = localStorage.getItem("layer_token");
+                  await fetch(apiUrl("/api/youtube/disconnect"), { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+                  await refetchYt();
+                  toast({ title: "YouTube disconnected" });
+                }}
+                className="text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1 rounded-lg hover:bg-destructive/10"
+              >
+                Disconnect
+              </button>
+            </div>
+          )}
+
           {/* YouTube Upload Section (creators only) */}
           {isCreator && (video.status === "approved" || video.status === "uploaded") && (
             <div className="bg-card border border-border/50 rounded-3xl p-6 space-y-4">
               <h3 className="font-bold flex items-center gap-2">
                 <Youtube className="w-5 h-5 text-red-500" /> YouTube Upload
               </h3>
-
               {video.status === "uploaded" && video.youtubeUrl && !video.youtubeUrl.startsWith("error:") ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-emerald-600">

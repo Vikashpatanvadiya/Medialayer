@@ -130,6 +130,7 @@ export default function LandingPage() {
           <span>© 2026 MediaLayer. All rights reserved.</span>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
             <a href="mailto:medialayer.app@gmail.com" className="hover:text-foreground transition-colors">Contact</a>
           </div>
         </div>

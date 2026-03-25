@@ -19,6 +19,7 @@ import AllVideos from "./pages/creator/all-videos";
 import VideoDetail from "./pages/video-detail";
 import NotFound from "@/pages/not-found";
 import PrivacyPolicy from "@/pages/privacy";
+import TermsOfService from "@/pages/terms";
 
 // Initialize the global fetch interceptor once
 setupFetchInterceptor();
@@ -103,6 +104,10 @@ function Router() {
 
       <Route path="/privacy">
         <PrivacyPolicy />
+      </Route>
+
+      <Route path="/terms">
+        <TermsOfService />
       </Route>
 
       <Route component={NotFound} />

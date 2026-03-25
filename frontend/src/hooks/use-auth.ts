@@ -44,11 +44,13 @@ export function useAuth() {
 
   const registerMutation = useRegister({
     mutation: {
-      onSuccess: (data) => {
-        localStorage.setItem('layer_token', data.token);
-        toast({ title: 'Account created!', description: 'Welcome to Layer.' });
-        queryClient.setQueryData(['/api/auth/me'], data.user);
-        setLocation(data.user.role === 'creator' ? '/dashboard/creator' : '/dashboard/editor');
+      onSuccess: (data: any) => {
+        // New flow: no token returned, just a message to check email
+        toast({
+          title: 'Check your email!',
+          description: 'We sent a verification link to your email. Click it to activate your account.',
+        });
+        setLocation('/login');
       },
       onError: (err: any) => {
         toast({ 

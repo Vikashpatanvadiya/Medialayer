@@ -70,19 +70,19 @@ export default function AllSubmissions() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">My Submissions</h1>
           <p className="text-muted-foreground mt-1">Videos grouped by creator.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="rounded-xl px-6 h-12 font-semibold">
+        <Button onClick={() => setIsModalOpen(true)} className="rounded-xl px-6 h-12 font-semibold shrink-0">
           <Plus className="w-5 h-5 mr-2" /> New Submission
         </Button>
       </div>
 
       {/* Status filter */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {["all", "pending", "approved", "rejected", "uploaded"].map((f) => (
           <button
             key={f}
@@ -102,11 +102,11 @@ export default function AllSubmissions() {
       </div>
 
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : filteredVideos.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto">
+        <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto py-20">
           <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mb-6">
             <VideoIcon className="w-10 h-10 text-muted-foreground opacity-50" />
           </div>
@@ -124,7 +124,6 @@ export default function AllSubmissions() {
         <div className="space-y-10">
           {Object.entries(grouped).map(([creatorId, { creatorName, videos: creatorVideos }]) => (
             <motion.div key={creatorId} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              {/* Creator header */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <User className="w-4 h-4 text-primary" />

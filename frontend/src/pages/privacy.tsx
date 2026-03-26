@@ -10,11 +10,11 @@ export default function PrivacyPolicy() {
         </Link>
 
         <h1 className="text-4xl font-bold mb-2">Privacy Policy</h1>
-        <p className="text-muted-foreground mb-10">Effective Date: March 25, 2026</p>
+        <p className="text-muted-foreground mb-10">Effective Date: March 26, 2026</p>
 
         <div className="space-y-8 text-foreground/80 leading-relaxed">
 
-          <p>MediaLayer ("we", "our", "us") operates the website <strong>https://medialayer.vercel.app</strong> and provides a platform for creators and editors to collaborate on video uploads. We are committed to protecting your privacy and ensuring transparency in how your data is handled.</p>
+          <p>MediaLayer ("we") operates the website <strong>https://medialayer.vercel.app</strong> and provides a platform for creators and editors to collaborate on video uploads. We are committed to protecting your privacy and ensuring transparency in how your data is handled.</p>
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">1. Information We Collect</h2>

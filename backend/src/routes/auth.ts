@@ -111,6 +111,28 @@ router.get("/verify-email", async (req, res) => {
   `);
 });
 
+router.post("/resend-verification", async (req, res) => {
+  const { email } = req.body as { email?: string };
+  if (!email) { res.status(400).json({ error: "Email is required" }); return; }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+  if (!user) { res.status(200).json({ message: "If that email exists, a verification link has been sent." }); return; }
+  if (user.emailVerified) { res.status(200).json({ message: "Email is already verified. You can log in." }); return; }
+
+  const verificationToken = randomBytes(32).toString("hex");
+  await db.update(usersTable).set({ verificationToken }).where(eq(usersTable.id, user.id));
+
+  const verifyUrl = `${process.env.BACKEND_URL || "http://localhost:3000"}/api/auth/verify-email?token=${verificationToken}`;
+  sendEmail(email, "Verify your MediaLayer email", `
+    <p>Hi ${user.name},</p>
+    <p>Here is your new verification link for MediaLayer:</p>
+    <p><a href="${verifyUrl}" style="background:#6366f1;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Verify Email</a></p>
+    <p>Or copy this link: ${verifyUrl}</p>
+  `).catch(() => {});
+
+  res.json({ message: "Verification email resent. Please check your inbox." });
+});
+
 router.post("/login", async (req, res) => {
   const parsed = LoginBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: "Invalid request body" }); return; }

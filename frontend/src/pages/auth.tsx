@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { apiUrl } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -67,9 +68,30 @@ function GoogleRolePicker({ onSelect, onClose }: { onSelect: (role: "creator" | 
 export default function AuthPage({ mode = "login" }: { mode?: "login" | "register" }) {
   const { login, register, isLoggingIn, isRegistering } = useAuth();
   const [showRolePicker, setShowRolePicker] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const { toast } = useToast();
   const params = new URLSearchParams(window.location.search);
   const defaultRole = (params.get("role") === "creator" ? "creator" : "editor") as "creator" | "editor";
   const isLogin = mode === "login";
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setIsResending(true);
+    try {
+      const res = await fetch(apiUrl("/api/auth/resend-verification"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+      const data = await res.json();
+      toast({ title: "Email sent", description: data.message });
+    } catch {
+      toast({ title: "Error", description: "Failed to resend. Please try again.", variant: "destructive" });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -127,7 +149,17 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                onSubmit={loginForm.handleSubmit(d => login(d))}
+                onSubmit={loginForm.handleSubmit(async (d) => {
+                  try {
+                    setUnverifiedEmail(null);
+                    await login(d);
+                  } catch (err: any) {
+                    const msg: string = err?.data?.error || err?.message || "";
+                    if (msg.toLowerCase().includes("verify your email")) {
+                      setUnverifiedEmail(d.email);
+                    }
+                  }
+                })}
                 className="space-y-5"
               >
                 <div className="space-y-1.5">
@@ -143,6 +175,21 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                 <Button type="submit" disabled={isLoggingIn} className="w-full btn-primary-gradient py-3 rounded-xl text-base">
                   {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
                 </Button>
+
+                {unverifiedEmail && (
+                  <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-700 dark:text-yellow-400">
+                    <p className="mb-2">Didn't receive the verification email?</p>
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={isResending}
+                      className="font-semibold underline hover:no-underline disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {isResending && <Loader2 className="w-3 h-3 animate-spin" />}
+                      Resend verification email
+                    </button>
+                  </div>
+                )}
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>

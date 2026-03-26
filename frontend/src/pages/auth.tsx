@@ -79,20 +79,24 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
     if (!unverifiedEmail) return;
     setIsResending(true);
     try {
-      const res = await fetch(apiUrl("/api/auth/resend-verification"), {
+      const url = apiUrl("/api/auth/resend-verification");
+      console.log("[resend] POST", url);
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: unverifiedEmail }),
       });
-      const data = await res.json().catch(() => ({ message: "Email sent if account exists." }));
+      let data: any = {};
+      try { data = await res.json(); } catch { data = {}; }
+      console.log("[resend] status:", res.status, "data:", data);
       if (res.ok) {
-        toast({ title: "Email sent", description: data.message });
+        toast({ title: "Email sent", description: data.message || "Check your inbox." });
       } else {
-        toast({ title: "Error", description: data.error || "Failed to resend. Please try again.", variant: "destructive" });
+        toast({ title: "Error", description: data.error || `Server error (${res.status})`, variant: "destructive" });
       }
     } catch (err) {
-      console.error("[resend-verification] fetch error:", err);
-      toast({ title: "Error", description: "Could not reach the server. Please try again.", variant: "destructive" });
+      console.error("[resend] network error:", err);
+      toast({ title: "Network error", description: "Could not reach the server. Check your connection.", variant: "destructive" });
     } finally {
       setIsResending(false);
     }

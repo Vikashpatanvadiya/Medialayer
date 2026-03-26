@@ -140,7 +140,7 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                   <input type="password" {...loginForm.register("password")} className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground input-ring" placeholder="••••••••" />
                   {loginForm.formState.errors.password && <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>}
                 </div>
-                <Button type="submit" disabled={isLoggingIn} className="w-full btn-primary-gradient py-6 rounded-xl text-base">
+                <Button type="submit" disabled={isLoggingIn} className="w-full btn-primary-gradient py-3 rounded-xl text-base">
                   {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
                 </Button>
 
@@ -194,7 +194,7 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                   </div>
                 </div>
 
-                <Button type="submit" disabled={isRegistering} className="w-full btn-primary-gradient py-6 rounded-xl text-base">
+                <Button type="submit" disabled={isRegistering} className="w-full btn-primary-gradient py-3 rounded-xl text-base">
                   {isRegistering ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Account"}
                 </Button>
 

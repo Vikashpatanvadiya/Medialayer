@@ -1,6 +1,33 @@
 import nodemailer from "nodemailer";
 
-// Resend HTTP API — more reliable than SMTP on Render free tier
+// Brevo (Sendinblue) HTTP API — works on Render free tier (no SMTP port blocking)
+async function sendViaBrevoApi(to: string, subject: string, html: string): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return false;
+
+  const from = { name: "MediaLayer", email: process.env.SMTP_FROM_EMAIL || "noreply@medialayer.app" };
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: from,
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Brevo API error: ${err}`);
+  }
+  return true;
+}
+
+// Resend HTTP API fallback
 async function sendViaResendApi(to: string, subject: string, html: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return false;
@@ -22,37 +49,20 @@ async function sendViaResendApi(to: string, subject: string, html: string): Prom
   return true;
 }
 
-// SMTP fallback (Gmail, etc.)
-function createTransport() {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!host || !user || !pass) return null;
-  return nodemailer.createTransport({
-    host,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: { user, pass },
-  });
-}
-
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
-    // Try Resend HTTP API first (works on Render free tier)
+    // Try Brevo HTTP API first
+    if (process.env.BREVO_API_KEY) {
+      await sendViaBrevoApi(to, subject, html);
+      return;
+    }
+    // Try Resend HTTP API
     if (process.env.RESEND_API_KEY) {
       await sendViaResendApi(to, subject, html);
       return;
     }
-
-    // Fallback to SMTP
-    const transport = createTransport();
-    if (!transport) return;
-    await transport.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to,
-      subject,
-      html,
-    });
+    // No email provider configured
+    console.warn("[mailer] No email provider configured (BREVO_API_KEY or RESEND_API_KEY)");
   } catch (err) {
     console.error("[mailer] Failed to send email:", err);
   }

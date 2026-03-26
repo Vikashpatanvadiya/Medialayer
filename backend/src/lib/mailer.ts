@@ -5,7 +5,14 @@ async function sendViaBrevoApi(to: string, subject: string, html: string): Promi
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return false;
 
-  const from = { name: "MediaLayer", email: process.env.SMTP_FROM_EMAIL || "noreply@medialayer.app" };
+  const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_FROM || "noreply@medialayer.app";
+  // Strip name if format is "Name <email>"
+  const emailMatch = fromEmail.match(/<(.+)>/);
+  const senderEmail = emailMatch ? emailMatch[1] : fromEmail;
+  const from = { name: "MediaLayer", email: senderEmail };
+
+  console.log("[mailer] Brevo: sending from", senderEmail, "to", to);
+
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
@@ -22,8 +29,10 @@ async function sendViaBrevoApi(to: string, subject: string, html: string): Promi
 
   if (!res.ok) {
     const err = await res.text();
+    console.error("[mailer] Brevo API error:", err);
     throw new Error(`Brevo API error: ${err}`);
   }
+  console.log("[mailer] Brevo: email sent to", to);
   return true;
 }
 

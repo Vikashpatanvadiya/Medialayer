@@ -45,8 +45,10 @@ async function sendViaResendApi(to: string, subject: string, html: string): Prom
 
   if (!res.ok) {
     const err = await res.text();
+    console.error("[mailer] Resend API error response:", err);
     throw new Error(`Resend API error: ${err}`);
   }
+  console.log("[mailer] Resend API: email sent to", to);
   return true;
 }
 
@@ -54,17 +56,19 @@ export async function sendEmail(to: string, subject: string, html: string) {
   try {
     // Try Brevo HTTP API first
     if (process.env.BREVO_API_KEY) {
+      console.log("[mailer] Using Brevo API");
       await sendViaBrevoApi(to, subject, html);
       return;
     }
     // Try Resend HTTP API (also works with SMTP_PASS when SMTP_HOST is resend)
     const resendKey = process.env.RESEND_API_KEY || (process.env.SMTP_HOST?.includes("resend") ? process.env.SMTP_PASS : undefined);
     if (resendKey) {
+      console.log("[mailer] Using Resend API, from:", process.env.SMTP_FROM || "MediaLayer <onboarding@resend.dev>");
       await sendViaResendApi(to, subject, html);
       return;
     }
     // No email provider configured
-    console.warn("[mailer] No email provider configured (BREVO_API_KEY or RESEND_API_KEY)");
+    console.warn("[mailer] No email provider configured. BREVO_API_KEY:", !!process.env.BREVO_API_KEY, "RESEND_API_KEY:", !!process.env.RESEND_API_KEY, "SMTP_HOST:", process.env.SMTP_HOST, "SMTP_PASS set:", !!process.env.SMTP_PASS);
   } catch (err) {
     console.error("[mailer] Failed to send email:", err);
   }

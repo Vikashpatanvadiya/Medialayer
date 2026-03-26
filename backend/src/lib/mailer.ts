@@ -1,14 +1,33 @@
 import nodemailer from "nodemailer";
 
-// Uses SMTP env vars — works with Gmail, SendGrid, Resend, Mailtrap, etc.
-// If no SMTP config, emails are skipped silently (non-blocking)
+// Resend HTTP API — more reliable than SMTP on Render free tier
+async function sendViaResendApi(to: string, subject: string, html: string): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+
+  const from = process.env.SMTP_FROM || "MediaLayer <onboarding@resend.dev>";
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from, to, subject, html }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend API error: ${err}`);
+  }
+  return true;
+}
+
+// SMTP fallback (Gmail, etc.)
 function createTransport() {
   const host = process.env.SMTP_HOST;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-
   if (!host || !user || !pass) return null;
-
   return nodemailer.createTransport({
     host,
     port: Number(process.env.SMTP_PORT || 587),
@@ -19,9 +38,15 @@ function createTransport() {
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
-    const transport = createTransport();
-    if (!transport) return; // silently skip if SMTP not configured
+    // Try Resend HTTP API first (works on Render free tier)
+    if (process.env.RESEND_API_KEY) {
+      await sendViaResendApi(to, subject, html);
+      return;
+    }
 
+    // Fallback to SMTP
+    const transport = createTransport();
+    if (!transport) return;
     await transport.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to,
@@ -29,7 +54,6 @@ export async function sendEmail(to: string, subject: string, html: string) {
       html,
     });
   } catch (err) {
-    // Non-blocking — email failures should never crash the request
     console.error("[mailer] Failed to send email:", err);
   }
 }

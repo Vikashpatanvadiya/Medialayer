@@ -10,98 +10,138 @@ export default function PrivacyPolicy() {
         </Link>
 
         <h1 className="text-4xl font-bold mb-2">Privacy Policy</h1>
-        <p className="text-muted-foreground mb-10">Last updated: March 25, 2026</p>
+        <p className="text-muted-foreground mb-10">Effective Date: March 25, 2026</p>
 
-        <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8 text-foreground/80 leading-relaxed">
+        <div className="space-y-8 text-foreground/80 leading-relaxed">
 
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">1. Overview</h2>
-            <p>MediaLayer ("we", "our", or "us") is a video collaboration platform that connects YouTube creators and video editors. This Privacy Policy explains how we collect, use, store, and protect your information when you use our platform at <strong>medialayer.vercel.app</strong>.</p>
-          </section>
+          <p>MediaLayer ("we", "our", "us") operates the website <strong>https://medialayer.vercel.app</strong> and provides a platform for creators and editors to collaborate on video uploads. We are committed to protecting your privacy and ensuring transparency in how your data is handled.</p>
 
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">2. Information We Collect</h2>
-            <p className="mb-3">We collect the following information when you register and use MediaLayer:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Account information:</strong> Your name, email address, and password (stored as a secure hash).</li>
-              <li><strong>Video content:</strong> Video files you upload, along with titles, descriptions, and tags you provide.</li>
-              <li><strong>YouTube account data:</strong> If you connect your YouTube channel, we store OAuth tokens (encrypted) to enable video uploads on your behalf. We access your YouTube channel name and upload videos you explicitly authorize.</li>
-              <li><strong>Usage data:</strong> Actions performed on the platform such as video submissions, approvals, and rejections, stored for audit purposes.</li>
+            <h2 className="text-xl font-bold text-foreground mb-3">1. Information We Collect</h2>
+            <p className="mb-3">We collect the following types of information:</p>
+
+            <h3 className="font-semibold text-foreground mb-2">Account Information</h3>
+            <ul className="list-disc pl-6 space-y-1 mb-4">
+              <li>Name (if provided)</li>
+              <li>Email address (via Google Sign-In or manual registration)</li>
+            </ul>
+
+            <h3 className="font-semibold text-foreground mb-2">Google Account Data</h3>
+            <p className="mb-2">When you sign in using Google OAuth, we may access:</p>
+            <ul className="list-disc pl-6 space-y-1 mb-4">
+              <li>Your email address</li>
+              <li>Basic profile information</li>
+              <li>Permission to upload videos to your YouTube channel (only if granted)</li>
+            </ul>
+            <p className="mb-4">We do not access your password at any time.</p>
+
+            <h3 className="font-semibold text-foreground mb-2">Video & Content Data</h3>
+            <ul className="list-disc pl-6 space-y-1 mb-4">
+              <li>Uploaded video files (temporarily stored)</li>
+              <li>Video metadata (title, description, tags)</li>
+              <li>Approval status and workflow data</li>
+            </ul>
+
+            <h3 className="font-semibold text-foreground mb-2">Usage Data</h3>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>Actions performed on the platform (upload, approve, reject)</li>
+              <li>Logs for security and debugging purposes</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">3. How We Use Your Information</h2>
+            <h2 className="text-xl font-bold text-foreground mb-3">2. How We Use Your Information</h2>
+            <p className="mb-3">We use your data strictly to provide core functionality:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>To provide the video collaboration service between creators and editors.</li>
-              <li>To upload approved videos to your YouTube channel when you explicitly request it.</li>
-              <li>To send email notifications about video status changes (approvals, rejections, uploads).</li>
-              <li>To authenticate your identity and protect your account.</li>
-              <li>We do not sell, rent, or share your personal data with third parties for marketing purposes.</li>
+              <li>Enable secure collaboration between editors and creators</li>
+              <li>Allow creators to review and approve videos</li>
+              <li>Upload videos to your YouTube channel upon approval</li>
+              <li>Send notifications related to workflow activity</li>
+              <li>Maintain system security and prevent misuse</li>
+            </ul>
+            <p className="mt-3">We do not use your data for advertising or tracking purposes.</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-foreground mb-3">3. Google API Data Usage</h2>
+            <p className="mb-3">MediaLayer uses Google APIs solely to enable video uploads to your YouTube channel.</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>We only request the minimum required permissions (<code className="text-sm bg-secondary px-1 rounded">youtube.upload</code>)</li>
+              <li>We do not access or modify any other YouTube data</li>
+              <li>We do not store or share your YouTube content outside of the intended workflow</li>
+            </ul>
+            <p className="mt-3">MediaLayer's use of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noreferrer" className="text-primary underline">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-foreground mb-3">4. Data Storage & Security</h2>
+            <p className="mb-3">We implement strong security practices:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>OAuth tokens are encrypted using AES-256-CBC encryption</li>
+              <li>Video files are stored securely using authenticated access on Cloudinary</li>
+              <li>Access to videos is restricted using temporary signed URLs (1-hour expiry)</li>
+              <li>Backend systems enforce JWT authentication and role-based authorization checks</li>
+            </ul>
+            <p className="mt-3">We take reasonable measures to protect your data from unauthorized access.</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-foreground mb-3">5. Data Sharing</h2>
+            <p className="mb-3">We do not sell, rent, or trade your personal data. We only share data with trusted services required to operate the platform:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Cloudinary</strong> — for secure video file storage</li>
+              <li><strong>Google APIs</strong> — for YouTube uploads</li>
+              <li><strong>Neon</strong> — for database hosting</li>
+            </ul>
+            <p className="mt-3">These services are used strictly for functionality and not for data exploitation.</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-foreground mb-3">6. Data Retention</h2>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Video files are stored only as long as needed for workflow purposes</li>
+              <li>Users may delete videos at any time</li>
+              <li>Account data is retained until the user deletes their account</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">4. YouTube API Services</h2>
-            <p className="mb-3">MediaLayer uses the <strong>YouTube Data API v3</strong> to upload videos to your YouTube channel. By connecting your YouTube account, you authorize us to:</p>
+            <h2 className="text-xl font-bold text-foreground mb-3">7. Your Rights & Control</h2>
+            <p className="mb-3">You have full control over your data:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Read your YouTube channel information (channel name).</li>
-              <li>Upload videos to your YouTube channel on your behalf.</li>
+              <li>You can revoke Google access anytime via your <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer" className="text-primary underline">Google Account settings</a></li>
+              <li>You can disconnect your YouTube channel from within the platform</li>
+              <li>You can delete videos from the platform</li>
+              <li>You can request account deletion by contacting us</li>
             </ul>
-            <p className="mt-3">Your YouTube OAuth tokens are encrypted using AES-256 encryption before being stored in our database. We never share your YouTube credentials with any third party.</p>
-            <p className="mt-3">Our use of YouTube API Services is subject to the <a href="https://www.youtube.com/t/terms" target="_blank" rel="noreferrer" className="text-primary underline">YouTube Terms of Service</a>. You can revoke MediaLayer's access to your YouTube account at any time via <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer" className="text-primary underline">Google Account Permissions</a>.</p>
-            <p className="mt-3">Google's privacy policy is available at <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="text-primary underline">https://policies.google.com/privacy</a>.</p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">5. Video Storage</h2>
-            <p>Uploaded videos are stored securely on <strong>Cloudinary</strong> using authenticated (private) delivery. Videos are not publicly accessible via direct URL — they can only be viewed through our platform by authorized users (the creator and editor associated with that video). Signed URLs with a 1-hour expiry are used for playback.</p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">6. Data Security</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Passwords are hashed using bcrypt and never stored in plain text.</li>
-              <li>YouTube OAuth tokens are encrypted with AES-256-CBC before database storage.</li>
-              <li>All API communication uses HTTPS/TLS.</li>
-              <li>JWT tokens are used for session authentication with a 7-day expiry.</li>
-              <li>Rate limiting is applied to authentication endpoints to prevent brute force attacks.</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">7. Data Retention</h2>
-            <p>We retain your account data and video metadata for as long as your account is active. You may delete individual videos at any time from the platform, which removes both the database record and the file from Cloudinary. To request full account deletion, contact us at the email below.</p>
           </section>
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">8. Third-Party Services</h2>
-            <p>MediaLayer uses the following third-party services to operate:</p>
+            <p className="mb-3">MediaLayer integrates with:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Cloudinary</strong> — video file storage (<a href="https://cloudinary.com/privacy" target="_blank" rel="noreferrer" className="text-primary underline">Privacy Policy</a>)</li>
-              <li><strong>Neon</strong> — PostgreSQL database hosting (<a href="https://neon.tech/privacy-policy" target="_blank" rel="noreferrer" className="text-primary underline">Privacy Policy</a>)</li>
-              <li><strong>Render</strong> — backend hosting (<a href="https://render.com/privacy" target="_blank" rel="noreferrer" className="text-primary underline">Privacy Policy</a>)</li>
-              <li><strong>Vercel</strong> — frontend hosting (<a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noreferrer" className="text-primary underline">Privacy Policy</a>)</li>
-              <li><strong>Google / YouTube Data API v3</strong> — YouTube integration (<a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="text-primary underline">Privacy Policy</a>)</li>
+              <li><a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="text-primary underline">Google (OAuth and YouTube API)</a></li>
+              <li><a href="https://cloudinary.com/privacy" target="_blank" rel="noreferrer" className="text-primary underline">Cloudinary</a> — secure video storage</li>
+              <li><a href="https://neon.tech/privacy-policy" target="_blank" rel="noreferrer" className="text-primary underline">Neon</a> — database hosting</li>
+              <li><a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noreferrer" className="text-primary underline">Vercel</a> — frontend hosting</li>
+              <li><a href="https://render.com/privacy" target="_blank" rel="noreferrer" className="text-primary underline">Render</a> — backend hosting</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">9. Your Rights</h2>
-            <p>You have the right to:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Access the personal data we hold about you.</li>
-              <li>Request correction of inaccurate data.</li>
-              <li>Request deletion of your account and associated data.</li>
-              <li>Revoke YouTube access at any time via Google Account settings.</li>
-              <li>Disconnect your YouTube account from within the platform at any time.</li>
-            </ul>
+            <h2 className="text-xl font-bold text-foreground mb-3">9. Children's Privacy</h2>
+            <p>MediaLayer is not intended for users under the age of 13. We do not knowingly collect data from children.</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-foreground mb-3">10. Contact</h2>
-            <p>If you have any questions about this Privacy Policy or wish to exercise your data rights, please contact us at:</p>
-            <p className="mt-2 font-medium text-foreground">medialayer.app@gmail.com</p>
+            <h2 className="text-xl font-bold text-foreground mb-3">10. Changes to This Policy</h2>
+            <p>We may update this Privacy Policy from time to time. Updates will be posted on this page with a revised effective date.</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-foreground mb-3">11. Contact Us</h2>
+            <p>If you have any questions about this Privacy Policy, please contact us at:</p>
+            <p className="mt-2 font-medium text-foreground">patanvadiyabansi6@gmail.com</p>
           </section>
 
         </div>

@@ -74,6 +74,8 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
   const params = new URLSearchParams(window.location.search);
   const defaultRole = (params.get("role") === "creator" ? "creator" : "editor") as "creator" | "editor";
   const isLogin = mode === "login";
+  const justVerified = params.get("verified") === "1";
+  const verifiedEmail = params.get("email") || "";
 
   const handleResendVerification = async () => {
     if (!unverifiedEmail) return;
@@ -104,7 +106,7 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: verifiedEmail, password: "" },
   });
 
   const registerForm = useForm<z.infer<typeof registerSchema>>({
@@ -171,6 +173,11 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                 })}
                 className="space-y-5"
               >
+                {justVerified && (
+                  <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-700 dark:text-green-400">
+                    ✅ Email verified! Enter your password to sign in.
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-foreground">Email</label>
                   <input {...loginForm.register("email")} className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground input-ring" placeholder="you@example.com" />

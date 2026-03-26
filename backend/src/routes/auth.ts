@@ -102,13 +102,8 @@ router.get("/verify-email", async (req, res) => {
     .where(eq(usersTable.id, user.id));
 
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-  res.send(`
-    <html><body style="font-family:sans-serif;text-align:center;padding:60px">
-      <h2>✅ Email verified!</h2>
-      <p>Your account is now active.</p>
-      <a href="${frontendUrl}/login" style="background:#6366f1;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px">Sign In →</a>
-    </body></html>
-  `);
+  // Redirect to login with email pre-filled and a success flag
+  res.redirect(`${frontendUrl}/login?verified=1&email=${encodeURIComponent(user.email)}`);
 });
 
 router.post("/resend-verification", async (req, res) => {

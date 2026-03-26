@@ -31,6 +31,34 @@ router.post("/register", async (req, res) => {
 
   const { email, password, name, role } = parsed.data;
 
+  // Verify email is real using EasyEmailAPI (if API key is configured)
+  const emailVerifyKey = process.env.EMAIL_VERIFY_API_KEY;
+  if (emailVerifyKey) {
+    try {
+      const verifyRes = await fetch(
+        `http://easyemailapi.com/api/verify/${encodeURIComponent(email)}`,
+        { headers: { Authorization: `Bearer ${emailVerifyKey}` } }
+      );
+      if (verifyRes.ok) {
+        const result = await verifyRes.json() as any;
+        if (!result.valid) {
+          res.status(400).json({ error: "This email address is invalid. Please use a real email." });
+          return;
+        }
+        if (result.disposable) {
+          res.status(400).json({ error: "Disposable email addresses are not allowed." });
+          return;
+        }
+        if (!result.valid_mx) {
+          res.status(400).json({ error: "This email domain does not exist. Please use a valid email." });
+          return;
+        }
+      }
+    } catch {
+      // If verification API fails, allow registration to proceed
+    }
+  }
+
   const existing = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
   if (existing.length > 0) { res.status(400).json({ error: "Email already registered" }); return; }
 

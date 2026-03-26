@@ -84,10 +84,15 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: unverifiedEmail }),
       });
-      const data = await res.json();
-      toast({ title: "Email sent", description: data.message });
-    } catch {
-      toast({ title: "Error", description: "Failed to resend. Please try again.", variant: "destructive" });
+      const data = await res.json().catch(() => ({ message: "Email sent if account exists." }));
+      if (res.ok) {
+        toast({ title: "Email sent", description: data.message });
+      } else {
+        toast({ title: "Error", description: data.error || "Failed to resend. Please try again.", variant: "destructive" });
+      }
+    } catch (err) {
+      console.error("[resend-verification] fetch error:", err);
+      toast({ title: "Error", description: "Could not reach the server. Please try again.", variant: "destructive" });
     } finally {
       setIsResending(false);
     }

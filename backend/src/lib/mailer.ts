@@ -29,7 +29,8 @@ async function sendViaBrevoApi(to: string, subject: string, html: string): Promi
 
 // Resend HTTP API fallback
 async function sendViaResendApi(to: string, subject: string, html: string): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
+  // Support both RESEND_API_KEY and SMTP_PASS (Resend uses same key for SMTP and HTTP API)
+  const apiKey = process.env.RESEND_API_KEY || (process.env.SMTP_HOST?.includes("resend") ? process.env.SMTP_PASS : undefined);
   if (!apiKey) return false;
 
   const from = process.env.SMTP_FROM || "MediaLayer <onboarding@resend.dev>";
@@ -56,8 +57,9 @@ export async function sendEmail(to: string, subject: string, html: string) {
       await sendViaBrevoApi(to, subject, html);
       return;
     }
-    // Try Resend HTTP API
-    if (process.env.RESEND_API_KEY) {
+    // Try Resend HTTP API (also works with SMTP_PASS when SMTP_HOST is resend)
+    const resendKey = process.env.RESEND_API_KEY || (process.env.SMTP_HOST?.includes("resend") ? process.env.SMTP_PASS : undefined);
+    if (resendKey) {
       await sendViaResendApi(to, subject, html);
       return;
     }

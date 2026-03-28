@@ -124,40 +124,64 @@ export default function VideoDetail() {
       headers: { Authorization: `Bearer ${token}` },
     });
     const { url } = await res.json();
-    const popup = window.open(url, "youtube-auth", "width=500,height=650,scrollbars=yes");
 
-    // Poll every 1.5s — when popup closes, refetch YouTube status
-    const pollInterval = setInterval(async () => {
-      try {
-        if (!popup || popup.closed) {
-          clearInterval(pollInterval);
-          const prev = ytStatus?.connected;
-          await refetchYt();
-          // Small delay to let state update, then check
-          setTimeout(async () => {
-            await refetchYt();
-          }, 500);
-        }
-      } catch {}
-    }, 1500);
+    // On mobile, window.open() opens a new tab — popup reference is unreliable.
+    // We handle both cases: postMessage (desktop popup) and visibilitychange (mobile tab return).
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    const popup = window.open(url, isMobile ? "_blank" : "youtube-auth", "width=500,height=650,scrollbars=yes");
 
-    // postMessage listener (works if same origin or CORS allows)
-    const handler = async (e: MessageEvent) => {
-      if (e.data?.type === "YOUTUBE_CONNECTED") {
-        window.removeEventListener("message", handler);
-        clearInterval(pollInterval);
-        popup?.close();
+    let done = false;
+
+    const finish = async (channelName?: string) => {
+      if (done) return;
+      done = true;
+      cleanup();
+      await refetchYt();
+      // Small delay so state settles, then show toast
+      setTimeout(async () => {
         await refetchYt();
-        toast({ title: "YouTube connected!", description: `Channel: ${e.data.channelName}` });
+        toast({
+          title: "✅ YouTube connected!",
+          description: channelName ? `Channel: ${channelName}` : "Your channel is now linked.",
+          duration: 3000,
+        });
+      }, 400);
+    };
+
+    // postMessage listener — works on desktop where popup shares origin context
+    const messageHandler = async (e: MessageEvent) => {
+      if (e.data?.type === "YOUTUBE_CONNECTED") {
+        popup?.close();
+        await finish(e.data.channelName);
       }
     };
-    window.addEventListener("message", handler);
+    window.addEventListener("message", messageHandler);
 
-    // Clean up after 10 minutes
-    setTimeout(() => {
+    // visibilitychange — fires when user switches back to this tab on mobile
+    const visibilityHandler = async () => {
+      if (document.visibilityState === "visible" && !done) {
+        // Give the OAuth callback a moment to write to DB before we poll
+        setTimeout(() => finish(), 800);
+      }
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+
+    // Fallback: poll popup closed state (desktop only — popup ref works)
+    const pollInterval = setInterval(() => {
+      if (!popup || popup.closed) {
+        clearInterval(pollInterval);
+        if (!done) finish();
+      }
+    }, 1500);
+
+    const cleanup = () => {
       clearInterval(pollInterval);
-      window.removeEventListener("message", handler);
-    }, 10 * 60 * 1000);
+      window.removeEventListener("message", messageHandler);
+      document.removeEventListener("visibilitychange", visibilityHandler);
+    };
+
+    // Clean up after 10 minutes regardless
+    setTimeout(cleanup, 10 * 60 * 1000);
   };
 
   const uploadToYouTube = async () => {

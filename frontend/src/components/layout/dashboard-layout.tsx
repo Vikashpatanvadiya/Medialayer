@@ -151,13 +151,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Sidebar desktop */}
       <aside className="hidden md:flex flex-col w-56 bg-white border-r border-gray-200 h-full shrink-0">
         {/* Logo */}
-        <div className="px-5 py-4 flex items-center gap-2.5 border-b border-gray-100">
+        <div className="px-5 py-4 flex items-center border-b border-gray-100">
           <img
             src={`${import.meta.env.BASE_URL}images/logo.png`}
             alt="MediaLayer"
-            className="w-7 h-7 rounded-lg object-contain"
+            className="h-8 w-auto object-contain"
           />
-          <span className="font-bold text-gray-900 text-sm tracking-tight">MediaLayer</span>
         </div>
         <SidebarContent />
       </aside>
@@ -298,8 +297,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           >
             <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer" className="w-7 h-7 rounded-lg object-contain" />
-                <span className="font-bold text-gray-900 text-sm">MediaLayer</span>
+                <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer" className="h-7 w-auto object-contain" />
               </div>
               <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />

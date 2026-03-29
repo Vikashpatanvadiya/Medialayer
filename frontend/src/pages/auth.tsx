@@ -126,9 +126,8 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
           <img
             src={`${import.meta.env.BASE_URL}images/logo.png`}
             alt="MediaLayer"
-            className="w-8 h-8 rounded-xl object-contain"
+            className="h-8 w-auto object-contain"
           />
-          <span className="font-bold text-gray-900 text-base">MediaLayer</span>
         </Link>
       </div>
 

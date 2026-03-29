@@ -88,29 +88,6 @@ export default function CreatorDashboard() {
         <p className="text-gray-500 mt-1 text-base">Here's what's happening with your videos today.</p>
       </div>
 
-      {/* Invite Code Banner — brief: purple primary CTA, 8px radius */}
-      {inviteCode && (
-        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-[0px_4px_8px_rgba(0,0,0,0.06)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-gray-900">Your Editor Invite Code</p>
-            <p className="text-sm text-gray-500 mt-0.5">Share this code with editors so they can link to your account</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xl font-bold tracking-widest text-indigo-700 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200">
-              {inviteCode}
-            </span>
-            {/* Brief: solid purple primary button, white text, 8px radius */}
-            <button
-              onClick={copyCode}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
-            >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-        </div>
-      )}
-
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-7 h-7 text-indigo-600 animate-spin" />

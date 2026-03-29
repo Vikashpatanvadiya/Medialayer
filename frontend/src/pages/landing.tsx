@@ -28,7 +28,9 @@ export default function LandingPage() {
       <nav className="fixed top-0 inset-x-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[22px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
+            <Link href="/">
+              <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[22px] tracking-tight text-[#1a1f3c] cursor-pointer hover:opacity-80 transition-opacity">MediaLayer</span>
+            </Link>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
             <a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a>

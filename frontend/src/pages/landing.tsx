@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import {
   ArrowRight, Upload, Eye, CheckCircle, Youtube,
   Shield, Lock, Key, Video, Users, FileCheck,
@@ -9,55 +8,6 @@ import {
 
 const fade = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 const stagger = { show: { transition: { staggerChildren: 0.1 } } };
-
-function PricingFeedback() {
-  const [price, setPrice] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!price.trim()) return;
-    setSubmitted(true);
-    // Send to backend which emails you
-    fetch(`${import.meta.env.VITE_API_URL || ""}/api/pricing-feedback`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ price }),
-    }).catch(() => {});
-  };
-
-  if (submitted) {
-    return (
-      <div className="flex flex-col items-center gap-2 py-4">
-        <span className="text-3xl">🙏</span>
-        <p className="font-semibold text-gray-900">Thanks for your feedback!</p>
-        <p className="text-sm text-gray-500">You'll get early access at a special price.</p>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto">
-      <div className="relative flex-1">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
-        <input
-          type="number"
-          min="0"
-          value={price}
-          onChange={e => setPrice(e.target.value)}
-          placeholder="e.g. 29"
-          className="w-full pl-7 pr-4 py-3 rounded-xl border border-gray-200 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-        />
-      </div>
-      <button
-        type="submit"
-        className="px-6 py-3 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-colors whitespace-nowrap"
-      >
-        Submit feedback
-      </button>
-    </form>
-  );
-}
 
 export default function LandingPage() {
   return (
@@ -270,29 +220,64 @@ export default function LandingPage() {
 
       {/* ── PRICING ── */}
       <section id="pricing" className="py-24 px-6">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
             <motion.p variants={fade} className="text-indigo-600 font-semibold text-sm uppercase tracking-widest mb-4">Pricing</motion.p>
-            <motion.h2 variants={fade} className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Simple, creator-friendly pricing</motion.h2>
-            <motion.p variants={fade} className="text-gray-500 mb-10 leading-relaxed">
-              We're currently offering early access. Help us shape pricing — early users get special access and lifetime benefits.
+            <motion.h2 variants={fade} className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Pay once. Use forever.</motion.h2>
+            <motion.p variants={fade} className="text-gray-500 mb-12 leading-relaxed max-w-xl mx-auto">
+              No subscriptions. No monthly fees. Pay one time and get full lifetime access — the price depends on the plan you choose.
             </motion.p>
-            <motion.div variants={fade} className="bg-white rounded-3xl border border-gray-200 shadow-lg p-10">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-100 mb-6">
-                ⚡ Early Access
-              </span>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">How much would you pay for this?</h3>
-              <p className="text-gray-500 mb-8">Tell us your ideal price. Early users get lifetime access at a special one-time price.</p>
+            <motion.div variants={fade} className="grid md:grid-cols-2 gap-6 items-stretch">
 
-              <PricingFeedback />
-
-              <div className="mt-8 pt-8 border-t border-gray-100">
-                <Link href="/register" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
-                  Get Early Access <ArrowRight className="w-4 h-4" />
+              {/* Starter */}
+              <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 text-left flex flex-col">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-500 mb-2">Starter</p>
+                  <div className="flex items-end gap-1 mb-1">
+                    <span className="text-4xl font-bold text-gray-900">$50</span>
+                    <span className="text-gray-400 text-sm mb-1.5">one-time</span>
+                  </div>
+                  <p className="text-gray-500 text-sm mb-6">Perfect for solo creators working with one editor.</p>
+                  <ul className="space-y-3 mb-8">
+                    {["1 creator account", "Up to 3 editors", "Unlimited video reviews", "Direct YouTube publishing", "Email notifications", "Lifetime access"].map(f => (
+                      <li key={f} className="flex items-center gap-2.5 text-sm text-gray-700">
+                        <CheckCircle className="w-4 h-4 text-indigo-500 shrink-0" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Link href="/register" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm">
+                  Claim Offer <ArrowRight className="w-4 h-4" />
                 </Link>
-                <p className="text-xs text-gray-400 mt-4">No credit card required · Cancel anytime</p>
               </div>
+
+              {/* Pro */}
+              <div className="bg-indigo-600 rounded-3xl p-8 text-left relative overflow-hidden flex flex-col">
+                <div className="absolute top-4 right-4">
+                  <span className="px-2.5 py-1 rounded-full bg-white/20 text-white text-xs font-semibold">Most Popular</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-indigo-200 mb-2">Pro</p>
+                  <div className="flex items-end gap-1 mb-1">
+                    <span className="text-4xl font-bold text-white">$100</span>
+                    <span className="text-indigo-300 text-sm mb-1.5">one-time</span>
+                  </div>
+                  <p className="text-indigo-200 text-sm mb-6">For growing channels with multiple editors and higher volume.</p>
+                  <ul className="space-y-3 mb-8">
+                    {["Unlimited creator accounts", "Unlimited editors", "Unlimited video reviews", "Direct YouTube publishing", "Priority email support", "Audit logs & analytics", "Lifetime access"].map(f => (
+                      <li key={f} className="flex items-center gap-2.5 text-sm text-white">
+                        <CheckCircle className="w-4 h-4 text-indigo-300 shrink-0" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Link href="/register" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-indigo-600 font-semibold hover:bg-indigo-50 transition-colors text-sm">
+                  Claim Offer <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
             </motion.div>
+            <motion.p variants={fade} className="text-xs text-gray-400 mt-6">No subscriptions · No hidden fees · Pay once, own it forever</motion.p>
           </motion.div>
         </div>
       </section>

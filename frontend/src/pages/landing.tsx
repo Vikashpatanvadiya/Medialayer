@@ -33,13 +33,13 @@ function Slideshow() {
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-indigo-200/40 border border-white/60 bg-white">
-      <div className="relative aspect-video">
+      <div className="relative aspect-video bg-gray-50">
         {SLIDES.map((src, i) => (
           <img
             key={src}
             src={src}
             alt={`Screenshot ${i + 1}`}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === current ? "opacity-100" : "opacity-0"}`}
+            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${i === current ? "opacity-100" : "opacity-0"}`}
           />
         ))}
       </div>

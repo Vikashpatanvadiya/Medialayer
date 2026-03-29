@@ -9,6 +9,7 @@ import youtubeRouter from "./youtube.js";
 import uploadRouter from "./upload.js";
 import logsRouter from "./logs.js";
 import streamRouter from "./stream.js";
+import feedbackRouter from "./feedback.js";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use("/youtube", youtubeRouter);
 router.use("/upload", uploadRouter);
 router.use("/logs", logsRouter);
 router.use("/stream", streamRouter);
+router.use(feedbackRouter);
 
 export default router;

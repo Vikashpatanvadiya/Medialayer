@@ -535,7 +535,7 @@ export default function LandingPage() {
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-5">Company</p>
               <ul className="space-y-3 text-sm text-gray-400">
-                <li><a href="mailto:patanvadiyabansi6@gmail.com" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="mailto:vpatanvadiya2022@gmail.com" className="hover:text-white transition-colors">Contact</a></li>
                 <li><a href="https://x.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Twitter / X</a></li>
               </ul>
             </div>

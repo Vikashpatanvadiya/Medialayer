@@ -52,10 +52,20 @@ router.get("/my-creators", requireAuth, requireRole("editor"), async (req, res) 
   res.json({ creators: creators.filter(Boolean) });
 });
 
-// Creator gets their invite code
+// Creator gets their invite code — generate one if missing
 router.get("/invite-code", requireAuth, requireRole("creator"), async (req, res) => {
   const [user] = await db.select({ inviteCode: usersTable.inviteCode }).from(usersTable).where(eq(usersTable.id, req.user!.userId)).limit(1);
-  res.json({ inviteCode: user?.inviteCode ?? null });
+
+  if (user?.inviteCode) {
+    res.json({ inviteCode: user.inviteCode });
+    return;
+  }
+
+  // Generate invite code if missing (e.g. Google OAuth users)
+  const newCode = Math.random().toString(36).substring(2, 6).toUpperCase() +
+                  Math.random().toString(36).substring(2, 6).toUpperCase();
+  await db.update(usersTable).set({ inviteCode: newCode }).where(eq(usersTable.id, req.user!.userId));
+  res.json({ inviteCode: newCode });
 });
 
 // Creator gets their editors list

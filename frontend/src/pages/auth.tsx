@@ -239,7 +239,7 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  onSubmit={registerForm.handleSubmit((d) => register(d))}
+                  onSubmit={registerForm.handleSubmit((d) => register({ ...d, inviteCode: params.get("code") || undefined } as any))}
                 >
                   {/* Google — primary CTA */}
                   <button

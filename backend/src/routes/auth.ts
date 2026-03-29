@@ -1,8 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
-import { db, usersTable, videosTable, notificationsTable, editorCreatorsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, usersTable, videosTable, notificationsTable, editorCreatorsTable } from "@workspace/db";import { eq } from "drizzle-orm";
 import { signToken, requireAuth } from "../lib/auth.js";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
 import { sendEmail } from "../lib/mailer.js";
@@ -77,6 +76,16 @@ router.post("/register", async (req, res) => {
       verificationToken,
     })
     .returning();
+
+  // Auto-link editor to creator if invite code was provided
+  const inviteCodeParam = req.body.inviteCode as string | undefined;
+  if (role === "editor" && inviteCodeParam) {
+    const [creator] = await db.select().from(usersTable)
+      .where(eq(usersTable.inviteCode, inviteCodeParam.trim().toUpperCase())).limit(1);
+    if (creator) {
+      await db.insert(editorCreatorsTable).values({ editorId: user.id, creatorId: creator.id }).onConflictDoNothing();
+    }
+  }
 
   // Send verification email (non-blocking — don't await)
   const verifyUrl = `${process.env.BACKEND_URL || "http://localhost:3000"}/api/auth/verify-email?token=${verificationToken}`;

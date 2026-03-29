@@ -152,7 +152,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <aside className="hidden md:flex flex-col w-56 bg-white border-r border-gray-200 h-full shrink-0">
         {/* Logo */}
         <div className="px-5 py-4 flex items-center border-b border-gray-100">
-          <span className="font-bold text-[18px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
+          <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[18px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
         </div>
         <SidebarContent />
       </aside>
@@ -293,7 +293,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           >
             <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <span className="font-bold text-[18px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
+                <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[18px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
               </div>
               <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />

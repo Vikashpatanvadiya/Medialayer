@@ -13,6 +13,7 @@ import AuthPage from "./pages/auth";
 import { DashboardLayout } from "./components/layout/dashboard-layout";
 import EditorDashboard from "./pages/editor/dashboard";
 import AllSubmissions from "./pages/editor/all-submissions";
+import MyCreators from "./pages/editor/my-creators";
 import CreatorDashboard from "./pages/creator/dashboard";
 import MyEditors from "./pages/creator/my-editors";
 import AllVideos from "./pages/creator/all-videos";
@@ -87,6 +88,9 @@ function Router() {
       </Route>
       <Route path="/dashboard/editor/submissions">
         <ProtectedRoute allowedRole="editor" component={AllSubmissions} />
+      </Route>
+      <Route path="/dashboard/editor/creators">
+        <ProtectedRoute allowedRole="editor" component={MyCreators} />
       </Route>
       <Route path="/dashboard/creator">
         <ProtectedRoute allowedRole="creator" component={CreatorDashboard} />

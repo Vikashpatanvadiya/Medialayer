@@ -57,6 +57,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     : [
         { name: "Dashboard", href: "/dashboard/editor", icon: LayoutDashboard },
         { name: "My Submissions", href: "/dashboard/editor/submissions", icon: Video },
+        { name: "My Creators", href: "/dashboard/editor/creators", icon: Users },
         { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
         { name: "Settings", href: "/dashboard/profile", icon: Settings },
       ];

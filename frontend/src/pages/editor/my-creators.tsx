@@ -100,12 +100,20 @@ export default function MyCreators() {
               <p className="text-sm text-gray-500">{creatorVideos.length} video{creatorVideos.length !== 1 ? "s" : ""} submitted</p>
             </div>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" /> Submit Video
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => unlinkCreator(selectedCreator.id, selectedCreator.name)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-sm font-semibold transition-colors"
+            >
+              <X className="w-4 h-4" /> Remove
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> Submit Video
+            </button>
+          </div>
         </div>
 
         {/* Mini stats */}
@@ -226,12 +234,6 @@ export default function MyCreators() {
                       <p className="text-xs text-gray-500">{creator.email}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={e => { e.stopPropagation(); unlinkCreator(creator.id, creator.name); }}
-                    className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
                 </div>
 
                 <div className="flex items-center gap-4 text-xs text-gray-500">

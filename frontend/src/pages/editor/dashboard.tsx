@@ -153,7 +153,7 @@ export default function EditorDashboard() {
               <button
                 key={c.id}
                 onClick={() => setSelectedCreator(selectedCreator?.id === c.id ? null : c)}
-                className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   selectedCreator?.id === c.id
                     ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
                     : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"

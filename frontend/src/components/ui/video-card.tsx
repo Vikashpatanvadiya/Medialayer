@@ -40,7 +40,7 @@ export function VideoCard({ video, rolePath, onDelete }: VideoCardProps) {
 
   return (
     <Link href={`/dashboard/${rolePath}/video/${video.id}`}>
-      <div className="group cursor-pointer bg-card border border-border/50 rounded-2xl overflow-hidden premium-shadow flex flex-col h-full hover:border-primary/30 transition-colors relative">
+      <div className="group cursor-pointer bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col h-full shadow-[0px_4px_8px_rgba(0,0,0,0.08)] hover:shadow-[0px_6px_16px_rgba(0,0,0,0.12)] transition-shadow relative">
         <div className="relative aspect-video overflow-hidden bg-muted">
           <img
             src={thumb}
@@ -70,21 +70,21 @@ export function VideoCard({ video, rolePath, onDelete }: VideoCardProps) {
         </div>
 
         <div className="p-5 flex-1 flex flex-col">
-          <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">{video.title}</h3>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2 leading-relaxed flex-1">
+          <h3 className="font-semibold text-base text-[#333] line-clamp-1 group-hover:text-violet-600 transition-colors">{video.title}</h3>
+          <p className="text-sm text-[#6c757d] mt-1 line-clamp-2 leading-relaxed flex-1">
             {video.description || "No description provided."}
           </p>
 
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
+              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
                 {(video.editor?.name || "E").charAt(0).toUpperCase()}
               </div>
-              <span className="text-xs font-medium text-muted-foreground truncate max-w-[100px]">
+              <span className="text-xs font-medium text-[#6c757d] truncate max-w-[100px]">
                 {video.editor?.name || "Editor"}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+            <div className="flex items-center gap-1.5 text-xs text-[#6c757d] font-medium">
               <Clock className="w-3.5 h-3.5" />
               {formatDistanceToNow(new Date(video.createdAt))} ago
             </div>

@@ -90,7 +90,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-24 px-6 bg-white">
+      <section id="how-it-works" className="py-24 px-6 bg-white" style={{ background: "linear-gradient(180deg, #eeeaf8 0%, #ffffff 120px)" }}>
         <div className="max-w-[1100px] mx-auto">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
             <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-4">

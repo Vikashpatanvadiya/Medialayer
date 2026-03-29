@@ -1,5 +1,11 @@
 {
   "name": "medialayer",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "agentation": "^3.0.2"
+  },
+  "dependencies": {
+    "agentation-mcp": "^1.2.0"
+  }
 }

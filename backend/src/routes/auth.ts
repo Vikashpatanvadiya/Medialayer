@@ -179,6 +179,8 @@ router.delete("/account", requireAuth, async (req, res) => {
   await db.delete(usersTable).where(eq(usersTable.id, userId));
   res.json({ message: "Account deleted" });
 });
+
+router.post("/logout", (_req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 

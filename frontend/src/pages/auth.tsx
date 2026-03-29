@@ -3,10 +3,9 @@ import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,41 +28,41 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// Role picker modal before Google OAuth
 function GoogleRolePicker({ onSelect, onClose }: { onSelect: (role: "creator" | "editor") => void; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-card rounded-3xl shadow-2xl border border-border/50 w-full max-w-sm p-8"
-      >
-        <h2 className="text-xl font-bold mb-2 text-center">I am a...</h2>
-        <p className="text-sm text-muted-foreground text-center mb-6">Choose your role to continue with Google</p>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
+        <h2 className="text-xl font-bold mb-1 text-gray-900 text-center">I am a...</h2>
+        <p className="text-sm text-gray-500 text-center mb-6">Choose your role to continue with Google</p>
         <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => onSelect("creator")}
-            className="border rounded-xl p-5 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all"
-          >
-            <span className="text-2xl">🎬</span>
-            <span className="font-semibold text-foreground">Creator</span>
-            <span className="text-xs text-muted-foreground text-center">I review and approve videos</span>
-          </button>
-          <button
-            onClick={() => onSelect("editor")}
-            className="border rounded-xl p-5 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all"
-          >
-            <span className="text-2xl">✂️</span>
-            <span className="font-semibold text-foreground">Editor</span>
-            <span className="text-xs text-muted-foreground text-center">I upload and submit videos</span>
-          </button>
+          {(["creator", "editor"] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => onSelect(r)}
+              className="border border-gray-200 rounded-2xl p-5 flex flex-col items-center gap-2 hover:border-[#6c47ff] hover:bg-[#f9f8ff] transition-colors"
+            >
+              <span className="text-2xl">{r === "creator" ? "🎬" : "✂️"}</span>
+              <span className="font-semibold text-gray-900 capitalize text-sm">{r}</span>
+              <span className="text-xs text-gray-500 text-center leading-relaxed">
+                {r === "creator" ? "I review and approve videos" : "I upload and submit videos"}
+              </span>
+            </button>
+          ))}
         </div>
-        <button onClick={onClose} className="w-full mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
-      </motion.div>
+        <button onClick={onClose} className="w-full mt-5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
+
+// Brief: 8–16px border-radius on inputs, not pill-shaped
+const inputClass =
+  "w-full px-4 py-3 rounded-2xl bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 text-sm focus:outline-none focus:border-gray-400 transition-colors";
+
+const labelClass = "block text-sm text-gray-600 mb-1.5";
 
 export default function AuthPage({ mode = "login" }: { mode?: "login" | "register" }) {
   const { login, register, isLoggingIn, isRegistering } = useAuth();
@@ -81,24 +80,19 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
     if (!unverifiedEmail) return;
     setIsResending(true);
     try {
-      const url = apiUrl("/api/auth/resend-verification");
-      console.log("[resend] POST", url);
-      const res = await fetch(url, {
+      const res = await fetch(apiUrl("/api/auth/resend-verification"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: unverifiedEmail }),
       });
-      let data: any = {};
-      try { data = await res.json(); } catch { data = {}; }
-      console.log("[resend] status:", res.status, "data:", data);
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         toast({ title: "Email sent", description: data.message || "Check your inbox." });
       } else {
         toast({ title: "Error", description: data.error || `Server error (${res.status})`, variant: "destructive" });
       }
-    } catch (err) {
-      console.error("[resend] network error:", err);
-      toast({ title: "Network error", description: "Could not reach the server. Check your connection.", variant: "destructive" });
+    } catch {
+      toast({ title: "Network error", description: "Could not reach the server.", variant: "destructive" });
     } finally {
       setIsResending(false);
     }
@@ -120,183 +114,251 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    // Brief: centered gradient, soft cool-toned, not directional from one corner
+    <div className="min-h-screen flex flex-col" style={{ background: "radial-gradient(ellipse at 50% 40%, #f0eef8 0%, #e2ddf2 40%, #cdc6e8 100%)" }}>
       {showRolePicker && (
-        <GoogleRolePicker
-          onSelect={handleGoogleSignup}
-          onClose={() => setShowRolePicker(false)}
-        />
+        <GoogleRolePicker onSelect={handleGoogleSignup} onClose={() => setShowRolePicker(false)} />
       )}
 
-      {/* Left side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col px-8 sm:px-16 lg:px-24 xl:px-32 pt-8 pb-16">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group mb-12">
-          <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="MediaLayer" className="w-8 h-8 rounded-lg object-contain bg-white p-0.5" />
-          <span className="font-display font-bold text-lg group-hover:text-primary transition-colors">MediaLayer</span>
+      {/* Top-left logo — consistent treatment */}
+      <div className="px-8 pt-7">
+        <Link href="/" className="flex items-center gap-2 w-fit">
+          <img
+            src={`${import.meta.env.BASE_URL}images/logo.png`}
+            alt="MediaLayer"
+            className="w-8 h-8 rounded-xl object-contain"
+          />
+          <span className="font-bold text-gray-900 text-base">MediaLayer</span>
         </Link>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-md w-full mx-auto"
-        >
-          <div className="mb-8">
-            <h1 className="text-3xl font-display font-bold tracking-tight mb-2">
-              {isLogin ? "Welcome back" : "Create an account"}
-            </h1>
-            <p className="text-muted-foreground">
-              {isLogin
-                ? "Enter your details to access your workspace."
-                : "Join MediaLayer to streamline your video collaboration."}
-            </p>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {isLogin ? (
-              <motion.form
-                key="login"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                onSubmit={loginForm.handleSubmit(async (d) => {
-                  try {
-                    setUnverifiedEmail(null);
-                    await login(d);
-                  } catch (err: any) {
-                    const msg: string = err?.data?.error || err?.message || "";
-                    if (msg.toLowerCase().includes("verify your email")) {
-                      setUnverifiedEmail(d.email);
-                    }
-                  }
-                })}
-                className="space-y-5"
-              >
-                {justVerified && (
-                  <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-700 dark:text-green-400">
-                    ✅ Email verified! Enter your password to sign in.
-                  </div>
-                )}
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Email</label>
-                  <input {...loginForm.register("email")} className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground input-ring" placeholder="you@example.com" />
-                  {loginForm.formState.errors.email && <p className="text-sm text-destructive">{loginForm.formState.errors.email.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Password</label>
-                  <input type="password" {...loginForm.register("password")} className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground input-ring" placeholder="••••••••" />
-                  {loginForm.formState.errors.password && <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>}
-                </div>
-                <Button type="submit" disabled={isLoggingIn} className="w-full btn-primary-gradient py-3 rounded-xl text-base">
-                  {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
-                </Button>
-
-                {unverifiedEmail && (
-                  <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-700 dark:text-yellow-400">
-                    <p className="mb-2">Didn't receive the verification email?</p>
-                    <button
-                      type="button"
-                      onClick={handleResendVerification}
-                      disabled={isResending}
-                      className="font-semibold underline hover:no-underline disabled:opacity-50 flex items-center gap-1"
-                    >
-                      {isResending && <Loader2 className="w-3 h-3 animate-spin" />}
-                      Resend verification email
-                    </button>
-                  </div>
-                )}
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
-                  <div className="relative flex justify-center text-xs text-muted-foreground"><span className="bg-background px-3">or</span></div>
-                </div>
-
-                <a href={apiUrl("/api/auth/google?role=editor")} className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors text-sm font-medium">
-                  <GoogleIcon /> Continue with Google
-                </a>
-
-                <p className="text-center text-sm text-muted-foreground">
-                  Don't have an account? <Link href="/register" className="text-primary font-semibold hover:underline">Sign up</Link>
-                </p>
-              </motion.form>
-            ) : (
-              <motion.form
-                key="register"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                onSubmit={registerForm.handleSubmit(d => register(d))}
-                className="space-y-5"
-              >
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Full Name</label>
-                  <input {...registerForm.register("name")} className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground input-ring" placeholder="John Doe" />
-                  {registerForm.formState.errors.name && <p className="text-sm text-destructive">{registerForm.formState.errors.name.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Email</label>
-                  <input {...registerForm.register("email")} className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground input-ring" placeholder="you@example.com" />
-                  {registerForm.formState.errors.email && <p className="text-sm text-destructive">{registerForm.formState.errors.email.message}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Password</label>
-                  <input type="password" {...registerForm.register("password")} className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground input-ring" placeholder="••••••••" />
-                  {registerForm.formState.errors.password && <p className="text-sm text-destructive">{registerForm.formState.errors.password.message}</p>}
-                </div>
-                <div className="space-y-3 pt-1">
-                  <label className="text-sm font-medium text-foreground">I am a...</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(["creator", "editor"] as const).map(r => (
-                      <label key={r} className={`cursor-pointer border rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${registerForm.watch("role") === r ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:bg-secondary"}`}>
-                        <input type="radio" value={r} {...registerForm.register("role")} className="hidden" />
-                        <span className="font-semibold text-foreground capitalize">{r}</span>
-                        <span className="text-xs text-muted-foreground text-center">{r === "creator" ? "I review and approve videos" : "I upload and submit videos"}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <Button type="submit" disabled={isRegistering} className="w-full btn-primary-gradient py-3 rounded-xl text-base">
-                  {isRegistering ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Account"}
-                </Button>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
-                  <div className="relative flex justify-center text-xs text-muted-foreground"><span className="bg-background px-3">or</span></div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowRolePicker(true)}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors text-sm font-medium"
-                >
-                  <GoogleIcon /> Sign up with Google
-                </button>
-
-                <p className="text-center text-sm text-muted-foreground">
-                  Already have an account? <Link href="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
-                </p>
-              </motion.form>
-            )}
-          </AnimatePresence>
-        </motion.div>
       </div>
 
-      {/* Right side */}
-      <div className="hidden lg:block lg:w-1/2 relative bg-primary/5 border-l border-border/50 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-background z-10" />
-        <img src={`${import.meta.env.BASE_URL}images/hero-bg.png`} alt="" className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-50" />
-        <div className="absolute inset-0 z-20 flex items-center justify-center p-16">
-          <div className="glass-card max-w-md p-8 rounded-3xl text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-[#7c3aed] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-primary/20">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      {/* Center content — brief: 48–64px between sections */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
+        <div className="w-full max-w-[400px]">
+
+          {/* Card — brief: 24–32px padding, 16px border-radius, soft shadow */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-md shadow-black/[0.07] px-8 py-8">
+            <h1 className="text-[26px] font-bold text-gray-900 text-center leading-tight mb-6">
+              {isLogin ? (
+                <>Welcome back to<br />MediaLayer</>
+              ) : (
+                <>Start using<br />MediaLayer for free</>
+              )}
+            </h1>
+
+            <AnimatePresence mode="wait">
+              {isLogin ? (
+                <motion.form
+                  key="login"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  onSubmit={loginForm.handleSubmit(async (d) => {
+                    try {
+                      setUnverifiedEmail(null);
+                      await login(d);
+                    } catch (err: any) {
+                      const msg: string = err?.data?.error || err?.message || "";
+                      if (msg.toLowerCase().includes("verify your email")) {
+                        setUnverifiedEmail(d.email);
+                      }
+                    }
+                  })}
+                >
+                  {/* Google — brief: more visually active primary CTA */}
+                  <a
+                    href={apiUrl("/api/auth/google?role=editor")}
+                    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors"
+                  >
+                    <GoogleIcon /> Sign in with Google
+                  </a>
+
+                  {/* Divider — brief: 16px spacing between elements */}
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs text-gray-400 tracking-widest">OR</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+
+                  {justVerified && (
+                    <div className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-700 mb-4">
+                      <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                      Email verified. Enter your password to sign in.
+                    </div>
+                  )}
+
+                  {/* Fields — brief: 16px spacing between elements */}
+                  <div className="mb-4">
+                    <label className={labelClass}>Work email</label>
+                    <input {...loginForm.register("email")} className={inputClass} placeholder="name@company.com" />
+                    {loginForm.formState.errors.email && (
+                      <p className="text-xs text-red-500 mt-1">{loginForm.formState.errors.email.message}</p>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className={labelClass}>Password</label>
+                    <input type="password" {...loginForm.register("password")} className={inputClass} placeholder="••••••••" />
+                    {loginForm.formState.errors.password && (
+                      <p className="text-xs text-red-500 mt-1">{loginForm.formState.errors.password.message}</p>
+                    )}
+                  </div>
+
+                  {/* Continue — brief: subdued, secondary to Google */}
+                  <button
+                    type="submit"
+                    disabled={isLoggingIn}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                  </button>
+
+                  {unverifiedEmail && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 mt-4">
+                      <p className="mb-1">Didn't receive the verification email?</p>
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={isResending}
+                        className="font-semibold underline hover:no-underline disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {isResending && <Loader2 className="w-3 h-3 animate-spin" />}
+                        Resend verification email
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Legal — brief: accent purple used sparingly, only for links */}
+                  <p className="text-center text-xs text-gray-400 mt-4 leading-relaxed">
+                    By signing in, you agree to MediaLayer's{" "}
+                    <Link href="/terms" className="text-[#6c47ff] hover:underline">Terms</Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="text-[#6c47ff] hover:underline">Privacy Policy</Link>.
+                  </p>
+                </motion.form>
+              ) : (
+                <motion.form
+                  key="register"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  onSubmit={registerForm.handleSubmit((d) => register(d))}
+                >
+                  {/* Google — primary CTA */}
+                  <button
+                    type="button"
+                    onClick={() => setShowRolePicker(true)}
+                    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors"
+                  >
+                    <GoogleIcon /> Sign up with Google
+                  </button>
+
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs text-gray-400 tracking-widest">OR</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className={labelClass}>Full name</label>
+                    <input {...registerForm.register("name")} className={inputClass} placeholder="John Doe" />
+                    {registerForm.formState.errors.name && (
+                      <p className="text-xs text-red-500 mt-1">{registerForm.formState.errors.name.message}</p>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className={labelClass}>Work email</label>
+                    <input {...registerForm.register("email")} className={inputClass} placeholder="name@company.com" />
+                    {registerForm.formState.errors.email && (
+                      <p className="text-xs text-red-500 mt-1">{registerForm.formState.errors.email.message}</p>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className={labelClass}>Password</label>
+                    <input type="password" {...registerForm.register("password")} className={inputClass} placeholder="••••••••" />
+                    {registerForm.formState.errors.password && (
+                      <p className="text-xs text-red-500 mt-1">{registerForm.formState.errors.password.message}</p>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className={labelClass}>I am a...</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["creator", "editor"] as const).map((r) => (
+                        <label
+                          key={r}
+                          className={`cursor-pointer border rounded-2xl p-3 flex flex-col items-center gap-1 transition-colors ${
+                            registerForm.watch("role") === r
+                              ? "border-[#6c47ff] bg-[#f9f8ff]"
+                              : "border-gray-200 hover:bg-gray-50"
+                          }`}
+                        >
+                          <input type="radio" value={r} {...registerForm.register("role")} className="hidden" />
+                          <span className="font-semibold text-gray-900 capitalize text-sm">{r}</span>
+                          <span className="text-xs text-gray-500 text-center">
+                            {r === "creator" ? "Review & approve" : "Upload & submit"}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isRegistering}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {isRegistering ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                  </button>
+
+                  <p className="text-center text-xs text-gray-400 mt-4 leading-relaxed">
+                    By signing up, you agree to MediaLayer's{" "}
+                    <Link href="/terms" className="text-[#6c47ff] hover:underline">Terms</Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="text-[#6c47ff] hover:underline">Privacy Policy</Link>.
+                  </p>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Sign in/up toggle — brief: secondary path, below card, 48px gap */}
+          <p className="text-center text-sm text-gray-700 mt-5">
+            {isLogin ? (
+              <>Don't have an account?{" "}
+                <Link href="/register" className="text-[#6c47ff] hover:underline">Sign up</Link>
+              </>
+            ) : (
+              <>Already have an account?{" "}
+                <Link href="/login" className="text-[#6c47ff] hover:underline">Sign in</Link>
+              </>
+            )}
+          </p>
+
+          {/* Testimonial — brief: 48–64px below card section */}
+          <div className="mt-14 text-center max-w-sm mx-auto">
+            <p className="text-sm text-gray-800 leading-relaxed">
+              I've <span className="font-bold">sent videos externally three times this month instead of scheduling a meeting</span>{" "}
+              and the first response is always, "This is great, why don't more people do this?"
+            </p>
+            <div className="flex items-center justify-center gap-3 mt-5">
+              <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+                N
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">Nayan R.</p>
+                <p className="text-xs text-gray-500">Founder, MediaLayer</p>
+              </div>
             </div>
-            <h2 className="text-2xl font-display font-bold mb-4">Focus on creation.</h2>
-            <p className="text-muted-foreground">MediaLayer handles the messy back-and-forth of video approvals so you and your team can focus on making incredible content.</p>
           </div>
         </div>
       </div>
+
+
     </div>
   );
 }

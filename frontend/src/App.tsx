@@ -20,6 +20,8 @@ import VideoDetail from "./pages/video-detail";
 import NotFound from "@/pages/not-found";
 import PrivacyPolicy from "@/pages/privacy";
 import TermsOfService from "@/pages/terms";
+import ProfilePage from "./pages/profile";
+import NotificationsPage from "./pages/notifications";
 import GoogleAuthSuccess from "@/pages/auth-google-success";
 
 // Initialize the global fetch interceptor once
@@ -96,7 +98,15 @@ function Router() {
         <ProtectedRoute allowedRole="creator" component={AllVideos} />
       </Route>
       
-      {/* Video Detail (accessible by both, API handles authorization logic) */}
+      <Route path="/dashboard/profile">
+        <ProtectedRoute component={ProfilePage} />
+      </Route>
+
+      <Route path="/dashboard/notifications">
+        <ProtectedRoute component={NotificationsPage} />
+      </Route>
+
+      {/* Video Detail */}
       <Route path="/dashboard/:role/video/:id">
         <ProtectedRoute>
           <VideoDetail />

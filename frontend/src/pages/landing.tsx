@@ -1,6 +1,6 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 import {
   Upload, Eye, CheckCircle, Youtube, Shield, Lock,
   Key, Video, Users, FileCheck, BarChart3, Play,
@@ -109,6 +109,126 @@ const Logo = () => (
   </span>
 );
 
+const HOW_STEPS = [
+  {
+    icon: Upload,
+    step: "01",
+    title: "Editor uploads",
+    body: "Editor uploads the video directly. No file sharing or Drive links needed.",
+    gradient: "linear-gradient(135deg, #c7d2fe 0%, #818cf8 50%, #6366f1 100%)",
+    iconBg: "bg-white/20",
+  },
+  {
+    icon: Eye,
+    step: "02",
+    title: "Creator reviews",
+    body: "Watch the video securely inside the platform with a signed, expiring URL.",
+    gradient: "linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #d97706 100%)",
+    iconBg: "bg-white/20",
+  },
+  {
+    icon: FileCheck,
+    step: "03",
+    title: "Approve or reject",
+    body: "One click to approve, or send feedback. Editor gets notified instantly.",
+    gradient: "linear-gradient(135deg, #bbf7d0 0%, #34d399 50%, #059669 100%)",
+    iconBg: "bg-white/20",
+  },
+  {
+    icon: Youtube,
+    step: "04",
+    title: "Published to YouTube",
+    body: "Approved video is pushed directly to the creator's YouTube channel.",
+    gradient: "linear-gradient(135deg, #fecaca 0%, #f87171 50%, #ef4444 100%)",
+    iconBg: "bg-white/20",
+  },
+];
+
+function HowItWorks() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+
+  return (
+    <section
+      id="how-it-works"
+      ref={containerRef}
+      // 400vh gives enough scroll room for 4 cards to animate in
+      className="relative"
+      style={{ height: "400vh", background: "linear-gradient(180deg, #eeeaf8 0%, #ffffff 300px)" }}
+    >
+      {/* Sticky wrapper */}
+      <div className="sticky top-0 h-screen flex flex-col justify-center px-6 overflow-hidden">
+        <div className="max-w-[1100px] mx-auto w-full">
+          <div className="text-center mb-14">
+            <h2 className="text-4xl md:text-5xl font-bold text-[#1a1f3c] mb-4">
+              A better workflow for creators &amp; editors
+            </h2>
+            <p className="text-gray-500 text-lg">Four steps. No downloads. No shared passwords.</p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-6">
+            {HOW_STEPS.map((item, i) => (
+              <StepCard key={item.step} item={item} index={i} scrollYProgress={scrollYProgress} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StepCard({
+  item,
+  index,
+  scrollYProgress,
+}: {
+  item: typeof HOW_STEPS[number];
+  index: number;
+  scrollYProgress: ReturnType<typeof useScroll>["scrollYProgress"];
+}) {
+  const start = index * 0.22;
+  const end   = start + 0.22;
+
+  const opacity = useTransform(scrollYProgress, [start, end], [0, 1]);
+  const y       = useTransform(scrollYProgress, [start, end], [56, 0]);
+  const scale   = useTransform(scrollYProgress, [start, end], [0.88, 1]);
+
+  return (
+    <motion.div
+      style={{ opacity, y, scale }}
+      className="rounded-3xl overflow-hidden flex flex-col"
+    >
+      <div
+        className="rounded-3xl overflow-hidden"
+        style={{ background: "#eeedf8", padding: "16px 16px 0 16px" }}
+      >
+        {/* Illustration area */}
+        <div
+          className="rounded-2xl flex items-center justify-center"
+          style={{
+            background: item.gradient,
+            height: "180px",
+          }}
+        >
+          <div className="w-20 h-20 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-lg">
+            <item.icon className="w-10 h-10 text-white drop-shadow" />
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="px-2 py-5 text-center">
+          <span className="text-xs font-bold text-indigo-400 tracking-widest block mb-1">{item.step}</span>
+          <h3 className="font-bold text-[#1a1f3c] text-base mb-2">{item.title}</h3>
+          <p className="text-gray-500 text-sm leading-relaxed">{item.body}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -182,35 +302,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-24 px-6 bg-white" style={{ background: "linear-gradient(180deg, #eeeaf8 0%, #ffffff 120px)" }}>
-        <div className="max-w-[1100px] mx-auto">
-          <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
-            <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-4">
-              A better workflow for creators & editors
-            </motion.h2>
-            <motion.p variants={fade} className="text-gray-500 text-center max-w-lg mx-auto mb-16 text-lg">
-              Four steps. No downloads. No shared passwords.
-            </motion.p>
-            <div className="grid md:grid-cols-4 gap-6">
-              {[
-                { icon: Upload, step: "01", title: "Editor uploads", body: "Editor uploads the video directly. No file sharing or Drive links needed." },
-                { icon: Eye, step: "02", title: "Creator reviews", body: "Watch the video securely inside the platform with a signed, expiring URL." },
-                { icon: FileCheck, step: "03", title: "Approve or reject", body: "One click to approve, or send feedback. Editor gets notified instantly." },
-                { icon: Youtube, step: "04", title: "Published to YouTube", body: "Approved video is pushed directly to the creator's YouTube channel." },
-              ].map((item) => (
-                <motion.div key={item.step} variants={fade} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0px_4px_8px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow">
-                  <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
-                    <item.icon className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <span className="text-xs font-bold text-indigo-400 tracking-widest">{item.step}</span>
-                  <h3 className="font-bold text-gray-900 mt-1 mb-2 text-base">{item.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{item.body}</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <HowItWorks />
 
       {/* ── FEATURES ── */}
       <section id="features" className="py-24 px-6 bg-gray-50 border-y border-gray-100">

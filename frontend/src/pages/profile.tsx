@@ -37,14 +37,14 @@ export default function ProfilePage() {
   };
 
   const inputClass =
-    "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors";
+    "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-colors";
 
   return (
     <div className="max-w-2xl">
       {/* Page header */}
       <div className="mb-6">
         <p className="text-sm text-gray-500 mb-0.5">{user?.name}</p>
-        <h1 className="text-[28px] font-bold text-[#333]">Personal Settings</h1>
+        <h1 className="text-[28px] font-bold text-gray-900">Personal Settings</h1>
       </div>
 
       {/* Tabs — ref: underline style, purple active */}
@@ -55,7 +55,7 @@ export default function ProfilePage() {
             onClick={() => setActiveTab(tab)}
             className={`pb-3 text-sm font-medium transition-colors relative ${
               activeTab === tab
-                ? "text-[#333] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-violet-600"
+                ? "text-gray-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-indigo-600"
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
@@ -69,8 +69,8 @@ export default function ProfilePage() {
 
           {/* Name and photos */}
           <section>
-            <h2 className="text-[18px] font-bold text-[#333] mb-1">Name and photos</h2>
-            <p className="text-sm text-[#6c757d] mb-6">
+            <h2 className="text-[18px] font-bold text-gray-900 mb-1">Name and photos</h2>
+            <p className="text-sm text-gray-500 mb-6">
               Changing your name below will update your name on your profile.
             </p>
 
@@ -79,14 +79,14 @@ export default function ProfilePage() {
               <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-500 shrink-0">
                 {user?.name?.charAt(0).toUpperCase() ?? "?"}
               </div>
-              <button className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-violet-400 hover:bg-violet-50 transition-colors">
+              <button className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
                 <Camera className="w-5 h-5 text-gray-400" />
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-5">
               <div>
-                <label className="block text-sm text-[#333] mb-1.5">First name</label>
+                <label className="block text-sm text-gray-900 mb-1.5">First name</label>
                 <input
                   className={inputClass}
                   value={firstName}
@@ -95,7 +95,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-[#333] mb-1.5">Last name</label>
+                <label className="block text-sm text-gray-900 mb-1.5">Last name</label>
                 <input
                   className={inputClass}
                   value={lastName}
@@ -110,7 +110,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm"
+                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
               </button>
@@ -128,14 +128,14 @@ export default function ProfilePage() {
 
           {/* Contact Info */}
           <section>
-            <h2 className="text-[18px] font-bold text-[#333] mb-1">Contact Info</h2>
-            <p className="text-sm text-[#6c757d] mb-6">
+            <h2 className="text-[18px] font-bold text-gray-900 mb-1">Contact Info</h2>
+            <p className="text-sm text-gray-500 mb-6">
               Your email address is used to sign in and receive notifications.
             </p>
 
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm text-[#333] mb-1.5">Email</label>
+                <label className="block text-sm text-gray-900 mb-1.5">Email</label>
                 <input
                   className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}
                   value={user?.email || ""}
@@ -143,7 +143,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-[#333] mb-1.5">Role</label>
+                <label className="block text-sm text-gray-900 mb-1.5">Role</label>
                 <input
                   className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed capitalize`}
                   value={user?.role || ""}
@@ -156,7 +156,7 @@ export default function ProfilePage() {
           {/* Danger zone */}
           <section className="border border-red-100 rounded-lg p-5 bg-red-50/50">
             <h2 className="text-[15px] font-bold text-red-600 mb-1">Danger Zone</h2>
-            <p className="text-sm text-[#6c757d] mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               Permanently delete your account and all associated data. This cannot be undone.
             </p>
             <button
@@ -179,13 +179,13 @@ export default function ProfilePage() {
       )}
 
       {activeTab === "Notifications" && (
-        <div className="text-sm text-[#6c757d]">Notification settings coming soon.</div>
+        <div className="text-sm text-gray-500">Notification settings coming soon.</div>
       )}
 
       {activeTab === "Integrations" && (
         <div className="space-y-4">
-          <h2 className="text-[18px] font-bold text-[#333] mb-1">Connected Accounts</h2>
-          <p className="text-sm text-[#6c757d] mb-6">Connect external accounts to enhance your workflow.</p>
+          <h2 className="text-[18px] font-bold text-gray-900 mb-1">Connected Accounts</h2>
+          <p className="text-sm text-gray-500 mb-6">Connect external accounts to enhance your workflow.</p>
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white shadow-[0px_4px_8px_rgba(0,0,0,0.04)]">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
@@ -197,8 +197,8 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#333]">Google</p>
-                <p className="text-xs text-[#6c757d]">Connect your Google account</p>
+                <p className="text-sm font-semibold text-gray-900">Google</p>
+                <p className="text-xs text-gray-500">Connect your Google account</p>
               </div>
             </div>
             <button className="px-4 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">

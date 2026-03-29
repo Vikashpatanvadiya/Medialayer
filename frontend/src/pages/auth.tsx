@@ -40,7 +40,7 @@ function GoogleRolePicker({ onSelect, onClose }: { onSelect: (role: "creator" | 
             <button
               key={r}
               onClick={() => onSelect(r)}
-              className="border border-gray-200 rounded-2xl p-5 flex flex-col items-center gap-2 hover:border-[#6c47ff] hover:bg-[#f9f8ff] transition-colors"
+              className="border border-gray-200 rounded-2xl p-5 flex flex-col items-center gap-2 hover:border-[#4f46e5] hover:bg-[#eef2ff] transition-colors"
             >
               <span className="text-2xl">{r === "creator" ? "🎬" : "✂️"}</span>
               <span className="font-semibold text-gray-900 capitalize text-sm">{r}</span>
@@ -232,9 +232,9 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                   {/* Legal — brief: accent purple used sparingly, only for links */}
                   <p className="text-center text-xs text-gray-400 mt-4 leading-relaxed">
                     By signing in, you agree to MediaLayer's{" "}
-                    <Link href="/terms" className="text-[#6c47ff] hover:underline">Terms</Link>{" "}
+                    <Link href="/terms" className="text-[#4f46e5] hover:underline">Terms</Link>{" "}
                     and{" "}
-                    <Link href="/privacy" className="text-[#6c47ff] hover:underline">Privacy Policy</Link>.
+                    <Link href="/privacy" className="text-[#4f46e5] hover:underline">Privacy Policy</Link>.
                   </p>
                 </motion.form>
               ) : (
@@ -293,7 +293,7 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                           key={r}
                           className={`cursor-pointer border rounded-2xl p-3 flex flex-col items-center gap-1 transition-colors ${
                             registerForm.watch("role") === r
-                              ? "border-[#6c47ff] bg-[#f9f8ff]"
+                              ? "border-[#4f46e5] bg-[#eef2ff]"
                               : "border-gray-200 hover:bg-gray-50"
                           }`}
                         >
@@ -317,9 +317,9 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
 
                   <p className="text-center text-xs text-gray-400 mt-4 leading-relaxed">
                     By signing up, you agree to MediaLayer's{" "}
-                    <Link href="/terms" className="text-[#6c47ff] hover:underline">Terms</Link>{" "}
+                    <Link href="/terms" className="text-[#4f46e5] hover:underline">Terms</Link>{" "}
                     and{" "}
-                    <Link href="/privacy" className="text-[#6c47ff] hover:underline">Privacy Policy</Link>.
+                    <Link href="/privacy" className="text-[#4f46e5] hover:underline">Privacy Policy</Link>.
                   </p>
                 </motion.form>
               )}
@@ -330,11 +330,11 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
           <p className="text-center text-sm text-gray-700 mt-5">
             {isLogin ? (
               <>Don't have an account?{" "}
-                <Link href="/register" className="text-[#6c47ff] hover:underline">Sign up</Link>
+                <Link href="/register" className="text-[#4f46e5] hover:underline">Sign up</Link>
               </>
             ) : (
               <>Already have an account?{" "}
-                <Link href="/login" className="text-[#6c47ff] hover:underline">Sign in</Link>
+                <Link href="/login" className="text-[#4f46e5] hover:underline">Sign in</Link>
               </>
             )}
           </p>

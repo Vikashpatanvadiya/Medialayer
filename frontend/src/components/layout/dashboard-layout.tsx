@@ -23,11 +23,13 @@ import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
+import { InviteModal } from "@/components/ui/invite-modal";
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: notifData, refetch: refetchNotifs } = useListNotifications({
@@ -72,7 +74,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="px-4 py-4 border-b border-gray-100">
         <div className="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
               {user.name?.charAt(0).toUpperCase() ?? "M"}
             </div>
             <div>
@@ -82,6 +84,15 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
           <ChevronDown className="w-4 h-4 text-gray-400" />
         </div>
+        {user.role === "creator" && (
+          <button
+            onClick={() => setShowInviteModal(true)}
+            className="mt-1.5 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+          >
+            <Users className="w-4 h-4" />
+            Invite teammates
+          </button>
+        )}
       </div>
 
       {/* Nav links — ref: icon + label, purple active bg */}
@@ -93,12 +104,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               <div
                 className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm font-medium ${
                   active
-                    ? "bg-violet-50 text-violet-700"
+                    ? "bg-indigo-50 text-indigo-700"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
                 {active && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-violet-600 rounded-r-full" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-600 rounded-r-full" />
                 )}
                 <link.icon className="w-4 h-4 shrink-0" />
                 <span>{link.name}</span>
@@ -117,14 +128,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="px-4 py-4 border-t border-gray-100">
         {isCreator ? (
           <Link href="/dashboard/creator/videos">
-            <div className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors cursor-pointer shadow-sm">
+            <div className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors cursor-pointer shadow-sm">
               <Upload className="w-4 h-4" />
               Upload a video
             </div>
           </Link>
         ) : (
           <Link href="/dashboard/editor/submissions">
-            <div className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors cursor-pointer shadow-sm">
+            <div className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors cursor-pointer shadow-sm">
               <Upload className="w-4 h-4" />
               Submit a video
             </div>
@@ -167,7 +178,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 placeholder="Search videos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg w-56 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors placeholder:text-gray-400"
+                className="pl-9 pr-4 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg w-56 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-colors placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -187,7 +198,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
                   <h3 className="font-semibold text-sm text-gray-900">Notifications</h3>
                   {unreadCount > 0 && (
-                    <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">{unreadCount} new</span>
+                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">{unreadCount} new</span>
                   )}
                 </div>
                 <ScrollArea className="h-[280px]">
@@ -202,7 +213,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                         <div
                           key={notif.id}
                           onClick={() => !notif.read && markReadMutation.mutate({ id: notif.id })}
-                          className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${!notif.read ? "bg-violet-50/50" : ""}`}
+                          className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${!notif.read ? "bg-indigo-50/50" : ""}`}
                         >
                           <div className="flex gap-3">
                             <div className="mt-0.5 shrink-0">
@@ -232,7 +243,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <Popover>
               <PopoverTrigger asChild>
                 <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">
                     {user.name?.charAt(0).toUpperCase() ?? "?"}
                   </div>
                   <span className="text-sm font-medium text-gray-700 hidden sm:block">{user.name?.split(" ")[0]}</span>
@@ -298,6 +309,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </motion.aside>
         </div>
       )}
+
+      {/* Invite modal */}
+      {showInviteModal && <InviteModal onClose={() => setShowInviteModal(false)} />}
     </div>
   );
 }

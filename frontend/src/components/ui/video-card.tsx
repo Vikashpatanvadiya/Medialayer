@@ -70,7 +70,7 @@ export function VideoCard({ video, rolePath, onDelete }: VideoCardProps) {
         </div>
 
         <div className="p-5 flex-1 flex flex-col">
-          <h3 className="font-semibold text-base text-[#333] line-clamp-1 group-hover:text-violet-600 transition-colors">{video.title}</h3>
+          <h3 className="font-semibold text-base text-[#333] line-clamp-1 group-hover:text-indigo-600 transition-colors">{video.title}</h3>
           <p className="text-sm text-[#6c757d] mt-1 line-clamp-2 leading-relaxed flex-1">
             {video.description || "No description provided."}
           </p>

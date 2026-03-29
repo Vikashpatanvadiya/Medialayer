@@ -94,4 +94,30 @@ router.delete("/remove-editor/:editorId", requireAuth, requireRole("creator"), a
   res.json({ message: "Editor removed" });
 });
 
+// Creator sends email invites to editors
+router.post("/invite", requireAuth, requireRole("creator"), async (req, res) => {
+  const { emails, message } = req.body as { emails: string[]; message?: string };
+  if (!emails?.length) { res.status(400).json({ error: "At least one email is required" }); return; }
+
+  const [creator] = await db.select({ name: usersTable.name, inviteCode: usersTable.inviteCode })
+    .from(usersTable).where(eq(usersTable.id, req.user!.userId)).limit(1);
+
+  const { sendEmail } = await import("../lib/mailer.js");
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const inviteLink = `${frontendUrl}/register?role=editor&inviteCode=${creator?.inviteCode || ""}`;
+
+  await Promise.all(emails.map(email =>
+    sendEmail(email, `${creator?.name || "A creator"} invited you to MediaLayer`, `
+      <p>Hi,</p>
+      <p><strong>${creator?.name || "A creator"}</strong> has invited you to join their workspace on MediaLayer.</p>
+      ${message ? `<p>"${message}"</p>` : ""}
+      <p>Click below to create your editor account and join their workspace:</p>
+      <p><a href="${inviteLink}" style="background:#6366f1;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Accept Invitation</a></p>
+      <p>Or use invite code: <strong>${creator?.inviteCode}</strong></p>
+    `).catch(() => {})
+  ));
+
+  res.json({ success: true, message: `Invites sent to ${emails.length} editor(s)` });
+});
+
 export default router;

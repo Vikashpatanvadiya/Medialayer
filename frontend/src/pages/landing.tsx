@@ -40,14 +40,6 @@ const SOCIAL_POSTS = [
   },
 ];
 
-const WORKFLOW_CARDS = [
-  { icon: Upload, title: "Editor uploads the finished video directly — no Drive links, no WeTransfer", author: "Sam Torres", role: "Video Editor" },
-  { icon: Eye, title: "Creator reviews with a secure in-browser player, no downloads needed", author: "Maya Patel", role: "YouTube Creator" },
-  { icon: Youtube, title: "One click sends the approved video straight to YouTube", author: "Chris Nguyen", role: "Content Creator" },
-  { icon: CheckCircle, title: "Approve or reject with feedback — editor gets notified instantly", author: "Dana Lee", role: "Creator & Editor" },
-  { icon: Shield, title: "No password sharing, no channel access handed over — ever", author: "Ravi Sharma", role: "Channel Manager" },
-  { icon: BarChart3, title: "Every action is logged so you always know what happened and when", author: "Lena Wolf", role: "Content Agency" },
-];
 
 function SocialPostCarousel() {
   const [current, setCurrent] = useState(0);
@@ -280,27 +272,6 @@ export default function LandingPage() {
                 {/* Social post content */}
                 <SocialPostCarousel />
               </div>
-            </motion.div>
-
-            {/* Content grid */}
-            <motion.div variants={stagger} className="grid md:grid-cols-3 gap-6">
-              {WORKFLOW_CARDS.map((card) => (
-                <motion.div key={card.title} variants={fade} className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/80 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="aspect-video rounded-xl bg-indigo-50 mb-4 flex items-center justify-center overflow-hidden">
-                    <card.icon className="w-10 h-10 text-indigo-300" />
-                  </div>
-                  <h3 className="font-semibold text-[#1a1f3c] text-base mb-2">{card.title}</h3>
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
-                      {card.author[0]}
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700">{card.author}</p>
-                      <p className="text-xs text-gray-400">{card.role}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
             </motion.div>
 
           </motion.div>

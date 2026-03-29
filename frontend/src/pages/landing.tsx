@@ -1,365 +1,371 @@
 import { Link } from "wouter";
+import { motion } from "framer-motion";
+import { useState } from "react";
 import {
-  ArrowRight, Upload, Eye, CheckCircle, Youtube,
-  Shield, Lock, Key, Video, Users, FileCheck, BarChart3,
+  Upload, Eye, CheckCircle, Youtube, Shield, Lock,
+  Key, Video, Users, FileCheck, BarChart3, Play,
+  ArrowRight, ChevronRight
 } from "lucide-react";
 
-// ── CSS vars (from design-brief-loom-landing.md) ─────────────────────────────
-// --color-accent: #4f46e5
-// --color-accent-hover: #4338ca
-// --color-accent-light: #eef2ff
-// --shadow-card: 0 4px 24px rgba(0,0,0,0.06)
-// --shadow-mockup: 0 8px 40px rgba(0,0,0,0.12)
+const fade = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
+const stagger = { show: { transition: { staggerChildren: 0.08 } } };
 
-const ACCENT = "#4f46e5";
-
-// ── Logo marquee data ─────────────────────────────────────────────────────────
-const logos = [
-  "YouTube Creators", "Indie Filmmakers", "Podcast Studios",
-  "Marketing Agencies", "Content Teams", "Video Editors",
-  "Course Creators", "Brand Studios",
-];
+const Logo = () => (
+  <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[22px] tracking-tight text-[#1a1f3c]">
+    MediaLayer
+  </span>
+);
 
 export default function LandingPage() {
-  return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans antialiased" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-      {/* ── NAV ── brief: fixed, white, subtle border, pill CTA */}
+  return (
+    <div className="min-h-screen bg-white text-gray-900 font-sans antialiased">
+
+      {/* ── NAV ── */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center">
-            <Link href="/">
-              <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[22px] tracking-tight text-[#1a1f3c] cursor-pointer hover:opacity-80 transition-opacity">MediaLayer</span>
-            </Link>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
+        <div className="max-w-[1100px] mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/"><Logo /></Link>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
             <a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a>
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-            <a href="#security" className="hover:text-gray-900 transition-colors">Security</a>
+            <a href="#testimonials" className="hover:text-gray-900 transition-colors">Customers</a>
             <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
+            <Link href="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors hidden sm:block">
-              Sign in
-            </Link>
-            {/* brief: pill-shaped primary CTA */}
-            <Link href="/register" className="px-5 py-2 rounded-full text-white text-sm font-semibold transition-colors" style={{ backgroundColor: ACCENT }}>
-              Get started free
-            </Link>
-          </div>
+          <Link href="/register" className="px-5 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
+            Get Started Free
+          </Link>
         </div>
       </nav>
 
-      {/* ── HERO ── brief: 56–64px H1, dual CTA, generous padding */}
-      <section className="pt-36 pb-28 px-6">
-        <div className="max-w-[1200px] mx-auto text-center">
-          {/* Section label chip */}
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ backgroundColor: "#eef2ff", color: ACCENT }}>
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: ACCENT }} />
-            Early Access — Limited Spots
-          </span>
-
-          <h1 className="text-5xl md:text-[62px] font-bold tracking-tight text-gray-900 leading-[1.1] mb-6 max-w-4xl mx-auto">
-            Your editor uploads.<br />
-            <span style={{ color: ACCENT }}>You approve.</span> It publishes.
-          </h1>
-
-          <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-            MediaLayer helps creators review and publish videos without downloads, re-uploads, or sharing YouTube access.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register" className="flex items-center gap-2 px-7 py-3.5 rounded-full text-white font-semibold transition-colors text-sm" style={{ backgroundColor: ACCENT }}>
-              Get started free <ArrowRight className="w-4 h-4" />
-            </Link>
-            <a href="#demo" className="flex items-center gap-2 px-7 py-3.5 rounded-full border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">
-              Watch demo
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── LOGO MARQUEE ── brief: infinite scroll, grayscale logos */}
-      <section className="py-12 bg-[#F7F7F8] border-y border-gray-100 overflow-hidden">
-        <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-widest mb-8">
-          Trusted by creators and teams worldwide
-        </p>
-        <div className="flex gap-12 animate-marquee whitespace-nowrap">
-          {[...logos, ...logos].map((name, i) => (
-            <span key={i} className="text-sm font-semibold text-gray-300 shrink-0 px-4">
-              {name}
-            </span>
-          ))}
-        </div>
-        <style>{`
-          @keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
-          .animate-marquee { animation: marquee 20s linear infinite; }
-        `}</style>
-      </section>
-
-      {/* ── PROBLEM ── brief: #F7F7F8 bg, 2-col cards, shadow-card */}
-      <section className="py-28 px-6 bg-[#F7F7F8]">
-        <div className="max-w-[1200px] mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest text-center mb-4" style={{ color: ACCENT }}>The Problem</p>
-          <h2 className="text-4xl md:text-[42px] font-bold text-center text-gray-900 mb-16 leading-tight">Content workflows are broken</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {[
-              { icon: "📦", title: "Large files are slow to transfer", body: "Sending 4K videos over Google Drive or WeTransfer wastes hours every week." },
-              { icon: "💬", title: "Feedback is scattered", body: "Notes in DMs, emails, and voice messages — no one knows what version is final." },
-              { icon: "🔄", title: "Manual re-uploads", body: "Creators download, re-upload, and re-title videos themselves. Every. Single. Time." },
-              { icon: "🔑", title: "Sharing YouTube access is risky", body: "Giving editors your YouTube password or channel access is a security nightmare." },
-            ].map((item) => (
-              <div key={item.title} className="bg-white rounded-2xl p-7 border border-gray-100" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-                <span className="text-3xl mb-4 block">{item.icon}</span>
-                <h3 className="font-semibold text-gray-900 mb-2 text-lg">{item.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── brief: white bg, 4-col steps */}
-      <section id="how-it-works" className="py-28 px-6 bg-white">
-        <div className="max-w-[1200px] mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest text-center mb-4" style={{ color: ACCENT }}>How it works</p>
-          <h2 className="text-4xl md:text-[42px] font-bold text-center text-gray-900 mb-4 leading-tight">Four steps. Zero friction.</h2>
-          <p className="text-gray-500 text-center max-w-xl mx-auto mb-16 text-lg">No downloads. No shared passwords. No re-uploads.</p>
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              { icon: Upload, step: "01", title: "Editor uploads", body: "Editor uploads the video directly to the platform. No file sharing needed." },
-              { icon: Eye, step: "02", title: "Creator reviews", body: "Creator watches the video securely inside the platform with a signed URL." },
-              { icon: FileCheck, step: "03", title: "Approve or reject", body: "One click to approve, or send feedback. Editor gets notified instantly." },
-              { icon: Youtube, step: "04", title: "Published to YouTube", body: "Approved video is pushed directly to the creator's YouTube channel." },
-            ].map((item) => (
-              <div key={item.step} className="bg-white rounded-2xl p-6 border border-gray-100 h-full" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: "#eef2ff" }}>
-                  <item.icon className="w-5 h-5" style={{ color: ACCENT }} />
+      {/* ── HERO ── */}
+      <section className="pt-16" style={{ background: "linear-gradient(160deg, #eeeaf8 0%, #e8e4f5 40%, #ddd8f0 100%)" }}>
+        <div className="max-w-[1100px] mx-auto px-6 pt-20 pb-0 text-center">
+          <motion.div initial="hidden" animate="show" variants={stagger}>
+            <motion.div variants={fade}>
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 text-indigo-700 text-xs font-semibold border border-indigo-100 mb-8 backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                Early Access — Limited Spots
+              </span>
+            </motion.div>
+            <motion.h1 variants={fade} className="text-5xl md:text-[64px] font-bold tracking-tight text-[#1a1f3c] leading-[1.1] mb-6 max-w-3xl mx-auto">
+              Your editor uploads.<br />You approve. It publishes.
+            </motion.h1>
+            <motion.p variants={fade} className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto mb-10 leading-relaxed">
+              MediaLayer helps creators review and publish videos without downloads, re-uploads, or sharing YouTube access.
+            </motion.p>
+            <motion.div variants={fade} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+              <Link href="/register" className="px-8 py-3.5 rounded-full bg-indigo-600 text-white font-semibold text-base hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-300/40">
+                Get MediaLayer for free
+              </Link>
+              <a href="#demo" className="flex items-center gap-2 text-gray-600 font-medium text-sm hover:text-gray-900 transition-colors">
+                <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
+                  <Play className="w-3.5 h-3.5 text-indigo-600 ml-0.5" />
                 </div>
-                <span className="text-xs font-bold tracking-widest" style={{ color: ACCENT }}>{item.step}</span>
-                <h3 className="font-semibold text-gray-900 mt-1 mb-2">{item.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{item.body}</p>
-              </div>
+                Watch demo
+              </a>
+            </motion.div>
+          </motion.div>
+
+          {/* Demo video */}
+          <motion.div
+            id="demo"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.7 }}
+            className="rounded-t-2xl overflow-hidden shadow-2xl shadow-indigo-200/50 border border-white/50 max-w-4xl mx-auto"
+          >
+            <div className="aspect-video bg-gray-900">
+              <iframe
+                src="https://www.youtube.com/embed/i5V6dnPXCqI"
+                className="w-full h-full"
+                allowFullScreen
+                title="MediaLayer Demo"
+              />
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── SOCIAL PROOF BAR ── */}
+      <section className="py-10 border-y border-gray-100 bg-white">
+        <div className="max-w-[1100px] mx-auto px-6 text-center">
+          <p className="text-sm text-gray-400 font-medium mb-6 uppercase tracking-widest">Trusted by creators and editors</p>
+          <div className="flex flex-wrap items-center justify-center gap-10 text-gray-300 font-bold text-xl">
+            {["YouTube Creators", "Video Editors", "Content Teams", "Agencies"].map(t => (
+              <span key={t} className="text-gray-400 text-sm font-semibold">{t}</span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FEATURES ── brief: alternating 2-col sections, icon + text */}
-      <section id="features" className="py-28 px-6 bg-[#F7F7F8]">
-        <div className="max-w-[1200px] mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest text-center mb-4" style={{ color: ACCENT }}>Features</p>
-          <h2 className="text-4xl md:text-[42px] font-bold text-center text-gray-900 mb-16 leading-tight">Everything you need, nothing you don't</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { icon: Upload, title: "Secure upload system", body: "Videos are stored privately on Cloudinary. No public links, ever." },
-              { icon: Users, title: "Role-based access", body: "Separate dashboards for creators and editors. Everyone sees only what they need." },
-              { icon: Eye, title: "Built-in video review", body: "Watch videos directly in the platform with signed, expiring URLs." },
-              { icon: CheckCircle, title: "One-click approval", body: "Approve or reject with feedback. Instant notifications to the editor." },
-              { icon: Youtube, title: "Direct YouTube publishing", body: "Push approved videos straight to YouTube. No re-uploading." },
-              { icon: BarChart3, title: "Audit trail & logs", body: "Every action is logged. Know exactly who did what and when." },
-            ].map((f) => (
-              <div key={f.title} className="bg-white rounded-2xl p-7 border border-gray-100" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5" style={{ backgroundColor: "#eef2ff" }}>
-                  <f.icon className="w-5 h-5" style={{ color: ACCENT }} />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{f.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECURITY ── brief: white bg, 2-col, checklist left, table right */}
-      <section id="security" className="py-28 px-6 bg-white">
-        <div className="max-w-[1200px] mx-auto grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: ACCENT }}>Security</p>
-            <h2 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">Built for security and trust</h2>
-            <p className="text-gray-500 leading-relaxed mb-8 text-lg">Your videos, tokens, and credentials are protected at every layer.</p>
-            <div className="space-y-4">
+      {/* ── HOW IT WORKS ── */}
+      <section id="how-it-works" className="py-24 px-6 bg-white">
+        <div className="max-w-[1100px] mx-auto">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
+            <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-4">
+              A better workflow for creators & editors
+            </motion.h2>
+            <motion.p variants={fade} className="text-gray-500 text-center max-w-lg mx-auto mb-16 text-lg">
+              Four steps. No downloads. No shared passwords.
+            </motion.p>
+            <div className="grid md:grid-cols-4 gap-6">
               {[
-                { icon: Key, text: "OAuth-based login — no password sharing" },
-                { icon: Shield, text: "No YouTube channel access sharing" },
-                { icon: Lock, text: "Encrypted tokens (AES-256-CBC)" },
-                { icon: Video, text: "Private video storage — no public links" },
-                { icon: CheckCircle, text: "Signed URLs for secure playback (1hr expiry)" },
+                { icon: Upload, step: "01", title: "Editor uploads", body: "Editor uploads the video directly. No file sharing or Drive links needed." },
+                { icon: Eye, step: "02", title: "Creator reviews", body: "Watch the video securely inside the platform with a signed, expiring URL." },
+                { icon: FileCheck, step: "03", title: "Approve or reject", body: "One click to approve, or send feedback. Editor gets notified instantly." },
+                { icon: Youtube, step: "04", title: "Published to YouTube", body: "Approved video is pushed directly to the creator's YouTube channel." },
               ].map((item) => (
-                <div key={item.text} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#eef2ff" }}>
-                    <item.icon className="w-4 h-4" style={{ color: ACCENT }} />
+                <motion.div key={item.step} variants={fade} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0px_4px_8px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow">
+                  <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
+                    <item.icon className="w-5 h-5 text-indigo-600" />
                   </div>
-                  <span className="text-gray-700 text-sm font-medium">{item.text}</span>
-                </div>
+                  <span className="text-xs font-bold text-indigo-400 tracking-widest">{item.step}</span>
+                  <h3 className="font-bold text-gray-900 mt-1 mb-2 text-base">{item.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{item.body}</p>
+                </motion.div>
               ))}
             </div>
-          </div>
-          <div className="bg-[#F7F7F8] rounded-2xl p-8 border border-gray-100" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-            <div className="space-y-0">
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section id="features" className="py-24 px-6 bg-gray-50 border-y border-gray-100">
+        <div className="max-w-[1100px] mx-auto">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
+            <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-16">Features</motion.h2>
+            <div className="grid md:grid-cols-4 gap-8">
               {[
-                { label: "Video storage", value: "Cloudinary (authenticated)", status: "secure" },
-                { label: "YouTube tokens", value: "AES-256 encrypted", status: "secure" },
-                { label: "Video access", value: "Signed URLs, 1hr expiry", status: "secure" },
-                { label: "Authentication", value: "JWT + Google OAuth", status: "secure" },
-                { label: "Direct URL access", value: "Blocked (401)", status: "blocked" },
-              ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between py-4 border-b border-gray-200 last:border-0">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{row.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{row.value}</p>
+                { icon: Upload, title: "Secure upload", body: "Videos stored privately on Cloudinary. No public links, ever." },
+                { icon: Users, title: "Role-based access", body: "Separate dashboards for creators and editors." },
+                { icon: Eye, title: "Built-in review", body: "Watch videos directly in the platform with signed URLs." },
+                { icon: CheckCircle, title: "One-click approval", body: "Approve or reject with feedback. Instant notifications." },
+                { icon: Youtube, title: "YouTube publishing", body: "Push approved videos straight to YouTube." },
+                { icon: BarChart3, title: "Audit trail", body: "Every action is logged. Know exactly who did what." },
+                { icon: Lock, title: "Encrypted tokens", body: "YouTube OAuth tokens encrypted with AES-256." },
+                { icon: Shield, title: "No password sharing", body: "Creators never share YouTube credentials." },
+              ].map((f) => (
+                <motion.div key={f.title} variants={fade} className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#1a1f3c] flex items-center justify-center shrink-0">
+                    <f.icon className="w-4 h-4 text-white" />
                   </div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${row.status === "secure" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
-                    {row.status === "secure" ? "✓ Secure" : "✗ Blocked"}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm mb-1">{f.title}</h3>
+                    <p className="text-gray-500 text-xs leading-relaxed">{f.body}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <section id="testimonials" className="py-24 px-6" style={{ background: "linear-gradient(160deg, #f0eef8 0%, #e8e4f5 100%)" }}>
+        <div className="max-w-[1100px] mx-auto">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
+            <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-16">
+              What Customers are Saying
+            </motion.h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { name: "Vikash P.", role: "YouTube Creator", quote: "MediaLayer completely changed how I work with my editor. No more back-and-forth on WhatsApp. Everything is in one place." },
+                { name: "Bansi P.", role: "Video Editor", quote: "I upload the video, the creator reviews it, and it goes live on YouTube. The whole process takes minutes now instead of hours." },
+                { name: "Ratandip S.", role: "Content Creator", quote: "The fact that I don't have to share my YouTube password with anyone is a game changer. MediaLayer handles everything securely." },
+                { name: "Aastha M.", role: "Editor", quote: "The approval workflow is so clean. I get notified the moment my video is approved. No more chasing replies." },
+                { name: "Nayan R.", role: "Creator", quote: "I've sent videos externally three times this month instead of scheduling a meeting. The first response is always 'why don't more people do this?'" },
+                { name: "Chirag V.", role: "YouTube Creator", quote: "Direct YouTube publishing is the killer feature. My editor submits, I approve, and it's live. That's it." },
+              ].map((t) => (
+                <motion.div key={t.name} variants={fade} className="bg-white rounded-2xl p-6 border border-white shadow-[0px_4px_8px_rgba(0,0,0,0.08)]">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
+                      {t.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
+                      <p className="text-gray-500 text-xs">{t.role}</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed">"{t.quote}"</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── SECURITY ── */}
+      <section className="py-24 px-6 bg-[#1a2a1a]">
+        <div className="max-w-[1100px] mx-auto">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} className="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+              <motion.p variants={fade} className="text-green-400 font-semibold text-sm uppercase tracking-widest mb-4">Security</motion.p>
+              <motion.h2 variants={fade} className="text-3xl md:text-4xl font-bold text-white mb-6">Built for security and trust</motion.h2>
+              <motion.div variants={stagger} className="space-y-4">
+                {[
+                  { icon: Key, text: "OAuth-based login — no password sharing" },
+                  { icon: Shield, text: "No YouTube channel access sharing" },
+                  { icon: Lock, text: "Encrypted tokens (AES-256-CBC)" },
+                  { icon: Video, text: "Private video storage — no public links" },
+                  { icon: CheckCircle, text: "Signed URLs for secure playback (1hr expiry)" },
+                ].map((item) => (
+                  <motion.div key={item.text} variants={fade} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-green-900/50 flex items-center justify-center shrink-0">
+                      <item.icon className="w-4 h-4 text-green-400" />
+                    </div>
+                    <span className="text-gray-300 text-sm font-medium">{item.text}</span>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+            <motion.div variants={fade} className="bg-[#0f1a0f] rounded-3xl p-8 border border-green-900/30">
+              {[
+                { label: "Video storage", value: "Cloudinary (authenticated)", ok: true },
+                { label: "YouTube tokens", value: "AES-256 encrypted", ok: true },
+                { label: "Video access", value: "Signed URLs, 1hr expiry", ok: true },
+                { label: "Authentication", value: "JWT + Google OAuth", ok: true },
+                { label: "Direct URL access", value: "Blocked (401)", ok: false },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between py-3 border-b border-green-900/20 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-white">{row.label}</p>
+                    <p className="text-xs text-gray-500">{row.value}</p>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${row.ok ? "bg-green-900/50 text-green-400" : "bg-red-900/50 text-red-400"}`}>
+                    {row.ok ? "✓ Secure" : "✗ Blocked"}
                   </span>
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── DEMO ── brief: #F7F7F8 bg, video mockup with strong shadow */}
-      <section id="demo" className="py-28 px-6 bg-[#F7F7F8]">
-        <div className="max-w-[900px] mx-auto text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: ACCENT }}>Demo</p>
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">See MediaLayer in action</h2>
-          <p className="text-gray-500 mb-10 text-lg">Watch the full workflow from upload to YouTube publish.</p>
-          <div className="rounded-2xl overflow-hidden aspect-video" style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.12)" }}>
-            <iframe
-              src="https://www.youtube.com/embed/i5V6dnPXCqI"
-              className="w-full h-full"
-              allowFullScreen
-              title="MediaLayer Demo"
-            />
-          </div>
-        </div>
-      </section>
+      {/* ── PRICING ── */}
+      <section id="pricing" className="py-24 px-6 bg-white">
+        <div className="max-w-[900px] mx-auto">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
+            <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-4">
+              Choose the plan that fits your needs.
+            </motion.h2>
+            <motion.p variants={fade} className="text-gray-500 text-center mb-14 text-lg">Pay once. Use forever. No subscriptions.</motion.p>
+            <motion.div variants={fade} className="grid md:grid-cols-2 gap-6 items-stretch">
 
-      {/* ── PRICING ── brief: white bg, 2-col cards */}
-      <section id="pricing" className="py-28 px-6 bg-white">
-        <div className="max-w-[900px] mx-auto text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: ACCENT }}>Pricing</p>
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">Pay once. Use forever.</h2>
-          <p className="text-gray-500 mb-14 text-lg max-w-xl mx-auto">
-            No subscriptions. No monthly fees. Pay one time and get full lifetime access.
-          </p>
-          <div className="grid md:grid-cols-2 gap-6 items-stretch text-left">
-
-            {/* Starter */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 flex flex-col" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-400 mb-3">Starter</p>
-                <div className="flex items-end gap-1.5 mb-1">
-                  <span className="text-5xl font-bold text-gray-900">$50</span>
-                  <span className="text-gray-400 text-sm mb-2">one-time</span>
-                </div>
-                <p className="text-gray-500 text-sm mb-7">Perfect for solo creators working with one editor.</p>
-                <ul className="space-y-3 mb-8">
-                  {["1 creator account", "Up to 3 editors", "Unlimited video reviews", "Direct YouTube publishing", "Email notifications", "Lifetime access"].map(f => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm text-gray-700">
-                      <CheckCircle className="w-4 h-4 shrink-0" style={{ color: ACCENT }} /> {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Link href="/register" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-gray-200 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm">
-                Get started <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* Pro — brief: accent bg for featured plan */}
-            <div className="rounded-2xl p-8 text-left relative overflow-hidden flex flex-col" style={{ backgroundColor: ACCENT, boxShadow: "0 8px 40px rgba(98,93,245,0.3)" }}>
-              <span className="absolute top-5 right-5 px-2.5 py-1 rounded-full bg-white/20 text-white text-xs font-semibold">Most Popular</span>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-white/60 mb-3">Pro</p>
-                <div className="flex items-end gap-1.5 mb-1">
-                  <span className="text-5xl font-bold text-white">$100</span>
-                  <span className="text-white/60 text-sm mb-2">one-time</span>
-                </div>
-                <p className="text-white/70 text-sm mb-7">For growing channels with multiple editors and higher volume.</p>
-                <ul className="space-y-3 mb-8">
-                  {["Unlimited creator accounts", "Unlimited editors", "Unlimited video reviews", "Direct YouTube publishing", "Priority email support", "Audit logs & analytics", "Lifetime access"].map(f => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm text-white">
-                      <CheckCircle className="w-4 h-4 text-white/60 shrink-0" /> {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Link href="/register" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white font-semibold hover:bg-gray-50 transition-colors text-sm" style={{ color: ACCENT }}>
-                Get started <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-          <p className="text-xs text-gray-400 mt-6">No subscriptions · No hidden fees · Pay once, own it forever</p>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS ── brief: carousel-style, avatar + quote + company */}
-      <section className="py-28 px-6 bg-[#F7F7F8]">
-        <div className="max-w-[1200px] mx-auto">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16 leading-tight">What creators are saying</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                quote: "MediaLayer cut our review cycle from 2 days to 2 hours. It's the missing piece for any creator-editor team.",
-                name: "Alex R.", role: "YouTube Creator, 200k subscribers",
-              },
-              {
-                quote: "No more sending huge files over WeTransfer. My editor uploads directly and I approve in one click. Game changer.",
-                name: "Sarah M.", role: "Content Creator, 500k subscribers",
-              },
-              {
-                quote: "The YouTube direct publish feature alone is worth it. I never have to touch the upload process anymore.",
-                name: "James K.", role: "Indie Filmmaker",
-              },
-            ].map((t) => (
-              <div key={t.name} className="bg-white rounded-2xl p-7 border border-gray-100" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-                <p className="text-gray-700 text-sm leading-relaxed mb-6 italic">"{t.quote}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: ACCENT }}>
-                    {t.name.charAt(0)}
+              {/* Starter */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-[0px_4px_8px_rgba(0,0,0,0.06)] p-8 flex flex-col">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-500 mb-1">Starter</p>
+                  <div className="flex items-end gap-1 mb-1">
+                    <span className="text-4xl font-bold text-gray-900">$50</span>
+                    <span className="text-gray-400 text-sm mb-1.5">one-time</span>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{t.name}</p>
-                    <p className="text-xs text-gray-400">{t.role}</p>
-                  </div>
+                  <p className="text-gray-500 text-sm mb-6">Perfect for solo creators working with one editor.</p>
+                  <ul className="space-y-3 mb-8">
+                    {["1 creator account", "Up to 3 editors", "Unlimited video reviews", "Direct YouTube publishing", "Email notifications", "Lifetime access"].map(f => (
+                      <li key={f} className="flex items-center gap-2.5 text-sm text-gray-700">
+                        <CheckCircle className="w-4 h-4 text-indigo-500 shrink-0" /> {f}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
+                <Link href="/register" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm">
+                  Claim Offer <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
-            ))}
-          </div>
+
+              {/* Pro — highlighted */}
+              <div className="bg-indigo-600 rounded-2xl p-8 flex flex-col relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <span className="px-2.5 py-1 rounded-full bg-white/20 text-white text-xs font-semibold">Most popular</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-indigo-200 mb-1">Pro</p>
+                  <div className="flex items-end gap-1 mb-1">
+                    <span className="text-4xl font-bold text-white">$100</span>
+                    <span className="text-indigo-300 text-sm mb-1.5">one-time</span>
+                  </div>
+                  <p className="text-indigo-200 text-sm mb-6">For growing channels with multiple editors and higher volume.</p>
+                  <ul className="space-y-3 mb-8">
+                    {["Unlimited creator accounts", "Unlimited editors", "Unlimited video reviews", "Direct YouTube publishing", "Priority email support", "Audit logs & analytics", "Lifetime access"].map(f => (
+                      <li key={f} className="flex items-center gap-2.5 text-sm text-white">
+                        <CheckCircle className="w-4 h-4 text-indigo-300 shrink-0" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Link href="/register" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-indigo-600 font-semibold hover:bg-indigo-50 transition-colors text-sm">
+                  Claim Offer <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+            </motion.div>
+            <motion.p variants={fade} className="text-xs text-gray-400 text-center mt-6">No subscriptions · No hidden fees · Pay once, own it forever</motion.p>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── FINAL CTA ── brief: white bg, large headline, dual pill CTAs */}
-      <section className="py-28 px-6 bg-white">
-        <div className="max-w-[700px] mx-auto text-center">
-          <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">Start using MediaLayer today</h2>
-          <p className="text-gray-500 text-lg mb-10">Join creators and editors who are already using a better workflow.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register" className="flex items-center gap-2 px-8 py-3.5 rounded-full text-white font-semibold transition-colors text-sm" style={{ backgroundColor: ACCENT }}>
-              Get started free <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link href="/login" className="flex items-center gap-2 px-8 py-3.5 rounded-full border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">
-              Sign in
-            </Link>
-          </div>
-          <p className="text-xs text-gray-400 mt-6">Free to start · No credit card required</p>
+      {/* ── FINAL CTA ── */}
+      <section className="py-24 px-6" style={{ background: "linear-gradient(160deg, #eeeaf8 0%, #e8e4f5 100%)" }}>
+        <div className="max-w-2xl mx-auto text-center">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
+            <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-[#1a1f3c] mb-6">
+              Start using MediaLayer today
+            </motion.h2>
+            <motion.p variants={fade} className="text-gray-600 text-lg mb-10">
+              Join creators and editors who are already using a better workflow.
+            </motion.p>
+            <motion.div variants={fade}>
+              <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-indigo-600 text-white font-semibold text-base hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-300/40">
+                Get MediaLayer for free <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── FOOTER ── brief: clean, minimal, logo left, links right */}
-      <footer className="border-t border-gray-100 py-10 px-6 bg-white">
-        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-bold text-sm text-[#1a1f3c]">MediaLayer</span>
-            <span className="text-gray-400 text-sm">© 2026</span>
+      {/* ── FOOTER ── */}
+      <footer className="bg-white border-t border-gray-100 py-16 px-6">
+        <div className="max-w-[1100px] mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Product</p>
+              <ul className="space-y-3 text-sm text-gray-600">
+                <li><a href="#features" className="hover:text-gray-900 transition-colors">Features</a></li>
+                <li><a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a></li>
+                <li><a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a></li>
+                <li><a href="#demo" className="hover:text-gray-900 transition-colors">Demo</a></li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Use Cases</p>
+              <ul className="space-y-3 text-sm text-gray-600">
+                <li><span className="text-gray-500">YouTube Creators</span></li>
+                <li><span className="text-gray-500">Video Editors</span></li>
+                <li><span className="text-gray-500">Content Agencies</span></li>
+                <li><span className="text-gray-500">Freelancers</span></li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Security</p>
+              <ul className="space-y-3 text-sm text-gray-600">
+                <li><a href="#security" className="hover:text-gray-900 transition-colors">Security overview</a></li>
+                <li><Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-gray-900 transition-colors">Terms of Service</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Company</p>
+              <ul className="space-y-3 text-sm text-gray-600">
+                <li><a href="mailto:patanvadiyabansi6@gmail.com" className="hover:text-gray-900 transition-colors">Contact</a></li>
+                <li><a href="https://x.com" target="_blank" rel="noreferrer" className="hover:text-gray-900 transition-colors">Twitter / X</a></li>
+              </ul>
+            </div>
           </div>
-          <div className="flex items-center gap-6 text-sm text-gray-500">
-            <Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-gray-900 transition-colors">Terms</Link>
-            <a href="mailto:patanvadiyabansi6@gmail.com" className="hover:text-gray-900 transition-colors">Contact</a>
-            <a href="https://x.com" target="_blank" rel="noreferrer" className="hover:text-gray-900 transition-colors">Twitter</a>
+          <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <Link href="/"><Logo /></Link>
+            <p className="text-sm text-gray-400">© 2026 MediaLayer. All rights reserved.</p>
           </div>
         </div>
       </footer>

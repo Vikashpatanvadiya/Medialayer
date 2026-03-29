@@ -28,7 +28,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 inset-x-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/images/logo.png" alt="MediaLayer" className="h-10 w-auto object-contain" />
+            <span className="font-bold text-[22px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
             <a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a>
@@ -349,9 +349,9 @@ export default function LandingPage() {
       {/* ── FOOTER ── brief: clean, minimal, logo left, links right */}
       <footer className="border-t border-gray-100 py-10 px-6 bg-white">
         <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <img src="/images/logo.png" alt="MediaLayer" className="h-6 w-auto object-contain" />
-            <span className="text-gray-400 text-sm ml-1">© 2026</span>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-sm text-[#1a1f3c]">MediaLayer</span>
+            <span className="text-gray-400 text-sm">© 2026</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500">
             <Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy</Link>

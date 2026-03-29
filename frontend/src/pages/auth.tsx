@@ -122,12 +122,8 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
 
       {/* Top-left logo — consistent treatment */}
       <div className="px-8 pt-7">
-        <Link href="/" className="flex items-center gap-2 w-fit">
-          <img
-            src={`${import.meta.env.BASE_URL}images/logo.png`}
-            alt="MediaLayer"
-            className="h-10 w-auto object-contain"
-          />
+        <Link href="/" className="flex items-center w-fit">
+          <span className="font-bold text-[20px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
         </Link>
       </div>
 

@@ -62,8 +62,8 @@ function VideoDrawer({ videoId, onClose }: { videoId: string; onClose: () => voi
           <div>
             {video && (
               <>
-                <h2 className="text-base font-bold text-[#333] line-clamp-1">{video.title}</h2>
-                <p className="text-xs text-[#6c757d] mt-0.5">
+                <h2 className="text-base font-bold text-gray-900 line-clamp-1">{video.title}</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
                   {video.editor?.name} · {formatDistanceToNow(new Date(video.createdAt), { addSuffix: true })}
                 </p>
               </>
@@ -80,7 +80,7 @@ function VideoDrawer({ videoId, onClose }: { videoId: string; onClose: () => voi
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-40">
-              <Loader2 className="w-6 h-6 text-violet-600 animate-spin" />
+              <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
             </div>
           ) : video ? (
             <>
@@ -130,7 +130,7 @@ function VideoDrawer({ videoId, onClose }: { videoId: string; onClose: () => voi
 
                 {/* Description */}
                 {video.description && (
-                  <p className="text-sm text-[#6c757d] leading-relaxed">{video.description}</p>
+                  <p className="text-sm text-gray-500 leading-relaxed">{video.description}</p>
                 )}
 
                 {/* Meta */}
@@ -140,8 +140,8 @@ function VideoDrawer({ videoId, onClose }: { videoId: string; onClose: () => voi
                       <User className="w-4 h-4 text-gray-400" />
                     </div>
                     <div>
-                      <p className="text-xs text-[#6c757d]">Editor</p>
-                      <p className="text-sm font-medium text-[#333]">{video.editor?.name || "Unknown"}</p>
+                      <p className="text-xs text-gray-500">Editor</p>
+                      <p className="text-sm font-medium text-gray-900">{video.editor?.name || "Unknown"}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -149,8 +149,8 @@ function VideoDrawer({ videoId, onClose }: { videoId: string; onClose: () => voi
                       <Calendar className="w-4 h-4 text-gray-400" />
                     </div>
                     <div>
-                      <p className="text-xs text-[#6c757d]">Submitted</p>
-                      <p className="text-sm font-medium text-[#333]">
+                      <p className="text-xs text-gray-500">Submitted</p>
+                      <p className="text-sm font-medium text-gray-900">
                         {format(new Date(video.createdAt), "MMM d, yyyy 'at' h:mm a")}
                       </p>
                     </div>
@@ -168,7 +168,7 @@ function VideoDrawer({ videoId, onClose }: { videoId: string; onClose: () => voi
                 {/* CTA */}
                 <a
                   href={`/dashboard/${video.creatorId ? "creator" : "editor"}/video/${video.id}`}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors shadow-sm"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
                 >
                   <ExternalLink className="w-4 h-4" />
                   Open Full Detail
@@ -176,7 +176,7 @@ function VideoDrawer({ videoId, onClose }: { videoId: string; onClose: () => voi
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-40 text-[#6c757d] text-sm">
+            <div className="flex items-center justify-center h-40 text-gray-500 text-sm">
               Video not found
             </div>
           )}
@@ -224,7 +224,7 @@ export default function NotificationsPage() {
     <div className="max-w-3xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[28px] font-bold text-[#333]">Notifications</h1>
+        <h1 className="text-[28px] font-bold text-gray-900">Notifications</h1>
         <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400">
           <Settings className="w-5 h-5" />
         </button>
@@ -238,7 +238,7 @@ export default function NotificationsPage() {
             onClick={() => setActiveTab(tab)}
             className={`pb-3 text-sm font-medium transition-colors relative whitespace-nowrap ${
               activeTab === tab
-                ? "text-[#333] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-violet-600"
+                ? "text-gray-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-indigo-600"
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
@@ -253,8 +253,8 @@ export default function NotificationsPage() {
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
             <Clock className="w-6 h-6 text-gray-400" />
           </div>
-          <p className="font-semibold text-[#333] mb-1">All caught up!</p>
-          <p className="text-sm text-[#6c757d]">No notifications in this category.</p>
+          <p className="font-semibold text-gray-900 mb-1">All caught up!</p>
+          <p className="text-sm text-gray-500">No notifications in this category.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -268,25 +268,25 @@ export default function NotificationsPage() {
                 key={notif.id}
                 onClick={() => handleNotifClick(notif)}
                 className={`bg-white border rounded-lg overflow-hidden shadow-[0px_4px_8px_rgba(0,0,0,0.06)] cursor-pointer hover:shadow-[0px_6px_16px_rgba(0,0,0,0.1)] transition-shadow ${
-                  !notif.read ? "border-violet-200" : "border-gray-200"
+                  !notif.read ? "border-indigo-200" : "border-gray-200"
                 }`}
               >
                 {/* Notif header */}
                 <div className="flex items-start gap-3 px-5 py-4">
                   {/* Sender avatar */}
-                  <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-xs font-bold text-violet-700 shrink-0 mt-0.5">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0 mt-0.5">
                     {notif.senderName?.charAt(0)?.toUpperCase() ?? "M"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className={`text-sm ${!notif.read ? "font-semibold text-[#333]" : "text-[#333]"}`}>
+                      <p className={`text-sm ${!notif.read ? "font-semibold text-gray-900" : "text-gray-900"}`}>
                         {notif.title}
                       </p>
                       {!notif.read && (
-                        <span className="w-2 h-2 rounded-full bg-violet-600 shrink-0" />
+                        <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-[#6c757d]">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
                       <NotifIcon type={notif.type} />
                       <span>{formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}</span>
                     </div>
@@ -313,12 +313,12 @@ export default function NotificationsPage() {
                 {notif.videoTitle && (
                   <div className="px-5 pb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center text-[10px] font-bold text-violet-700">
+                      <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700">
                         {notif.senderName?.charAt(0)?.toUpperCase() ?? "M"}
                       </div>
-                      <span className="text-xs text-[#6c757d] font-medium">{notif.senderName}</span>
+                      <span className="text-xs text-gray-500 font-medium">{notif.senderName}</span>
                       <span className="text-xs text-gray-300">·</span>
-                      <span className="text-xs text-[#6c757d]">
+                      <span className="text-xs text-gray-500">
                         {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
                       </span>
                     </div>
@@ -327,16 +327,16 @@ export default function NotificationsPage() {
 
                 {notif.videoTitle && (
                   <div className="px-5 pb-4">
-                    <p className="text-sm font-semibold text-[#333]">{notif.videoTitle}</p>
+                    <p className="text-sm font-semibold text-gray-900">{notif.videoTitle}</p>
                     {notif.message && (
-                      <p className="text-xs text-[#6c757d] mt-0.5 line-clamp-2 leading-relaxed">{notif.message}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">{notif.message}</p>
                     )}
                   </div>
                 )}
 
                 {!notif.videoTitle && notif.message && (
                   <div className="px-5 pb-4">
-                    <p className="text-sm text-[#6c757d] leading-relaxed">{notif.message}</p>
+                    <p className="text-sm text-gray-500 leading-relaxed">{notif.message}</p>
                   </div>
                 )}
               </div>

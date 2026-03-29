@@ -104,7 +104,7 @@ export default function MyEditors() {
             >
               {/* Avatar + Name */}
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-[#7c3aed] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/20 shrink-0">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-[#4338ca] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/20 shrink-0">
                   {editor.name?.charAt(0).toUpperCase() ?? "?"}
                 </div>
                 <div className="overflow-hidden">

@@ -194,17 +194,17 @@ export default function VideoDetail() {
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+      <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
     </div>
   );
 
   if (error || !video) return (
     <div className="flex flex-col items-center justify-center h-64 text-center">
-      <h2 className="text-xl font-bold text-[#333] mb-2">Video Not Found</h2>
-      <p className="text-[#6c757d] text-sm mb-6">The video doesn't exist or you don't have access.</p>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">Video Not Found</h2>
+      <p className="text-gray-500 text-sm mb-6">The video doesn't exist or you don't have access.</p>
       <button
         onClick={() => setLocation(`/dashboard/${user?.role}`)}
-        className="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors"
+        className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
       >
         Back to Dashboard
       </button>
@@ -224,14 +224,14 @@ export default function VideoDetail() {
     <div className="space-y-6 pb-10">
 
       {/* Back link */}
-      <Link href={backPath} className="inline-flex items-center gap-1.5 text-sm text-[#6c757d] hover:text-[#333] transition-colors">
+      <Link href={backPath} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back to Dashboard
       </Link>
 
       {/* Page header — brief: ~28px bold #333, status badge, action buttons */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-[26px] font-bold text-[#333] leading-tight">{video.title}</h1>
+          <h1 className="text-[26px] font-bold text-gray-900 leading-tight">{video.title}</h1>
           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border capitalize ${statusBadge(video.status)}`}>
             {video.status}
           </span>
@@ -313,8 +313,8 @@ export default function VideoDetail() {
 
           {/* Description */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-[0px_4px_8px_rgba(0,0,0,0.06)]">
-            <h3 className="text-[16px] font-bold text-[#333] mb-3">Description</h3>
-            <p className="text-sm text-[#6c757d] leading-relaxed whitespace-pre-wrap">
+            <h3 className="text-[16px] font-bold text-gray-900 mb-3">Description</h3>
+            <p className="text-sm text-gray-500 leading-relaxed whitespace-pre-wrap">
               {video.description || "No description provided."}
             </p>
           </div>
@@ -328,14 +328,14 @@ export default function VideoDetail() {
               <textarea
                 value={rejectFeedback}
                 onChange={(e) => setRejectFeedback(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#333] resize-none focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-colors"
+                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-900 resize-none focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-colors"
                 rows={4}
                 placeholder="Tell the editor what needs to be fixed..."
               />
               <div className="flex justify-end gap-2 mt-4">
                 <button
                   onClick={() => setShowRejectForm(false)}
-                  className="px-4 py-2 rounded-lg text-sm text-[#6c757d] hover:bg-gray-100 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100 transition-colors"
                 >
                   Cancel
                 </button>
@@ -368,28 +368,28 @@ export default function VideoDetail() {
 
           {/* Details card */}
           <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-[0px_4px_8px_rgba(0,0,0,0.06)] space-y-4">
-            <h3 className="text-[15px] font-bold text-[#333] pb-3 border-b border-gray-100">Details</h3>
+            <h3 className="text-[15px] font-bold text-gray-900 pb-3 border-b border-gray-100">Details</h3>
 
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                <UserIcon className="w-4 h-4 text-[#6c757d]" />
+                <UserIcon className="w-4 h-4 text-gray-500" />
               </div>
               <div>
-                <p className="text-xs text-[#6c757d]">Editor</p>
-                <p className="text-sm font-semibold text-[#333]">{video.editor?.name || "Unknown"}</p>
+                <p className="text-xs text-gray-500">Editor</p>
+                <p className="text-sm font-semibold text-gray-900">{video.editor?.name || "Unknown"}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                <Calendar className="w-4 h-4 text-[#6c757d]" />
+                <Calendar className="w-4 h-4 text-gray-500" />
               </div>
               <div>
-                <p className="text-xs text-[#6c757d]">Submitted</p>
-                <p className="text-sm font-semibold text-[#333]">
+                <p className="text-xs text-gray-500">Submitted</p>
+                <p className="text-sm font-semibold text-gray-900">
                   {format(new Date(video.createdAt), "MMM d, yyyy")}
                 </p>
-                <p className="text-xs text-[#6c757d]">
+                <p className="text-xs text-gray-500">
                   {format(new Date(video.createdAt), "h:mm a")}
                 </p>
               </div>
@@ -398,23 +398,23 @@ export default function VideoDetail() {
             {video.fileSize && (
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                  <ExternalLink className="w-4 h-4 text-[#6c757d]" />
+                  <ExternalLink className="w-4 h-4 text-gray-500" />
                 </div>
                 <div>
-                  <p className="text-xs text-[#6c757d]">File Size</p>
-                  <p className="text-sm font-semibold text-[#333]">{(video.fileSize / (1024 * 1024)).toFixed(1)} MB</p>
+                  <p className="text-xs text-gray-500">File Size</p>
+                  <p className="text-sm font-semibold text-gray-900">{(video.fileSize / (1024 * 1024)).toFixed(1)} MB</p>
                 </div>
               </div>
             )}
 
             {video.tags && video.tags.length > 0 && (
               <div className="pt-3 border-t border-gray-100">
-                <p className="text-xs text-[#6c757d] mb-2 flex items-center gap-1.5">
+                <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5" /> Tags
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {video.tags.map((t) => (
-                    <span key={t} className="px-2.5 py-1 bg-gray-100 text-[#6c757d] rounded-lg text-xs font-medium">
+                    <span key={t} className="px-2.5 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs font-medium">
                       {t}
                     </span>
                   ))}
@@ -426,7 +426,7 @@ export default function VideoDetail() {
           {/* YouTube card — creators only */}
           {isCreator && (video.status === "approved" || video.status === "uploaded") && (
             <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-[0px_4px_8px_rgba(0,0,0,0.06)] space-y-4">
-              <h3 className="text-[15px] font-bold text-[#333] flex items-center gap-2 pb-3 border-b border-gray-100">
+              <h3 className="text-[15px] font-bold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-100">
                 <Youtube className="w-4 h-4 text-red-500" /> YouTube Upload
               </h3>
 
@@ -461,13 +461,13 @@ export default function VideoDetail() {
                   </a>
                 </>
               ) : ytLoading ? (
-                <div className="flex items-center gap-2 text-[#6c757d] text-sm">
+                <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <Loader2 className="w-4 h-4 animate-spin" /> Checking connection…
                 </div>
               ) : ytStatus?.connected ? (
                 <>
                   <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-[#6c757d]">
+                    <div className="flex items-center gap-2 text-gray-500">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                       <span>{ytStatus.channelName}</span>
                     </div>
@@ -478,7 +478,7 @@ export default function VideoDetail() {
                         await refetchYt();
                         toast({ title: "YouTube disconnected" });
                       }}
-                      className="text-xs text-[#6c757d] hover:text-red-600 transition-colors"
+                      className="text-xs text-gray-500 hover:text-red-600 transition-colors"
                     >
                       Disconnect
                     </button>
@@ -487,15 +487,15 @@ export default function VideoDetail() {
                   <button
                     onClick={uploadToYouTube}
                     disabled={isUploading}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-60"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-60"
                   >
                     {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : <><Youtube className="w-4 h-4" /> Upload to YouTube</>}
                   </button>
-                  <p className="text-xs text-[#6c757d]">Video will be uploaded as public on YouTube.</p>
+                  <p className="text-xs text-gray-500">Video will be uploaded as public on YouTube.</p>
                 </>
               ) : (
                 <>
-                  <p className="text-sm text-[#6c757d]">Connect your YouTube channel to upload this video directly.</p>
+                  <p className="text-sm text-gray-500">Connect your YouTube channel to upload this video directly.</p>
                   <button
                     onClick={connectYouTube}
                     className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors"
@@ -504,7 +504,7 @@ export default function VideoDetail() {
                   </button>
                   <button
                     onClick={() => refetchYt()}
-                    className="w-full text-xs text-[#6c757d] hover:text-[#333] transition-colors py-1"
+                    className="w-full text-xs text-gray-500 hover:text-gray-900 transition-colors py-1"
                   >
                     Already connected? Refresh ↻
                   </button>

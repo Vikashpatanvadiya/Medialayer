@@ -82,27 +82,27 @@ export default function CreatorDashboard() {
 
       {/* Welcome — brief: ~28px bold #333 heading */}
       <div>
-        <h1 className="text-[28px] font-bold text-[#333] leading-tight">
+        <h1 className="text-[28px] font-bold text-gray-900 leading-tight">
           Welcome back, {user?.name?.split(" ")[0]} 👋
         </h1>
-        <p className="text-[#6c757d] mt-1 text-base">Here's what's happening with your videos today.</p>
+        <p className="text-gray-500 mt-1 text-base">Here's what's happening with your videos today.</p>
       </div>
 
       {/* Invite Code Banner — brief: purple primary CTA, 8px radius */}
       {inviteCode && (
         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-[0px_4px_8px_rgba(0,0,0,0.06)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-[#333]">Your Editor Invite Code</p>
-            <p className="text-sm text-[#6c757d] mt-0.5">Share this code with editors so they can link to your account</p>
+            <p className="text-sm font-semibold text-gray-900">Your Editor Invite Code</p>
+            <p className="text-sm text-gray-500 mt-0.5">Share this code with editors so they can link to your account</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-xl font-bold tracking-widest text-violet-700 bg-violet-50 px-4 py-2 rounded-lg border border-violet-200">
+            <span className="font-mono text-xl font-bold tracking-widest text-indigo-700 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200">
               {inviteCode}
             </span>
             {/* Brief: solid purple primary button, white text, 8px radius */}
             <button
               onClick={copyCode}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               {copied ? "Copied" : "Copy"}
@@ -113,7 +113,7 @@ export default function CreatorDashboard() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-7 h-7 text-violet-600 animate-spin" />
+          <Loader2 className="w-7 h-7 text-indigo-600 animate-spin" />
         </div>
       ) : (
         <>
@@ -128,8 +128,8 @@ export default function CreatorDashboard() {
                   <stat.icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-[#333]">{stat.value}</p>
-                  <p className="text-xs text-[#6c757d] font-medium mt-0.5">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-xs text-gray-500 font-medium mt-0.5">{stat.label}</p>
                 </div>
               </div>
             ))}
@@ -138,17 +138,17 @@ export default function CreatorDashboard() {
           {/* Needs Review — brief: ~20px bold section heading, 48–64px section gap */}
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-[20px] font-bold text-[#333] flex items-center gap-2">
+              <h2 className="text-[20px] font-bold text-gray-900 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-500" />
                 Needs Review
                 {pending.length > 0 && (
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-600 text-[10px] text-white font-bold">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-[10px] text-white font-bold">
                     {pending.length}
                   </span>
                 )}
               </h2>
               <Link href="/dashboard/creator/videos">
-                <span className="text-sm text-violet-600 hover:underline cursor-pointer font-medium">View all →</span>
+                <span className="text-sm text-indigo-600 hover:underline cursor-pointer font-medium">View all →</span>
               </Link>
             </div>
 
@@ -157,8 +157,8 @@ export default function CreatorDashboard() {
                 <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <VideoIcon className="w-7 h-7 text-gray-400" />
                 </div>
-                <h3 className="font-bold text-[#333] mb-1">Inbox zero!</h3>
-                <p className="text-[#6c757d] text-sm">No videos waiting for review right now.</p>
+                <h3 className="font-bold text-gray-900 mb-1">Inbox zero!</h3>
+                <p className="text-gray-500 text-sm">No videos waiting for review right now.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -172,7 +172,7 @@ export default function CreatorDashboard() {
           {/* Ready to Upload */}
           {approved.length > 0 && (
             <div>
-              <h2 className="text-[20px] font-bold text-[#333] flex items-center gap-2 mb-6">
+              <h2 className="text-[20px] font-bold text-gray-900 flex items-center gap-2 mb-6">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                 Ready to Upload
               </h2>
@@ -197,10 +197,10 @@ export default function CreatorDashboard() {
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5">
               <AlertTriangle className="w-7 h-7 text-red-500" />
             </div>
-            <h2 className="text-xl font-bold text-[#333] mb-2">Delete this video?</h2>
-            <p className="text-[#6c757d] text-sm mb-1">You're about to permanently delete:</p>
-            <p className="font-semibold text-[#333] mb-4">"{deleteTarget.title}"</p>
-            <p className="text-xs text-[#6c757d] mb-8">This cannot be undone.</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Delete this video?</h2>
+            <p className="text-gray-500 text-sm mb-1">You're about to permanently delete:</p>
+            <p className="font-semibold text-gray-900 mb-4">"{deleteTarget.title}"</p>
+            <p className="text-xs text-gray-500 mb-8">This cannot be undone.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}

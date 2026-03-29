@@ -1,15 +1,115 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { ScreenshotCarousel } from "@/components/ui/screenshot-carousel";
 import {
   Upload, Eye, CheckCircle, Youtube, Shield, Lock,
   Key, Video, Users, FileCheck, BarChart3, Play,
-  ArrowRight, ChevronRight
+  ArrowRight, ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, MoreVertical
 } from "lucide-react";
 
 const fade = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 const stagger = { show: { transition: { staggerChildren: 0.08 } } };
+
+const SOCIAL_POSTS = [
+  {
+    name: "Alex Rivera",
+    handle: "@alexcreates",
+    time: "2 days ago",
+    avatar: "A",
+    text: "Finally no more sending huge files over Drive. My editor uploads directly and I just hit approve. Game changer for my workflow 🙌",
+    likes: 12,
+    comments: 3,
+  },
+  {
+    name: "Jordan Kim",
+    handle: "@jordanedits",
+    time: "1 week ago",
+    avatar: "J",
+    text: "As an editor, being able to submit videos without needing my creator's YouTube login is huge. Feels way more professional.",
+    likes: 8,
+    comments: 2,
+  },
+  {
+    name: "Phoebe Chen",
+    handle: "@phoebecontent",
+    time: "3 days ago",
+    avatar: "P",
+    text: "Without having to dl large files huge difference, stops entire process when screen just freezes 🌊",
+    likes: 1,
+    comments: 1,
+  },
+];
+
+const WORKFLOW_CARDS = [
+  { icon: Upload, title: "Editor uploads the finished video directly — no Drive links, no WeTransfer", author: "Sam Torres", role: "Video Editor" },
+  { icon: Eye, title: "Creator reviews with a secure in-browser player, no downloads needed", author: "Maya Patel", role: "YouTube Creator" },
+  { icon: Youtube, title: "One click sends the approved video straight to YouTube", author: "Chris Nguyen", role: "Content Creator" },
+  { icon: CheckCircle, title: "Approve or reject with feedback — editor gets notified instantly", author: "Dana Lee", role: "Creator & Editor" },
+  { icon: Shield, title: "No password sharing, no channel access handed over — ever", author: "Ravi Sharma", role: "Channel Manager" },
+  { icon: BarChart3, title: "Every action is logged so you always know what happened and when", author: "Lena Wolf", role: "Content Agency" },
+];
+
+function SocialPostCarousel() {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setCurrent((c) => (c + 1) % SOCIAL_POSTS.length), 4000);
+    return () => clearInterval(t);
+  }, []);
+
+  const post = SOCIAL_POSTS[current];
+
+  return (
+    <div className="relative px-12 py-10 min-h-[200px] flex flex-col justify-center">
+      {/* Nav arrows */}
+      <button
+        onClick={() => setCurrent((c) => (c - 1 + SOCIAL_POSTS.length) % SOCIAL_POSTS.length)}
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-gray-200 transition-colors"
+      >
+        <ChevronLeft className="w-4 h-4 text-gray-500" />
+      </button>
+      <button
+        onClick={() => setCurrent((c) => (c + 1) % SOCIAL_POSTS.length)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-gray-200 transition-colors"
+      >
+        <ChevronRight className="w-4 h-4 text-gray-500" />
+      </button>
+
+      {/* Post */}
+      <div key={current} className="animate-fade-in">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600">
+              {post.avatar}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{post.name}</p>
+              <p className="text-xs text-gray-400">{post.handle} · {post.time}</p>
+            </div>
+          </div>
+          <MoreVertical className="w-4 h-4 text-gray-400" />
+        </div>
+        <p className="text-sm text-gray-700 leading-relaxed mb-4">{post.text}</p>
+        <div className="flex items-center gap-6 text-xs text-gray-400">
+          <span className="flex items-center gap-1.5"><Heart className="w-3.5 h-3.5" /> {post.likes}</span>
+          <span className="flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> {post.comments}</span>
+          <span className="flex items-center gap-1.5"><Share2 className="w-3.5 h-3.5" /> Share</span>
+        </div>
+      </div>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-1.5 mt-6">
+        {SOCIAL_POSTS.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`h-1.5 rounded-full transition-all duration-300 ${i === current ? "bg-indigo-500 w-6" : "bg-gray-300 w-1.5"}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const Logo = () => (
   <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[22px] tracking-tight text-[#1a1f3c]">
@@ -151,16 +251,58 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SLIDESHOW ── */}
+      {/* ── SEE IT IN ACTION ── */}
       <section id="testimonials" className="py-24 px-6" style={{ background: "linear-gradient(160deg, #f0eef8 0%, #e8e4f5 100%)" }}>
         <div className="max-w-[1100px] mx-auto">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
             <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-16">
               See it in action
             </motion.h2>
-            <motion.div variants={fade}>
-              <ScreenshotCarousel />
+
+            {/* Browser mockup with social post carousel */}
+            <motion.div variants={fade} className="w-full max-w-3xl mx-auto mb-20">
+              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-indigo-200/40 border border-gray-200 bg-white">
+                {/* Browser chrome */}
+                <div className="bg-gray-100 border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className="flex-1 flex justify-center">
+                    <div className="bg-white border border-gray-200 rounded-md px-4 py-1 text-xs text-gray-400 w-52 text-center">
+                      medialayer.vercel.app
+                    </div>
+                  </div>
+                  <div className="w-16" />
+                </div>
+
+                {/* Social post content */}
+                <SocialPostCarousel />
+              </div>
             </motion.div>
+
+            {/* Content grid */}
+            <motion.div variants={stagger} className="grid md:grid-cols-3 gap-6">
+              {WORKFLOW_CARDS.map((card) => (
+                <motion.div key={card.title} variants={fade} className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/80 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="aspect-video rounded-xl bg-indigo-50 mb-4 flex items-center justify-center overflow-hidden">
+                    <card.icon className="w-10 h-10 text-indigo-300" />
+                  </div>
+                  <h3 className="font-semibold text-[#1a1f3c] text-base mb-2">{card.title}</h3>
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
+                      {card.author[0]}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700">{card.author}</p>
+                      <p className="text-xs text-gray-400">{card.role}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+
           </motion.div>
         </div>
       </section>

@@ -189,12 +189,13 @@ function StepCard({
   index: number;
   scrollYProgress: ReturnType<typeof useScroll>["scrollYProgress"];
 }) {
-  const start = index * 0.22;
-  const end   = start + 0.22;
+  // Overlapping windows so cards feel fluid, not choppy
+  const start = index * 0.18;
+  const end   = start + 0.28;
 
   const opacity = useTransform(scrollYProgress, [start, end], [0, 1]);
-  const y       = useTransform(scrollYProgress, [start, end], [56, 0]);
-  const scale   = useTransform(scrollYProgress, [start, end], [0.88, 1]);
+  const y       = useTransform(scrollYProgress, [start, end], [60, 0]);
+  const scale   = useTransform(scrollYProgress, [start, end], [0.9, 1]);
 
   return (
     <motion.div
@@ -500,47 +501,68 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-white border-t border-gray-100 py-16 px-6">
+      <footer className="bg-[#111111] text-white pt-16 pb-0 px-6">
         <div className="max-w-[1100px] mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+
+          {/* Link columns */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 pb-14 border-b border-white/10">
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Product</p>
-              <ul className="space-y-3 text-sm text-gray-600">
-                <li><a href="#features" className="hover:text-gray-900 transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a></li>
-                <li><a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a></li>
-                <li><a href="#demo" className="hover:text-gray-900 transition-colors">Demo</a></li>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-5">Product</p>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">How it works</a></li>
+                <li><a href="#demo" className="hover:text-white transition-colors">Demo</a></li>
               </ul>
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Use Cases</p>
-              <ul className="space-y-3 text-sm text-gray-600">
-                <li><span className="text-gray-500">YouTube Creators</span></li>
-                <li><span className="text-gray-500">Video Editors</span></li>
-                <li><span className="text-gray-500">Content Agencies</span></li>
-                <li><span className="text-gray-500">Freelancers</span></li>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-5">Use Cases</p>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li><span>YouTube Creators</span></li>
+                <li><span>Video Editors</span></li>
+                <li><span>Content Agencies</span></li>
+                <li><span>Freelancers</span></li>
               </ul>
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Security</p>
-              <ul className="space-y-3 text-sm text-gray-600">
-                <li><a href="#security" className="hover:text-gray-900 transition-colors">Security overview</a></li>
-                <li><Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-gray-900 transition-colors">Terms of Service</Link></li>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-5">Security</p>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li><a href="#security" className="hover:text-white transition-colors">Security overview</a></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Company</p>
-              <ul className="space-y-3 text-sm text-gray-600">
-                <li><a href="mailto:patanvadiyabansi6@gmail.com" className="hover:text-gray-900 transition-colors">Contact</a></li>
-                <li><a href="https://x.com" target="_blank" rel="noreferrer" className="hover:text-gray-900 transition-colors">Twitter / X</a></li>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-5">Company</p>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li><a href="mailto:patanvadiyabansi6@gmail.com" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="https://x.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Twitter / X</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <Link href="/"><Logo /></Link>
-            <p className="text-sm text-gray-400">© 2026 MediaLayer. All rights reserved.</p>
+
+          {/* Bottom bar */}
+          <div className="py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Social icons */}
+            <div className="flex items-center gap-3">
+              <a href="https://x.com" target="_blank" rel="noreferrer"
+                className="w-9 h-9 rounded-full border border-white/15 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/40 transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noreferrer"
+                className="w-9 h-9 rounded-full border border-white/15 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/40 transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </a>
+            </div>
+
+            {/* Legal */}
+            <div className="flex items-center gap-6 text-xs text-gray-500">
+              <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms &amp; Policies</Link>
+              <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>
+              <span>© 2026 MediaLayer. All rights reserved.</span>
+            </div>
           </div>
+
         </div>
       </footer>
 

@@ -282,14 +282,31 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
 
-          {/* Demo video */}
+          {/* Demo video — browser frame */}
           <motion.div
             id="demo"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.7 }}
-            className="rounded-t-2xl overflow-hidden shadow-2xl shadow-indigo-200/50 border border-white/50 max-w-4xl mx-auto"
+            className="rounded-2xl overflow-hidden shadow-2xl shadow-indigo-200/50 border border-white/60 max-w-4xl mx-auto"
+            style={{ background: "#f0eef8" }}
           >
+            {/* Browser chrome */}
+            <div className="px-4 py-3 flex items-center gap-3" style={{ background: "#e8e6f0" }}>
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+                <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+                <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+              </div>
+              <div className="flex-1 flex justify-center">
+                <div className="bg-white/80 border border-white/60 rounded-md px-4 py-1 text-xs text-gray-400 w-56 text-center tracking-tight">
+                  medialayer.vercel.app
+                </div>
+              </div>
+              <div className="w-16" />
+            </div>
+
+            {/* Video */}
             <div className="aspect-video bg-gray-900">
               <iframe
                 src="https://www.youtube.com/embed/i5V6dnPXCqI"

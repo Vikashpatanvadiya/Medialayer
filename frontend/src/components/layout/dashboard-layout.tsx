@@ -155,7 +155,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <img
             src={`${import.meta.env.BASE_URL}images/logo.png`}
             alt="MediaLayer"
-            className="h-8 w-auto object-contain"
+            className="h-10 w-auto object-contain"
           />
         </div>
         <SidebarContent />

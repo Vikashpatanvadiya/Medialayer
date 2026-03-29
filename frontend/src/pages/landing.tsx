@@ -27,8 +27,8 @@ export default function LandingPage() {
       {/* ── NAV ── brief: fixed, white, subtle border, pill CTA */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <img src="/images/logo.png" alt="MediaLayer" className="h-8 w-auto object-contain" />
+          <div className="flex items-center">
+            <img src="/images/logo.png" alt="MediaLayer" className="h-10 w-auto object-contain" />
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
             <a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a>

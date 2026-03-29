@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Upload, Eye, CheckCircle, Youtube, Shield, Lock,
   Key, Video, Users, FileCheck, BarChart3, Play,
@@ -15,6 +15,50 @@ const Logo = () => (
     MediaLayer
   </span>
 );
+
+const SLIDES = [
+  "/images/slide1.png",
+  "/images/slide2.png",
+  "/images/slide3.png",
+  "/images/slide4.png",
+];
+
+function Slideshow() {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setCurrent(c => (c + 1) % SLIDES.length), 3000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-indigo-200/40 border border-white/60 bg-white">
+      <div className="relative aspect-video">
+        {SLIDES.map((src, i) => (
+          <img
+            key={src}
+            src={src}
+            alt={`Screenshot ${i + 1}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === current ? "opacity-100" : "opacity-0"}`}
+          />
+        ))}
+      </div>
+      {/* Dots */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {SLIDES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-indigo-600 w-6" : "bg-white/60"}`}
+          />
+        ))}
+      </div>
+      {/* Arrows */}
+      <button onClick={() => setCurrent(c => (c - 1 + SLIDES.length) % SLIDES.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center shadow hover:bg-white transition-colors text-gray-700">‹</button>
+      <button onClick={() => setCurrent(c => (c + 1) % SLIDES.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center shadow hover:bg-white transition-colors text-gray-700">›</button>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -150,36 +194,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
+      {/* ── SLIDESHOW ── */}
       <section id="testimonials" className="py-24 px-6" style={{ background: "linear-gradient(160deg, #f0eef8 0%, #e8e4f5 100%)" }}>
         <div className="max-w-[1100px] mx-auto">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
             <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-16">
-              What Customers are Saying
+              See it in action
             </motion.h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { name: "Vikash P.", role: "YouTube Creator", quote: "MediaLayer completely changed how I work with my editor. No more back-and-forth on WhatsApp. Everything is in one place." },
-                { name: "Bansi P.", role: "Video Editor", quote: "I upload the video, the creator reviews it, and it goes live on YouTube. The whole process takes minutes now instead of hours." },
-                { name: "Ratandip S.", role: "Content Creator", quote: "The fact that I don't have to share my YouTube password with anyone is a game changer. MediaLayer handles everything securely." },
-                { name: "Aastha M.", role: "Editor", quote: "The approval workflow is so clean. I get notified the moment my video is approved. No more chasing replies." },
-                { name: "Nayan R.", role: "Creator", quote: "I've sent videos externally three times this month instead of scheduling a meeting. The first response is always 'why don't more people do this?'" },
-                { name: "Chirag V.", role: "YouTube Creator", quote: "Direct YouTube publishing is the killer feature. My editor submits, I approve, and it's live. That's it." },
-              ].map((t) => (
-                <motion.div key={t.name} variants={fade} className="bg-white rounded-2xl p-6 border border-white shadow-[0px_4px_8px_rgba(0,0,0,0.08)]">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
-                      {t.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                      <p className="text-gray-500 text-xs">{t.role}</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 text-sm leading-relaxed">"{t.quote}"</p>
-                </motion.div>
-              ))}
-            </div>
+            <motion.div variants={fade}>
+              <Slideshow />
+            </motion.div>
           </motion.div>
         </div>
       </section>

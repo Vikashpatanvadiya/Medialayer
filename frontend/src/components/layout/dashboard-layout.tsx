@@ -99,6 +99,21 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <LogOut className="w-4 h-4" />
             Sign Out
           </button>
+          <button
+            onClick={async () => {
+              if (!confirm("Delete your account? This cannot be undone.")) return;
+              const token = localStorage.getItem("layer_token");
+              await fetch(`${import.meta.env.VITE_API_URL || ""}/api/auth/account`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              localStorage.removeItem("layer_token");
+              window.location.href = "/";
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sidebar-foreground/40 hover:text-destructive transition-colors text-xs"
+          >
+            Delete Account
+          </button>
         </div>
       </aside>
 

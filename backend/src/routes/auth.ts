@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, videosTable, notificationsTable, editorCreatorsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { signToken, requireAuth } from "../lib/auth.js";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
@@ -149,7 +149,36 @@ router.post("/login", async (req, res) => {
   res.json({ user: formatUser(user), token });
 });
 
-router.post("/logout", (_req, res) => {
+router.post("/resend-verification", async (req, res) => {
+  const { email } = req.body as { email: string };
+  if (!email) { res.status(400).json({ error: "Email is required" }); return; }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+  if (!user) { res.status(404).json({ error: "No account found with this email" }); return; }
+  if (user.emailVerified) { res.status(400).json({ error: "Email is already verified" }); return; }
+
+  const verificationToken = randomBytes(32).toString("hex");
+  await db.update(usersTable).set({ verificationToken }).where(eq(usersTable.id, user.id));
+
+  const verifyUrl = `${process.env.BACKEND_URL || "http://localhost:3000"}/api/auth/verify-email?token=${verificationToken}`;
+  sendEmail(email, "Verify your MediaLayer email", `
+    <p>Hi ${user.name},</p>
+    <p>Here is your new verification link:</p>
+    <p><a href="${verifyUrl}" style="background:#6366f1;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Verify Email</a></p>
+    <p>Or copy: ${verifyUrl}</p>
+  `).catch(() => {});
+
+  res.json({ message: "Verification email resent. Check your inbox." });
+});
+
+router.delete("/account", requireAuth, async (req, res) => {
+  const userId = req.user!.userId;
+  await db.delete(notificationsTable).where(eq(notificationsTable.userId, userId));
+  await db.delete(editorCreatorsTable).where(eq(editorCreatorsTable.editorId, userId));
+  await db.delete(editorCreatorsTable).where(eq(editorCreatorsTable.creatorId, userId));
+  await db.delete(usersTable).where(eq(usersTable.id, userId));
+  res.json({ message: "Account deleted" });
+});
   res.json({ message: "Logged out successfully" });
 });
 

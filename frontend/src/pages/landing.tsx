@@ -88,18 +88,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF BAR ── */}
-      <section className="py-10 border-y border-gray-100 bg-white">
-        <div className="max-w-[1100px] mx-auto px-6 text-center">
-          <p className="text-sm text-gray-400 font-medium mb-6 uppercase tracking-widest">Trusted by creators and editors</p>
-          <div className="flex flex-wrap items-center justify-center gap-10 text-gray-300 font-bold text-xl">
-            {["YouTube Creators", "Video Editors", "Content Teams", "Agencies"].map(t => (
-              <span key={t} className="text-gray-400 text-sm font-semibold">{t}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── HOW IT WORKS ── */}
       <section id="how-it-works" className="py-24 px-6 bg-white">
         <div className="max-w-[1100px] mx-auto">

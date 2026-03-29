@@ -161,15 +161,6 @@ export default function EditorDashboard() {
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 {c.name}
-                <span
-                  onClick={(e) => { e.stopPropagation(); unlinkCreator(c.id, c.name); }}
-                  className={`ml-0.5 hover:opacity-70 transition-opacity ${selectedCreator?.id === c.id ? "text-white/70" : "text-emerald-500"}`}
-                >
-                  {removingCreator === c.id
-                    ? <Loader2 className="w-3 h-3 animate-spin" />
-                    : <X className="w-3 h-3" />
-                  }
-                </span>
               </button>
             ))}
           </div>

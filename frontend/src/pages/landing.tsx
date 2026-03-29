@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { ScreenshotCarousel } from "@/components/ui/screenshot-carousel";
 import {
   Upload, Eye, CheckCircle, Youtube, Shield, Lock,
   Key, Video, Users, FileCheck, BarChart3, Play,
@@ -15,50 +16,6 @@ const Logo = () => (
     MediaLayer
   </span>
 );
-
-const SLIDES = [
-  "/images/slide1.png",
-  "/images/slide2.png",
-  "/images/slide3.png",
-  "/images/slide4.png",
-];
-
-function Slideshow() {
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setCurrent(c => (c + 1) % SLIDES.length), 3000);
-    return () => clearInterval(t);
-  }, []);
-
-  return (
-    <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-indigo-200/40 border border-white/60 bg-white">
-      <div className="relative aspect-video bg-gray-50">
-        {SLIDES.map((src, i) => (
-          <img
-            key={src}
-            src={src}
-            alt={`Screenshot ${i + 1}`}
-            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${i === current ? "opacity-100" : "opacity-0"}`}
-          />
-        ))}
-      </div>
-      {/* Dots */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {SLIDES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-indigo-600 w-6" : "bg-white/60"}`}
-          />
-        ))}
-      </div>
-      {/* Arrows */}
-      <button onClick={() => setCurrent(c => (c - 1 + SLIDES.length) % SLIDES.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center shadow hover:bg-white transition-colors text-gray-700">‹</button>
-      <button onClick={() => setCurrent(c => (c + 1) % SLIDES.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center shadow hover:bg-white transition-colors text-gray-700">›</button>
-    </div>
-  );
-}
 
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -202,7 +159,7 @@ export default function LandingPage() {
               See it in action
             </motion.h2>
             <motion.div variants={fade}>
-              <Slideshow />
+              <ScreenshotCarousel />
             </motion.div>
           </motion.div>
         </div>

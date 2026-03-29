@@ -307,13 +307,13 @@ export default function LandingPage() {
             </div>
 
             {/* Video */}
-            <div className="relative" style={{ paddingTop: "56.25%" }}>
+            <div className="relative bg-black" style={{ paddingTop: "75%" }}>
               <iframe
                 src="https://player.vimeo.com/video/1178239755?badge=0&autopause=0&player_id=0&app_id=58479"
                 frameBorder="0"
                 allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
-                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "block" }}
                 title="MediaLayer Demo"
               />
             </div>

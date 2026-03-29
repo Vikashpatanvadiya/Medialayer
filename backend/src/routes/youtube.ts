@@ -50,76 +50,12 @@ router.get("/oauth-callback", async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     res.send(`
       <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>YouTube Connected</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-              background: #0f0f0f;
-              color: #fff;
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 24px;
-            }
-            .card {
-              background: #1a1a1a;
-              border: 1px solid #2a2a2a;
-              border-radius: 20px;
-              padding: 40px 32px;
-              text-align: center;
-              max-width: 360px;
-              width: 100%;
-            }
-            .icon {
-              width: 64px; height: 64px;
-              background: #22c55e22;
-              border-radius: 50%;
-              display: flex; align-items: center; justify-content: center;
-              margin: 0 auto 20px;
-              font-size: 32px;
-            }
-            h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-            .channel { color: #a1a1aa; font-size: 15px; margin-bottom: 24px; }
-            .channel span { color: #fff; font-weight: 600; }
-            .btn {
-              display: inline-block;
-              background: #6366f1;
-              color: #fff;
-              text-decoration: none;
-              padding: 14px 28px;
-              border-radius: 12px;
-              font-size: 15px;
-              font-weight: 600;
-              width: 100%;
-            }
-            .note { color: #52525b; font-size: 13px; margin-top: 16px; }
-          </style>
-        </head>
         <body>
-          <div class="card">
-            <div class="icon">✅</div>
-            <h1>YouTube Connected!</h1>
-            <p class="channel">Linked to <span>${channelName}</span></p>
-            <a href="${frontendUrl}" class="btn">Back to MediaLayer →</a>
-            <p class="note">Redirecting automatically in 3 seconds…</p>
-          </div>
           <script>
-            // Notify opener (desktop popup flow)
-            if (window.opener) {
-              try {
-                window.opener.postMessage({ type: 'YOUTUBE_CONNECTED', channelName: '${channelName}' }, '${frontendUrl}');
-                window.close();
-              } catch(e) {}
-            }
-            // Auto-redirect for mobile (new tab flow)
-            setTimeout(function() {
-              window.location.href = '${frontendUrl}';
-            }, 3000);
+            window.opener && window.opener.postMessage({ type: 'YOUTUBE_CONNECTED', channelName: '${channelName}' }, '${frontendUrl}');
+            window.close();
           </script>
+          <p>YouTube connected! You can close this window.</p>
         </body>
       </html>
     `);

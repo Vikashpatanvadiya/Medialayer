@@ -147,7 +147,8 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
       {/* Top-left logo */}
       <div className="px-8 pt-7">
         <Link href="/" className="flex items-center w-fit">
-          <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[20px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
+          <img src="/Medialayer-Indigo.svg" alt="MediaLayer" className="h-6 dark:hidden" />
+          <img src="/logomark-medialayer-02.svg" alt="MediaLayer" className="h-6 hidden dark:block" />
         </Link>
       </div>
 

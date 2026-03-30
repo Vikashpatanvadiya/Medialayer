@@ -104,7 +104,10 @@ function SocialPostCarousel() {
 }
 
 const Logo = () => (
-  <img src="/Medialayer-Indigo.svg" alt="MediaLayer" className="h-7" />
+  <>
+    <img src="/Medialayer-Indigo.svg" alt="MediaLayer" className="h-7 dark:hidden" />
+    <img src="/logomark-medialayer-02.svg" alt="MediaLayer" className="h-7 hidden dark:block" />
+  </>
 );
 
 const HOW_STEPS = [

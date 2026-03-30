@@ -134,9 +134,7 @@ export default function MyCreators() {
         {/* Videos */}
         {creatorVideos.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-2xl p-12 flex flex-col items-center text-center">
-            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <VideoIcon className="w-7 h-7 text-gray-400" />
-            </div>
+            <img src="/empty.png" alt="No videos" className="w-40 h-40 object-contain mb-4 opacity-90" />
             <h3 className="font-bold text-gray-900 mb-1">No videos yet</h3>
             <p className="text-gray-500 text-sm mb-5">Submit your first video to {selectedCreator.name}.</p>
             <button

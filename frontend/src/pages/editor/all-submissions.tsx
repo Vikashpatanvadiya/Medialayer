@@ -107,9 +107,7 @@ export default function AllSubmissions() {
         </div>
       ) : filteredVideos.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto py-20">
-          <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mb-6">
-            <VideoIcon className="w-10 h-10 text-muted-foreground opacity-50" />
-          </div>
+          <img src="/empty.png" alt="No videos" className="w-48 h-48 object-contain mb-4 opacity-90" />
           <h3 className="text-xl font-bold mb-2">No videos found</h3>
           <p className="text-muted-foreground mb-6">
             {filter === "all" ? "You haven't submitted any videos yet." : `No ${filter} videos at the moment.`}

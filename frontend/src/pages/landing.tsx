@@ -378,28 +378,43 @@ export default function LandingPage() {
       <HowItWorks />
 
       {/* ── FEATURES ── */}
-      <section id="features" className="py-24 px-6 bg-gray-50 border-y border-gray-100">
+      <section id="features" className="py-24 px-6" style={{ background: "#f7f7f8" }}>
         <div className="max-w-[1100px] mx-auto">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
-            <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-16">Features</motion.h2>
-            <div className="grid md:grid-cols-4 gap-8">
+            <motion.h2 variants={fade} className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-4">
+              Features
+            </motion.h2>
+            <motion.p variants={fade} className="text-center text-gray-500 text-lg mb-14">
+              Everything you need to run a smooth creator–editor workflow.
+            </motion.p>
+            <div className="grid md:grid-cols-2 gap-4">
               {[
-                { icon: Upload, title: "Secure upload", body: "Videos stored privately on Cloudinary. No public links, ever." },
-                { icon: Users, title: "Role-based access", body: "Separate dashboards for creators and editors." },
-                { icon: Eye, title: "Built-in review", body: "Watch videos directly in the platform with signed URLs." },
-                { icon: CheckCircle, title: "One-click approval", body: "Approve or reject with feedback. Instant notifications." },
-                { icon: Youtube, title: "YouTube publishing", body: "Push approved videos straight to YouTube." },
-                { icon: BarChart3, title: "Audit trail", body: "Every action is logged. Know exactly who did what." },
-                { icon: Lock, title: "Encrypted tokens", body: "YouTube OAuth tokens encrypted with AES-256." },
-                { icon: Shield, title: "No password sharing", body: "Creators never share YouTube credentials." },
+                { icon: Upload, title: "Secure upload", body: "Videos stored privately on Cloudinary. No public links, ever.", color: "#fff3e8", iconColor: "#f97316" },
+                { icon: Users, title: "Role-based access", body: "Separate dashboards for creators and editors.", color: "#fce8f0", iconColor: "#e0457b" },
+                { icon: Eye, title: "Built-in review", body: "Watch videos directly in the platform with signed URLs.", color: "#e8f0fe", iconColor: "#4f6ef7" },
+                { icon: CheckCircle, title: "One-click approval", body: "Approve or reject with feedback. Instant notifications.", color: "#e8faf0", iconColor: "#22c55e" },
+                { icon: Youtube, title: "YouTube publishing", body: "Push approved videos straight to YouTube.", color: "#fce8e8", iconColor: "#ef4444" },
+                { icon: BarChart3, title: "Audit trail", body: "Every action is logged. Know exactly who did what.", color: "#f0e8fe", iconColor: "#8b5cf6" },
+                { icon: Lock, title: "Encrypted tokens", body: "YouTube OAuth tokens encrypted with AES-256.", color: "#e8f5fe", iconColor: "#0ea5e9" },
+                { icon: Shield, title: "No password sharing", body: "Creators never share YouTube credentials.", color: "#f0fce8", iconColor: "#16a34a" },
               ].map((f) => (
-                <motion.div key={f.title} variants={fade} className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#1a1f3c] flex items-center justify-center shrink-0">
-                    <f.icon className="w-4 h-4 text-white" />
+                <motion.div
+                  key={f.title}
+                  variants={fade}
+                  className="flex items-center gap-5 bg-white rounded-2xl px-6 py-5 border border-gray-100 shadow-[0px_2px_8px_rgba(0,0,0,0.04)]"
+                >
+                  {/* Blob icon */}
+                  <div
+                    className="shrink-0 w-14 h-14 rounded-[40%_60%_55%_45%/50%_45%_55%_50%] flex items-center justify-center"
+                    style={{ background: f.color }}
+                  >
+                    <f.icon className="w-6 h-6" style={{ color: f.iconColor }} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 text-sm mb-1">{f.title}</h3>
-                    <p className="text-gray-500 text-xs leading-relaxed">{f.body}</p>
+                    <h3 className="font-semibold text-[#1a1f3c] text-sm mb-0.5">
+                      {f.title}.{" "}
+                      <span className="font-normal text-gray-500">{f.body}</span>
+                    </h3>
                   </div>
                 </motion.div>
               ))}

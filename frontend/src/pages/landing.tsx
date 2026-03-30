@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Upload, Eye, CheckCircle, Youtube, Shield, Lock,
   Key, Video, Users, FileCheck, BarChart3, Play,
-  ArrowRight, ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, MoreVertical
+  ArrowRight, ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, MoreVertical, ChevronDown
 } from "lucide-react";
 
 const fade = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
@@ -171,6 +171,75 @@ function HowItWorks() {
                 <h3 className="font-bold text-[#1a1f3c] text-base mb-2">{item.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{item.body}</p>
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const FAQ_ITEMS = [
+  {
+    q: "Do I need to share my YouTube password with my editor?",
+    a: "Never. MediaLayer uses OAuth — your editor never sees your credentials. You connect your YouTube channel once, and MediaLayer handles publishing on your behalf.",
+  },
+  {
+    q: "How does the video review process work?",
+    a: "Your editor uploads the finished video directly to MediaLayer. You get notified, watch it securely in the browser (no download needed), then approve or reject with optional feedback. If approved, one click publishes it to YouTube.",
+  },
+  {
+    q: "Is my video stored securely?",
+    a: "Yes. Videos are stored privately on Cloudinary and are never accessible via a public URL. Playback uses signed URLs that expire after 1 hour, so only authenticated users can watch.",
+  },
+  {
+    q: "Can I work with multiple editors?",
+    a: "Yes. The Starter plan supports up to 3 editors. The Pro plan supports unlimited editors across unlimited creator accounts.",
+  },
+  {
+    q: "What happens after I approve a video?",
+    a: "The video is pushed directly to your YouTube channel as a public video. Your editor gets an email notification and can see the YouTube link inside the platform.",
+  },
+  {
+    q: "Is this a subscription or a one-time payment?",
+    a: "One-time payment. Pay once and use MediaLayer forever — no monthly fees, no hidden charges.",
+  },
+  {
+    q: "What video formats are supported?",
+    a: "MP4 and MOV files up to 2GB. Cloudinary handles transcoding so your editor can upload in either format.",
+  },
+];
+
+function FaqSection() {
+  const [open, setOpen] = useState<number | null>(0);
+
+  return (
+    <section id="faq" className="py-24 px-6" style={{ background: "linear-gradient(180deg, #f0eef8 0%, #eeeaf8 100%)" }}>
+      <div className="max-w-[720px] mx-auto">
+        <h2 className="text-4xl md:text-5xl font-bold text-center text-[#1a1f3c] mb-14">FAQs</h2>
+
+        <div className="space-y-3">
+          {FAQ_ITEMS.map((item, i) => (
+            <div
+              key={i}
+              className="rounded-2xl overflow-hidden"
+              style={{ background: "rgba(99,102,241,0.07)" }}
+            >
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                className="w-full flex items-center justify-between px-6 py-5 text-left gap-4"
+              >
+                <span className="font-semibold text-[#1a1f3c] text-base leading-snug">{item.q}</span>
+                <ChevronDown
+                  className={`w-5 h-5 text-indigo-500 shrink-0 transition-transform duration-200 ${open === i ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {open === i && (
+                <div className="px-6 pb-5 border-t border-indigo-100/60">
+                  <p className="text-gray-600 text-sm leading-relaxed pt-4">{item.a}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -466,6 +535,9 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── FAQ ── */}
+      <FaqSection />
 
       {/* ── FINAL CTA ── */}
       <section className="py-24 px-6" style={{ background: "linear-gradient(160deg, #eeeaf8 0%, #e8e4f5 100%)" }}>

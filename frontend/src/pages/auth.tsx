@@ -31,26 +31,31 @@ const GoogleIcon = () => (
 function GoogleRolePicker({ onSelect, onClose }: { onSelect: (role: "creator" | "editor") => void; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
-        <h2 className="text-xl font-bold mb-1 text-gray-900 text-center">I am a...</h2>
-        <p className="text-sm text-gray-500 text-center mb-6">Choose your role to continue with Google</p>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-[420px] px-8 py-10">
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-1">I am a...</h2>
+        <p className="text-sm text-gray-500 text-center mb-8">Choose your role to continue with Google</p>
+
+        <div className="grid grid-cols-2 gap-4">
           {(["creator", "editor"] as const).map((r) => (
             <button
               key={r}
               onClick={() => onSelect(r)}
-              className="border border-gray-200 rounded-2xl p-5 flex flex-col items-center gap-2 hover:border-[#4f46e5] hover:bg-[#eef2ff] transition-colors"
+              className="group border border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-3 hover:border-indigo-400 hover:bg-indigo-50/60 transition-all duration-150 shadow-sm hover:shadow-md"
             >
-              <span className="text-2xl">{r === "creator" ? "🎬" : "✂️"}</span>
-              <span className="font-semibold text-gray-900 capitalize text-sm">{r}</span>
+              <span className="text-4xl leading-none">{r === "creator" ? "🎬" : "✂️"}</span>
+              <span className="font-bold text-gray-900 text-base capitalize">{r}</span>
               <span className="text-xs text-gray-500 text-center leading-relaxed">
                 {r === "creator" ? "I review and approve videos" : "I upload and submit videos"}
               </span>
             </button>
           ))}
         </div>
-        <button onClick={onClose} className="w-full mt-5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+
+        <button
+          onClick={onClose}
+          className="w-full mt-7 text-sm text-gray-400 hover:text-gray-700 transition-colors font-medium"
+        >
           Cancel
         </button>
       </div>

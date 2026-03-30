@@ -48,57 +48,88 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
     setUploadStage("idle");
   };
 
-  // Returns { filename, cloudinaryUrl } — file goes through backend for full validation
+  // Direct upload to Cloudinary using backend-signed params — fast + secure
   const uploadFile = (): Promise<{ filename: string; cloudinaryUrl: string }> => {
     if (!selectedFile) return Promise.reject(new Error("No file selected"));
     setIsUploading(true);
     setUploadStage("uploading");
     setUploadProgress(0);
 
-    return new Promise((resolve, reject) => {
-      const formData = new FormData();
-      formData.append("video", selectedFile);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const token = localStorage.getItem("layer_token");
+        const ext = selectedFile.name.split(".").pop()?.toLowerCase() || "mp4";
 
-      const xhr = new XMLHttpRequest();
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          setUploadProgress(pct);
-          if (pct === 100) setUploadStage("processing");
-        }
-      });
-      xhr.addEventListener("load", () => {
-        setIsUploading(false);
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const res = JSON.parse(xhr.responseText);
-          if (!res.cloudinaryUrl) {
-            reject(new Error("Upload failed — no Cloudinary URL returned"));
-            return;
+        // Step 1 — get signed params (tiny request, no file data)
+        const signRes = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/upload/sign`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ ext }),
+        });
+        if (!signRes.ok) throw new Error("Failed to get upload signature");
+        const { signature, timestamp, public_id, api_key, cloud_name, filename } = await signRes.json();
+
+        // Step 2 — upload directly from browser to Cloudinary (no Render hop)
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("api_key", api_key);
+        formData.append("timestamp", String(timestamp));
+        formData.append("signature", signature);
+        formData.append("public_id", public_id);
+        formData.append("type", "authenticated");
+        formData.append("overwrite", "true");
+
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(pct);
+            if (pct === 100) setUploadStage("processing");
           }
-          setUploadedFilename(res.filename);
-          setUploadedCloudinaryUrl(res.cloudinaryUrl);
-          setUploadStage("done");
-          resolve({ filename: res.filename, cloudinaryUrl: res.cloudinaryUrl });
-        } else {
+        });
+
+        xhr.addEventListener("load", async () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const result = JSON.parse(xhr.responseText);
+            const cloudinaryUrl = result.secure_url;
+
+            // Step 3 — confirm with backend (just logging, no file bytes)
+            await fetch(`${import.meta.env.VITE_API_URL || ""}/api/upload/confirm`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ filename, cloudinaryUrl, originalName: selectedFile.name, size: selectedFile.size }),
+            });
+
+            setIsUploading(false);
+            setUploadedFilename(filename);
+            setUploadedCloudinaryUrl(cloudinaryUrl);
+            setUploadStage("done");
+            resolve({ filename, cloudinaryUrl });
+          } else {
+            setIsUploading(false);
+            setUploadStage("idle");
+            try {
+              const err = JSON.parse(xhr.responseText);
+              reject(new Error(err.error?.message || err.error || `Upload failed (${xhr.status})`));
+            } catch {
+              reject(new Error(`Upload failed (${xhr.status})`));
+            }
+          }
+        });
+
+        xhr.addEventListener("error", () => {
+          setIsUploading(false);
           setUploadStage("idle");
-          try {
-            const err = JSON.parse(xhr.responseText);
-            reject(new Error(err.error || `Upload failed (${xhr.status})`));
-          } catch {
-            reject(new Error(`Upload failed (${xhr.status})`));
-          }
-        }
-      });
-      xhr.addEventListener("error", () => {
+          reject(new Error("Network error during upload"));
+        });
+
+        xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloud_name}/video/upload`);
+        xhr.send(formData);
+      } catch (err: any) {
         setIsUploading(false);
         setUploadStage("idle");
-        reject(new Error("Network error during upload"));
-      });
-
-      const token = localStorage.getItem("layer_token");
-      xhr.open("POST", `${import.meta.env.VITE_API_URL || ""}/api/upload/video`);
-      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.send(formData);
+        reject(err);
+      }
     });
   };
 

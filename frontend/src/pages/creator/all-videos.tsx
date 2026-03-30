@@ -80,7 +80,7 @@ export default function AllVideos() {
         </div>
       ) : filteredVideos.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto">
-          <img src="/empty.png" alt="No videos" className="w-48 h-48 object-contain mb-4 opacity-90" />
+          <img src="/empty.png" alt="No videos" className="w-72 h-72 object-contain mb-2" style={{ mixBlendMode: "multiply" }} />
           <h3 className="text-xl font-display font-bold mb-2">No videos found</h3>
           <p className="text-muted-foreground">No {filter === 'all' ? '' : filter} videos yet.</p>
         </div>

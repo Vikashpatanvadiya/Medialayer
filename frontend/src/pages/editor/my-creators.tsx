@@ -134,7 +134,7 @@ export default function MyCreators() {
         {/* Videos */}
         {creatorVideos.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-2xl p-12 flex flex-col items-center text-center">
-            <img src="/empty.png" alt="No videos" className="w-40 h-40 object-contain mb-4 opacity-90" />
+            <img src="/empty.png" alt="No videos" className="w-64 h-64 object-contain mb-2" style={{ mixBlendMode: "multiply" }} />
             <h3 className="font-bold text-gray-900 mb-1">No videos yet</h3>
             <p className="text-gray-500 text-sm mb-5">Submit your first video to {selectedCreator.name}.</p>
             <button

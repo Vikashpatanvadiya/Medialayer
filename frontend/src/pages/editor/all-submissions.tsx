@@ -106,8 +106,8 @@ export default function AllSubmissions() {
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : filteredVideos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto py-20">
-          <img src="/empty.png" alt="No videos" className="w-48 h-48 object-contain mb-4 opacity-90" />
+        <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto py-10">
+          <img src="/empty.png" alt="No videos" className="w-72 h-72 object-contain mb-2" style={{ mixBlendMode: "multiply" }} />
           <h3 className="text-xl font-bold mb-2">No videos found</h3>
           <p className="text-muted-foreground mb-6">
             {filter === "all" ? "You haven't submitted any videos yet." : `No ${filter} videos at the moment.`}

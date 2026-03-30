@@ -3,8 +3,10 @@ services:
     name: layer-backend
     runtime: node
     region: oregon
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/api-server run build
     startCommand: node backend/dist/index.cjs
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 20.19.0

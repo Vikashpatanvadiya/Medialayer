@@ -145,88 +145,37 @@ const HOW_STEPS = [
 ];
 
 function HowItWorks() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
   return (
     <section
       id="how-it-works"
-      ref={containerRef}
-      // 400vh gives enough scroll room for 4 cards to animate in
-      className="relative"
-      style={{ height: "400vh", background: "linear-gradient(180deg, #eeeaf8 0%, #ffffff 300px)" }}
+      className="py-24 px-6"
+      style={{ background: "linear-gradient(180deg, #eeeaf8 0%, #ffffff 120px)" }}
     >
-      {/* Sticky wrapper */}
-      <div className="sticky top-0 h-screen flex flex-col justify-center px-6 overflow-hidden">
-        <div className="max-w-[1100px] mx-auto w-full">
-          <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1a1f3c] mb-4">
-              A better workflow for creators &amp; editors
-            </h2>
-            <p className="text-gray-500 text-lg">Four steps. No downloads. No shared passwords.</p>
-          </div>
-
-          <div className="grid md:grid-cols-4 gap-6">
-            {HOW_STEPS.map((item, i) => (
-              <StepCard key={item.step} item={item} index={i} scrollYProgress={scrollYProgress} />
-            ))}
-          </div>
+      <div className="max-w-[1100px] mx-auto">
+        <div className="text-center mb-14">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#1a1f3c] mb-4">
+            A better workflow for creators &amp; editors
+          </h2>
+          <p className="text-gray-500 text-lg">Four steps. No downloads. No shared passwords.</p>
+        </div>
+        <div className="grid md:grid-cols-4 gap-6">
+          {HOW_STEPS.map((item) => (
+            <div key={item.step} className="rounded-3xl overflow-hidden" style={{ background: "#eeedf8", padding: "16px 16px 0 16px" }}>
+              <div className="rounded-2xl flex items-center justify-center" style={{ background: item.gradient, height: "180px" }}>
+                <div className="w-20 h-20 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                  <item.icon className="w-10 h-10 text-white drop-shadow" />
+                </div>
+              </div>
+              <div className="px-2 py-5 text-center">
+                <span className="text-xs font-bold text-indigo-400 tracking-widest block mb-1">{item.step}</span>
+                <h3 className="font-bold text-[#1a1f3c] text-base mb-2">{item.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{item.body}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
-  );
-}
-
-function StepCard({
-  item,
-  index,
-  scrollYProgress,
-}: {
-  item: typeof HOW_STEPS[number];
-  index: number;
-  scrollYProgress: ReturnType<typeof useScroll>["scrollYProgress"];
-}) {
-  // Overlapping windows so cards feel fluid, not choppy
-  const start = index * 0.18;
-  const end   = start + 0.28;
-
-  const opacity = useTransform(scrollYProgress, [start, end], [0, 1]);
-  const y       = useTransform(scrollYProgress, [start, end], [60, 0]);
-  const scale   = useTransform(scrollYProgress, [start, end], [0.9, 1]);
-
-  return (
-    <motion.div
-      style={{ opacity, y, scale }}
-      className="rounded-3xl overflow-hidden flex flex-col"
-    >
-      <div
-        className="rounded-3xl overflow-hidden"
-        style={{ background: "#eeedf8", padding: "16px 16px 0 16px" }}
-      >
-        {/* Illustration area */}
-        <div
-          className="rounded-2xl flex items-center justify-center"
-          style={{
-            background: item.gradient,
-            height: "180px",
-          }}
-        >
-          <div className="w-20 h-20 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-lg">
-            <item.icon className="w-10 h-10 text-white drop-shadow" />
-          </div>
-        </div>
-
-        {/* Text */}
-        <div className="px-2 py-5 text-center">
-          <span className="text-xs font-bold text-indigo-400 tracking-widest block mb-1">{item.step}</span>
-          <h3 className="font-bold text-[#1a1f3c] text-base mb-2">{item.title}</h3>
-          <p className="text-gray-500 text-sm leading-relaxed">{item.body}</p>
-        </div>
-      </div>
-    </motion.div>
   );
 }
 

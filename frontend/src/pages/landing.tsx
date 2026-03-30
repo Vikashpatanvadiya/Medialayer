@@ -111,36 +111,53 @@ const Logo = () => (
 
 const HOW_STEPS = [
   {
-    icon: Upload,
     step: "01",
     title: "Editor uploads",
     body: "Editor uploads the video directly. No file sharing or Drive links needed.",
     gradient: "linear-gradient(135deg, #c7d2fe 0%, #818cf8 50%, #6366f1 100%)",
-    iconBg: "bg-white/20",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 22V10M18 10L13 15M18 10L23 15" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M9 26h18" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
+      </svg>
+    ),
   },
   {
-    icon: Eye,
     step: "02",
     title: "Creator reviews",
     body: "Watch the video securely inside the platform with a signed, expiring URL.",
     gradient: "linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #d97706 100%)",
-    iconBg: "bg-white/20",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="18" cy="18" rx="10" ry="6.5" stroke="white" strokeWidth="2.2"/>
+        <circle cx="18" cy="18" r="3" stroke="white" strokeWidth="2.2"/>
+      </svg>
+    ),
   },
   {
-    icon: FileCheck,
     step: "03",
     title: "Approve or reject",
     body: "One click to approve, or send feedback. Editor gets notified instantly.",
     gradient: "linear-gradient(135deg, #bbf7d0 0%, #34d399 50%, #059669 100%)",
-    iconBg: "bg-white/20",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 8h7l5 5v15a1 1 0 01-1 1H13a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="white" strokeWidth="2.2" strokeLinejoin="round"/>
+        <path d="M20 8v6h5" stroke="white" strokeWidth="2.2" strokeLinejoin="round"/>
+        <path d="M14.5 20.5l2.5 2.5 5-5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
   },
   {
-    icon: Youtube,
     step: "04",
     title: "Published to YouTube",
     body: "Approved video is pushed directly to the creator's YouTube channel.",
     gradient: "linear-gradient(135deg, #fecaca 0%, #f87171 50%, #ef4444 100%)",
-    iconBg: "bg-white/20",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="10" width="26" height="16" rx="4" stroke="white" strokeWidth="2.2"/>
+        <path d="M15 14.5l7 3.5-7 3.5V14.5z" fill="white"/>
+      </svg>
+    ),
   },
 ];
 
@@ -163,7 +180,7 @@ function HowItWorks() {
             <div key={item.step} className="rounded-3xl overflow-hidden" style={{ background: "#eeedf8", padding: "16px 16px 0 16px" }}>
               <div className="rounded-2xl flex items-center justify-center" style={{ background: item.gradient, height: "180px" }}>
                 <div className="w-20 h-20 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                  <item.icon className="w-10 h-10 text-white drop-shadow" />
+                  {item.icon}
                 </div>
               </div>
               <div className="px-2 py-5 text-center">

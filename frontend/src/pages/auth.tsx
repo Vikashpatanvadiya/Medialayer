@@ -37,19 +37,38 @@ function GoogleRolePicker({ onSelect, onClose }: { onSelect: (role: "creator" | 
         <p className="text-sm text-gray-500 text-center mb-8">Choose your role to continue with Google</p>
 
         <div className="grid grid-cols-2 gap-4">
-          {(["creator", "editor"] as const).map((r) => (
-            <button
-              key={r}
-              onClick={() => onSelect(r)}
-              className="group border border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-3 hover:border-indigo-400 hover:bg-indigo-50/60 transition-all duration-150 shadow-sm hover:shadow-md"
-            >
-              <span className="text-4xl leading-none">{r === "creator" ? "🎬" : "✂️"}</span>
-              <span className="font-bold text-gray-900 text-base capitalize">{r}</span>
-              <span className="text-xs text-gray-500 text-center leading-relaxed">
-                {r === "creator" ? "I review and approve videos" : "I upload and submit videos"}
-              </span>
-            </button>
-          ))}
+          {/* Creator card */}
+          <button
+            onClick={() => onSelect("creator")}
+            className="group border border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-3 hover:border-indigo-400 hover:bg-indigo-50/60 transition-all duration-150 shadow-sm hover:shadow-md"
+          >
+            {/* Clapperboard icon */}
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="16" width="28" height="18" rx="2" stroke="#374151" strokeWidth="2" strokeLinejoin="round"/>
+              <rect x="6" y="10" width="28" height="7" rx="1.5" stroke="#374151" strokeWidth="2"/>
+              <line x1="13" y1="10" x2="11" y2="17" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="20" y1="10" x2="18" y2="17" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="27" y1="10" x2="25" y2="17" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <span className="font-bold text-gray-900 text-base">Creator</span>
+            <span className="text-xs text-gray-500 text-center leading-relaxed">I review and approve videos</span>
+          </button>
+
+          {/* Editor card */}
+          <button
+            onClick={() => onSelect("editor")}
+            className="group border border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-3 hover:border-indigo-400 hover:bg-indigo-50/60 transition-all duration-150 shadow-sm hover:shadow-md"
+          >
+            {/* Scissors / edit icon */}
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="28" r="4" stroke="#374151" strokeWidth="2"/>
+              <circle cx="12" cy="12" r="4" stroke="#374151" strokeWidth="2"/>
+              <line x1="15.5" y1="25" x2="32" y2="10" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="15.5" y1="15" x2="32" y2="30" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <span className="font-bold text-gray-900 text-base">Editor</span>
+            <span className="text-xs text-gray-500 text-center leading-relaxed">I upload and submit videos</span>
+          </button>
         </div>
 
         <button

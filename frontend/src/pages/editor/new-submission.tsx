@@ -66,7 +66,10 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ ext }),
         });
-        if (!signRes.ok) throw new Error("Failed to get upload signature");
+        if (!signRes.ok) {
+          const errBody = await signRes.json().catch(() => ({}));
+          throw new Error(errBody.error || `Signature request failed (${signRes.status})`);
+        }
         const { signature, timestamp, public_id, api_key, cloud_name, filename } = await signRes.json();
 
         // Step 2 — upload directly from browser to Cloudinary (no Render hop)

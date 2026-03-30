@@ -354,23 +354,6 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
             )}
           </p>
 
-          {/* Testimonial */}
-          <div className="mt-12 text-center max-w-sm mx-auto">
-            <p className="text-sm text-gray-700 leading-relaxed">
-              I've <span className="font-bold text-gray-900">sent videos externally three times this month instead of scheduling a meeting</span>{" "}
-              and the first response is always, "This is great, why don't more people do this?"
-            </p>
-            <div className="flex items-center justify-center gap-3 mt-5">
-              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">
-                N
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-gray-900">Nayan R.</p>
-                <p className="text-xs text-gray-500">Founder, MediaLayer</p>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>

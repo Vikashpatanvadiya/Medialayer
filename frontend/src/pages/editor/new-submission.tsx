@@ -48,7 +48,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
     setUploadStage("idle");
   };
 
-  // Returns { filename, cloudinaryUrl } — waits for full Cloudinary upload
+  // Returns { filename, cloudinaryUrl } — file goes through backend for full validation
   const uploadFile = (): Promise<{ filename: string; cloudinaryUrl: string }> => {
     if (!selectedFile) return Promise.reject(new Error("No file selected"));
     setIsUploading(true);
@@ -64,7 +64,6 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         if (e.lengthComputable) {
           const pct = Math.round((e.loaded / e.total) * 100);
           setUploadProgress(pct);
-          // Once file reaches server, show "processing" (Cloudinary upload happening)
           if (pct === 100) setUploadStage("processing");
         }
       });
@@ -73,7 +72,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         if (xhr.status >= 200 && xhr.status < 300) {
           const res = JSON.parse(xhr.responseText);
           if (!res.cloudinaryUrl) {
-            reject(new Error("Cloudinary upload failed on server — check Render env vars"));
+            reject(new Error("Upload failed — no Cloudinary URL returned"));
             return;
           }
           setUploadedFilename(res.filename);
@@ -84,7 +83,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           setUploadStage("idle");
           try {
             const err = JSON.parse(xhr.responseText);
-            reject(new Error(err.error || "Upload failed"));
+            reject(new Error(err.error || `Upload failed (${xhr.status})`));
           } catch {
             reject(new Error(`Upload failed (${xhr.status})`));
           }

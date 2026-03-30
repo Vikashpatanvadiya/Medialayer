@@ -60,9 +60,9 @@ function GoogleRolePicker({ onSelect, onClose }: { onSelect: (role: "creator" | 
 
 // Brief: 8–16px border-radius on inputs, not pill-shaped
 const inputClass =
-  "w-full px-4 py-3 rounded-2xl bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 text-sm focus:outline-none focus:border-gray-400 transition-colors";
+  "w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-colors";
 
-const labelClass = "block text-sm text-gray-600 mb-1.5";
+const labelClass = "block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide";
 
 export default function AuthPage({ mode = "login" }: { mode?: "login" | "register" }) {
   const { login, register, isLoggingIn, isRegistering } = useAuth();
@@ -114,26 +114,25 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
   };
 
   return (
-    // Brief: centered gradient, soft cool-toned, not directional from one corner
-    <div className="min-h-screen flex flex-col" style={{ background: "radial-gradient(ellipse at 50% 40%, #f0eef8 0%, #e2ddf2 40%, #cdc6e8 100%)" }}>
+    // Centered radial lavender gradient matching reference
+    <div className="min-h-screen flex flex-col" style={{ background: "radial-gradient(ellipse at 50% 30%, #ece9f8 0%, #ddd8f0 50%, #cdc6e8 100%)" }}>
       {showRolePicker && (
         <GoogleRolePicker onSelect={handleGoogleSignup} onClose={() => setShowRolePicker(false)} />
       )}
 
-      {/* Top-left logo — consistent treatment */}
+      {/* Top-left logo */}
       <div className="px-8 pt-7">
         <Link href="/" className="flex items-center w-fit">
           <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[20px] tracking-tight text-[#1a1f3c]">MediaLayer</span>
         </Link>
       </div>
 
-      {/* Center content — brief: 48–64px between sections */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
-        <div className="w-full max-w-[400px]">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+        <div className="w-full max-w-[420px]">
 
-          {/* Card — brief: 24–32px padding, 16px border-radius, soft shadow */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-md shadow-black/[0.07] px-8 py-8">
-            <h1 className="text-[26px] font-bold text-gray-900 text-center leading-tight mb-6">
+          {/* Card — white, rounded-2xl, soft shadow */}
+          <div className="bg-white rounded-2xl shadow-lg shadow-black/[0.08] px-8 py-9">
+            <h1 className="text-[24px] font-bold text-gray-900 text-center leading-tight mb-7">
               {isLogin ? (
                 <>Welcome back to<br />MediaLayer</>
               ) : (
@@ -161,16 +160,15 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                     }
                   })}
                 >
-                  {/* Google — brief: more visually active primary CTA */}
+                  {/* Google button — outlined, full width */}
                   <a
                     href={apiUrl("/api/auth/google?role=editor")}
-                    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors shadow-sm"
                   >
                     <GoogleIcon /> Sign in with Google
                   </a>
 
-                  {/* Divider — brief: 16px spacing between elements */}
-                  <div className="flex items-center gap-3 my-4">
+                  <div className="flex items-center gap-3 my-5">
                     <div className="flex-1 h-px bg-gray-200" />
                     <span className="text-xs text-gray-400 tracking-widest">OR</span>
                     <div className="flex-1 h-px bg-gray-200" />
@@ -183,7 +181,6 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                     </div>
                   )}
 
-                  {/* Fields — brief: 16px spacing between elements */}
                   <div className="mb-4">
                     <label className={labelClass}>Work email</label>
                     <input {...loginForm.register("email")} className={inputClass} placeholder="name@company.com" />
@@ -192,7 +189,7 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                     )}
                   </div>
 
-                  <div className="mb-4">
+                  <div className="mb-5">
                     <label className={labelClass}>Password</label>
                     <input type="password" {...loginForm.register("password")} className={inputClass} placeholder="••••••••" />
                     {loginForm.formState.errors.password && (
@@ -200,11 +197,11 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                     )}
                   </div>
 
-                  {/* Continue — brief: subdued, secondary to Google */}
+                  {/* Primary CTA — solid indigo, full width */}
                   <button
                     type="submit"
                     disabled={isLoggingIn}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold transition-colors disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm shadow-indigo-200"
                   >
                     {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
                   </button>
@@ -224,12 +221,11 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                     </div>
                   )}
 
-                  {/* Legal — brief: accent purple used sparingly, only for links */}
-                  <p className="text-center text-xs text-gray-400 mt-4 leading-relaxed">
+                  <p className="text-center text-xs text-gray-400 mt-5 leading-relaxed">
                     By signing in, you agree to MediaLayer's{" "}
-                    <Link href="/terms" className="text-[#4f46e5] hover:underline">Terms</Link>{" "}
+                    <Link href="/terms" className="text-indigo-500 hover:underline">Terms</Link>{" "}
                     and{" "}
-                    <Link href="/privacy" className="text-[#4f46e5] hover:underline">Privacy Policy</Link>.
+                    <Link href="/privacy" className="text-indigo-500 hover:underline">Privacy Policy</Link>.
                   </p>
                 </motion.form>
               ) : (
@@ -241,16 +237,15 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                   transition={{ duration: 0.15 }}
                   onSubmit={registerForm.handleSubmit((d) => register({ ...d, inviteCode: params.get("code") || undefined } as any))}
                 >
-                  {/* Google — primary CTA */}
                   <button
                     type="button"
                     onClick={() => setShowRolePicker(true)}
-                    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors shadow-sm"
                   >
                     <GoogleIcon /> Sign up with Google
                   </button>
 
-                  <div className="flex items-center gap-3 my-4">
+                  <div className="flex items-center gap-3 my-5">
                     <div className="flex-1 h-px bg-gray-200" />
                     <span className="text-xs text-gray-400 tracking-widest">OR</span>
                     <div className="flex-1 h-px bg-gray-200" />
@@ -280,15 +275,15 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                     )}
                   </div>
 
-                  <div className="mb-4">
+                  <div className="mb-5">
                     <label className={labelClass}>I am a...</label>
                     <div className="grid grid-cols-2 gap-2">
                       {(["creator", "editor"] as const).map((r) => (
                         <label
                           key={r}
-                          className={`cursor-pointer border rounded-2xl p-3 flex flex-col items-center gap-1 transition-colors ${
+                          className={`cursor-pointer border rounded-xl p-3 flex flex-col items-center gap-1 transition-colors ${
                             registerForm.watch("role") === r
-                              ? "border-[#4f46e5] bg-[#eef2ff]"
+                              ? "border-indigo-500 bg-indigo-50"
                               : "border-gray-200 hover:bg-gray-50"
                           }`}
                         >
@@ -302,46 +297,47 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
                     </div>
                   </div>
 
+                  {/* Primary CTA — solid indigo */}
                   <button
                     type="submit"
                     disabled={isRegistering}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold transition-colors disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm shadow-indigo-200"
                   >
                     {isRegistering ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
                   </button>
 
-                  <p className="text-center text-xs text-gray-400 mt-4 leading-relaxed">
+                  <p className="text-center text-xs text-gray-400 mt-5 leading-relaxed">
                     By signing up, you agree to MediaLayer's{" "}
-                    <Link href="/terms" className="text-[#4f46e5] hover:underline">Terms</Link>{" "}
+                    <Link href="/terms" className="text-indigo-500 hover:underline">Terms</Link>{" "}
                     and{" "}
-                    <Link href="/privacy" className="text-[#4f46e5] hover:underline">Privacy Policy</Link>.
+                    <Link href="/privacy" className="text-indigo-500 hover:underline">Privacy Policy</Link>.
                   </p>
                 </motion.form>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Sign in/up toggle — brief: secondary path, below card, 48px gap */}
+          {/* Sign in/up toggle */}
           <p className="text-center text-sm text-gray-700 mt-5">
             {isLogin ? (
               <>Don't have an account?{" "}
-                <Link href="/register" className="text-[#4f46e5] hover:underline">Sign up</Link>
+                <Link href="/register" className="text-indigo-600 font-medium hover:underline">Sign up</Link>
               </>
             ) : (
               <>Already have an account?{" "}
-                <Link href="/login" className="text-[#4f46e5] hover:underline">Sign in</Link>
+                <Link href="/login" className="text-indigo-600 font-medium hover:underline">Sign in</Link>
               </>
             )}
           </p>
 
-          {/* Testimonial — brief: 48–64px below card section */}
-          <div className="mt-14 text-center max-w-sm mx-auto">
-            <p className="text-sm text-gray-800 leading-relaxed">
-              I've <span className="font-bold">sent videos externally three times this month instead of scheduling a meeting</span>{" "}
+          {/* Testimonial */}
+          <div className="mt-12 text-center max-w-sm mx-auto">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              I've <span className="font-bold text-gray-900">sent videos externally three times this month instead of scheduling a meeting</span>{" "}
               and the first response is always, "This is great, why don't more people do this?"
             </p>
             <div className="flex items-center justify-center gap-3 mt-5">
-              <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">
                 N
               </div>
               <div className="text-left">
@@ -350,10 +346,9 @@ export default function AuthPage({ mode = "login" }: { mode?: "login" | "registe
               </div>
             </div>
           </div>
+
         </div>
       </div>
-
-
     </div>
   );
 }

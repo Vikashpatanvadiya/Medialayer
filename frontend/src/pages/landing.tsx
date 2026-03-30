@@ -179,6 +179,36 @@ function HowItWorks() {
   );
 }
 
+function DemoVideo() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleMouseEnter = () => videoRef.current?.play();
+  const handleMouseLeave = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  return (
+    <div
+      className="relative bg-black"
+      style={{ paddingTop: "62.5%" }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <video
+        ref={videoRef}
+        src="https://res.cloudinary.com/dasrs5xx0/video/upload/v1774847598/Screen_Recording_2026-03-30_at_12.52.54_AM_twwjhf.mp4"
+        muted
+        playsInline
+        loop
+        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "block", objectFit: "cover" }}
+      />
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -250,14 +280,7 @@ export default function LandingPage() {
             </div>
 
             {/* Video */}
-            <div className="relative bg-black" style={{ paddingTop: "62.5%" }}>
-              <video
-                src="https://res.cloudinary.com/dasrs5xx0/video/upload/v1774847598/Screen_Recording_2026-03-30_at_12.52.54_AM_twwjhf.mp4"
-                controls
-                playsInline
-                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "block", objectFit: "cover" }}
-              />
-            </div>
+            <DemoVideo />
           </motion.div>
         </div>
       </section>

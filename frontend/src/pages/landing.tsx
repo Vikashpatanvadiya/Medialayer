@@ -256,14 +256,12 @@ export default function LandingPage() {
             </div>
 
             {/* Video */}
-            <div className="relative bg-black" style={{ paddingTop: "75%" }}>
-              <iframe
-                src="https://player.vimeo.com/video/1178239755?badge=0&autopause=0&player_id=0&app_id=58479"
-                frameBorder="0"
-                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "block" }}
-                title="MediaLayer Demo"
+            <div className="relative bg-black" style={{ paddingTop: "56.25%" }}>
+              <video
+                src="https://res.cloudinary.com/dasrs5xx0/video/upload/v1774847598/Screen_Recording_2026-03-30_at_12.52.54_AM_twwjhf.mp4"
+                controls
+                playsInline
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "block", objectFit: "contain" }}
               />
             </div>
           </motion.div>

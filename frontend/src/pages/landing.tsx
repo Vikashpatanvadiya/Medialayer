@@ -104,9 +104,7 @@ function SocialPostCarousel() {
 }
 
 const Logo = () => (
-  <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[22px] tracking-tight text-[#1a1f3c]">
-    MediaLayer
-  </span>
+  <img src="/Medialayer-Indigo.svg" alt="MediaLayer" className="h-7" />
 );
 
 const HOW_STEPS = [

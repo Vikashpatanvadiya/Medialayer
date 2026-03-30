@@ -154,7 +154,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Logo */}
         <div className="px-5 py-4 flex items-center border-b border-gray-100">
           <Link href="/">
-            <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[18px] tracking-tight text-[#1a1f3c] cursor-pointer hover:opacity-80 transition-opacity">MediaLayer</span>
+            <img src="/Medialayer-Indigo.svg" alt="MediaLayer" className="h-6 cursor-pointer hover:opacity-80 transition-opacity" />
           </Link>
         </div>
         <SidebarContent />

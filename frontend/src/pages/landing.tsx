@@ -149,7 +149,7 @@ function HowItWorks() {
     <section
       id="how-it-works"
       className="py-24 px-6"
-      style={{ background: "linear-gradient(180deg, #eeeaf8 0%, #ffffff 120px)" }}
+      style={{ background: "#ffffff" }}
     >
       <div className="max-w-[1100px] mx-auto">
         <div className="text-center mb-14">
@@ -222,12 +222,6 @@ export default function LandingPage() {
               <Link href="/register" className="px-8 py-3.5 rounded-full bg-indigo-600 text-white font-semibold text-base hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-300/40">
                 Get MediaLayer for free
               </Link>
-              <a href="#demo" className="flex items-center gap-2 text-gray-600 font-medium text-sm hover:text-gray-900 transition-colors">
-                <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
-                  <Play className="w-3.5 h-3.5 text-indigo-600 ml-0.5" />
-                </div>
-                Watch demo
-              </a>
             </motion.div>
           </motion.div>
 
@@ -256,17 +250,20 @@ export default function LandingPage() {
             </div>
 
             {/* Video */}
-            <div className="relative bg-black" style={{ paddingTop: "56.25%" }}>
+            <div className="relative bg-black" style={{ paddingTop: "62.5%" }}>
               <video
                 src="https://res.cloudinary.com/dasrs5xx0/video/upload/v1774847598/Screen_Recording_2026-03-30_at_12.52.54_AM_twwjhf.mp4"
                 controls
                 playsInline
-                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "block", objectFit: "contain" }}
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "block", objectFit: "cover" }}
               />
             </div>
           </motion.div>
         </div>
       </section>
+
+      {/* ── SECTION DIVIDER ── */}
+      <div style={{ height: "80px", background: "linear-gradient(180deg, #ddd8f0 0%, #ffffff 100%)" }} />
 
       {/* ── HOW IT WORKS ── */}
       <HowItWorks />

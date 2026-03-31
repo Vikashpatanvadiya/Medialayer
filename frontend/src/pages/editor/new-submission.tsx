@@ -178,15 +178,27 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
       formData.append("public_id", public_id);
       // Note: do NOT append overwrite — keep FormData params matching exactly what was signed
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
-        method: "POST",
-        body: formData,
+      // Use XHR instead of fetch — avoids CORS preflight issues with Cloudinary
+      return await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const result = JSON.parse(xhr.responseText);
+              if (result.error) { reject(new Error(result.error.message || "Cloudinary error")); return; }
+              resolve(result.secure_url);
+            } catch { reject(new Error("Invalid Cloudinary response")); }
+          } else {
+            try {
+              const err = JSON.parse(xhr.responseText);
+              reject(new Error(err.error?.message || `Cloudinary upload failed (${xhr.status})`));
+            } catch { reject(new Error(`Cloudinary upload failed (${xhr.status})`)); }
+          }
+        });
+        xhr.addEventListener("error", () => reject(new Error("Network error uploading thumbnail")));
+        xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`);
+        xhr.send(formData);
       });
-      const result = await res.json();
-      if (!res.ok || result.error) {
-        throw new Error(result.error?.message || `Cloudinary image upload failed (${res.status})`);
-      }
-      return result.secure_url as string;
     } finally {
       setIsUploadingThumbnail(false);
     }

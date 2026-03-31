@@ -43,6 +43,34 @@ router.post("/sign", requireAuth, requireRole("editor"), async (req, res) => {
   }
 });
 
+// Returns signed params for a PUBLIC image upload (thumbnails need to be publicly accessible for YouTube)
+router.post("/thumbnail-sign", requireAuth, requireRole("editor"), async (req, res) => {
+  try {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = (req.body.ext as string || "jpg").replace(/[^a-z0-9]/gi, "").toLowerCase();
+    const publicId = `medialayer/thumbnails/${unique}`;
+    const timestamp = Math.round(Date.now() / 1000);
+
+    // Public type — YouTube must be able to fetch this URL directly
+    const paramsToSign = { timestamp, public_id: publicId, overwrite: "true" };
+
+    const signature = cloudinary.utils.api_sign_request(
+      paramsToSign,
+      process.env.CLOUDINARY_API_SECRET!
+    );
+
+    res.json({
+      signature,
+      timestamp,
+      public_id: publicId,
+      api_key: process.env.CLOUDINARY_API_KEY!,
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Called after Cloudinary confirms upload — just logs it, no file data touches server
 router.post("/confirm", requireAuth, requireRole("editor"), async (req, res) => {
   const { filename, cloudinaryUrl, originalName, size } = req.body;

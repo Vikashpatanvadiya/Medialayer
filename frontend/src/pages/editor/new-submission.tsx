@@ -13,7 +13,6 @@ type LinkedCreator = { id: string; name: string; email: string };
 const schema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Provide a brief description"),
-  thumbnailUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   tags: z.string().optional(),
   creatorId: z.string().min(1, "Please select a creator"),
 });
@@ -29,9 +28,15 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
   const [uploadedFilename, setUploadedFilename] = useState<string | null>(null);
   const [uploadedCloudinaryUrl, setUploadedCloudinaryUrl] = useState<string | null>(null);
 
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { title: "", description: "", thumbnailUrl: "", tags: "", creatorId: linkedCreators.length === 1 ? linkedCreators[0].id : "" },
+    defaultValues: { title: "", description: "", tags: "", creatorId: linkedCreators.length === 1 ? linkedCreators[0].id : "" },
   });
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,6 +141,53 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
     });
   };
 
+  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
+      return;
+    }
+    setThumbnailFile(file);
+    setThumbnailUrl(null);
+    setThumbnailPreview(URL.createObjectURL(file));
+  };
+
+  const uploadThumbnail = async (file: File): Promise<string> => {
+    setIsUploadingThumbnail(true);
+    try {
+      const token = localStorage.getItem("layer_token");
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+
+      const signRes = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/upload/thumbnail-sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ext }),
+      });
+      if (!signRes.ok) throw new Error("Failed to get thumbnail upload signature");
+      const { signature, timestamp, public_id, api_key, cloud_name } = await signRes.json();
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("api_key", api_key);
+      formData.append("timestamp", String(timestamp));
+      formData.append("signature", signature);
+      formData.append("public_id", public_id);
+      formData.append("overwrite", "true");
+      // No "type: authenticated" — must be public so YouTube can fetch it
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Thumbnail upload to Cloudinary failed");
+      const result = await res.json();
+      return result.secure_url as string;
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  };
+
   const handleRealSubmit = async (data: z.infer<typeof schema>) => {
     if (!selectedFile) {
       toast({ title: "No video", description: "Please select a video file to upload.", variant: "destructive" });
@@ -156,6 +208,13 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         cloudinaryUrl = result.cloudinaryUrl;
       }
 
+      // Upload thumbnail if selected and not yet uploaded
+      let finalThumbnailUrl = thumbnailUrl;
+      if (thumbnailFile && !thumbnailUrl) {
+        finalThumbnailUrl = await uploadThumbnail(thumbnailFile);
+        setThumbnailUrl(finalThumbnailUrl);
+      }
+
       const token = localStorage.getItem("layer_token");
       const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/videos`, {
         method: "POST",
@@ -166,7 +225,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
           videoUrl: cloudinaryUrl,
           storedFilename: filename,
-          thumbnailUrl: data.thumbnailUrl || undefined,
+          thumbnailUrl: finalThumbnailUrl || undefined,
           fileSize: selectedFile.size,
           creatorId: data.creatorId,
         }),
@@ -334,14 +393,42 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                  <ImageIcon className="w-4 h-4" /> Thumbnail URL
+                  <ImageIcon className="w-4 h-4" /> Thumbnail
                   <span className="text-xs font-normal text-muted-foreground">(optional)</span>
                 </label>
                 <input
-                  {...form.register("thumbnailUrl")}
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground"
-                  placeholder="https://..."
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleThumbnailSelect}
+                  className="hidden"
                 />
+                {thumbnailPreview ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border group cursor-pointer" onClick={() => thumbnailInputRef.current?.click()}>
+                    <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-28 object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white text-xs font-semibold">Change image</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => thumbnailInputRef.current?.click()}
+                    className="border-2 border-dashed border-border rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-secondary/50 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                      <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Upload thumbnail</p>
+                      <p className="text-xs text-muted-foreground">JPG, PNG — recommended 1280×720</p>
+                    </div>
+                  </div>
+                )}
+                {isUploadingThumbnail && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Uploading thumbnail…
+                  </div>
+                )}
               </div>
             </div>
 
@@ -353,7 +440,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           <Button
             type="submit"
             form="submission-form"
-            disabled={isUploading || uploadStage === "processing" || !selectedFile || form.formState.isSubmitting}
+            disabled={isUploading || uploadStage === "processing" || isUploadingThumbnail || !selectedFile || form.formState.isSubmitting}
             className="rounded-xl px-8"
           >
             {isUploading ? (

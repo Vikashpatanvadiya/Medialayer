@@ -164,7 +164,10 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ext }),
       });
-      if (!signRes.ok) throw new Error("Failed to get thumbnail upload signature");
+      if (!signRes.ok) {
+        const errBody = await signRes.json().catch(() => ({}));
+        throw new Error(errBody.error || `Thumbnail sign failed (${signRes.status})`);
+      }
       const { signature, timestamp, public_id, api_key, cloud_name } = await signRes.json();
 
       const formData = new FormData();
@@ -180,7 +183,10 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error("Thumbnail upload to Cloudinary failed");
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error?.message || `Thumbnail Cloudinary upload failed (${res.status})`);
+      }
       const result = await res.json();
       return result.secure_url as string;
     } finally {
@@ -211,8 +217,13 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
       // Upload thumbnail if selected and not yet uploaded
       let finalThumbnailUrl = thumbnailUrl;
       if (thumbnailFile && !thumbnailUrl) {
-        finalThumbnailUrl = await uploadThumbnail(thumbnailFile);
-        setThumbnailUrl(finalThumbnailUrl);
+        try {
+          finalThumbnailUrl = await uploadThumbnail(thumbnailFile);
+          setThumbnailUrl(finalThumbnailUrl);
+        } catch (thumbErr: any) {
+          console.warn("[thumbnail] Upload failed, submitting without thumbnail:", thumbErr?.message);
+          // Non-fatal — continue submission without thumbnail
+        }
       }
 
       const token = localStorage.getItem("layer_token");

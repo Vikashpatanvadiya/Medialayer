@@ -533,9 +533,9 @@ export default function LandingPage() {
                     ))}
                   </ul>
                 </div>
-                <a href={`${import.meta.env.VITE_WALLET_URL || "https://medialayer-wallet.vercel.app"}?plan=starter`} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm">
+                <Link href="/checkout?plan=starter" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm">
                   Claim Offer <ArrowRight className="w-4 h-4" />
-                </a>
+                </Link>
               </div>
 
               {/* Pro — highlighted */}
@@ -558,9 +558,9 @@ export default function LandingPage() {
                     ))}
                   </ul>
                 </div>
-                <a href={`${import.meta.env.VITE_WALLET_URL || "https://medialayer-wallet.vercel.app"}?plan=pro`} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-indigo-600 font-semibold hover:bg-indigo-50 transition-colors text-sm">
+                <Link href="/checkout?plan=pro" className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-indigo-600 font-semibold hover:bg-indigo-50 transition-colors text-sm">
                   Claim Offer <ArrowRight className="w-4 h-4" />
-                </a>
+                </Link>
               </div>
 
             </motion.div>

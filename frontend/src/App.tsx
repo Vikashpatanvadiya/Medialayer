@@ -24,6 +24,7 @@ import TermsOfService from "@/pages/terms";
 import ProfilePage from "./pages/profile";
 import NotificationsPage from "./pages/notifications";
 import GoogleAuthSuccess from "@/pages/auth-google-success";
+import CheckoutPage from "@/pages/checkout";
 
 // Initialize the global fetch interceptor once
 setupFetchInterceptor();
@@ -127,6 +128,10 @@ function Router() {
 
       <Route path="/terms">
         <TermsOfService />
+      </Route>
+
+      <Route path="/checkout">
+        <CheckoutPage />
       </Route>
 
       <Route component={NotFound} />

@@ -1,0 +1,166 @@
+import { useMemo, useState } from "react";
+import { useSearch, Link } from "wouter";
+import { ArrowLeft, CheckCircle, ExternalLink, Loader2 } from "lucide-react";
+import {
+  ConnectionProvider,
+  WalletProvider,
+  useConnection,
+  useWallet,
+} from "@solana/wallet-adapter-react";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { WalletModalProvider, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { clusterApiUrl, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import "@solana/wallet-adapter-react-ui/styles.css";
+
+const RECEIVER = "9oBgTB8ZQ5qkeEbUP65QWaVKG2BfcY8iUUcgPWAov5W";
+
+const PLANS = {
+  starter: { name: "Starter", price: "$50", sol: "0.5", features: ["1 creator account", "Up to 3 editors", "Unlimited video reviews", "Direct YouTube publishing", "Lifetime access"] },
+  pro: { name: "Pro", price: "$100", sol: "1.0", features: ["Unlimited creator accounts", "Unlimited editors", "Unlimited video reviews", "Priority support", "Audit logs & analytics", "Lifetime access"] },
+} as const;
+
+function PaymentForm({ plan }: { plan: typeof PLANS[keyof typeof PLANS] }) {
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
+  const [amount, setAmount] = useState<string>(plan.sol);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [txSig, setTxSig] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handlePay = async () => {
+    if (!publicKey || !amount) return;
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      const tx = new Transaction().add(
+        SystemProgram.transfer({ fromPubkey: publicKey, toPubkey: new PublicKey(RECEIVER), lamports: parseFloat(amount) * LAMPORTS_PER_SOL })
+      );
+      const sig = await sendTransaction(tx, connection);
+      await connection.confirmTransaction(sig, "confirmed");
+      setTxSig(sig);
+      setStatus("success");
+    } catch (e: any) {
+      setErrorMsg(e.message || "Transaction failed");
+      setStatus("error");
+    }
+  };
+
+  if (status === "success") return (
+    <div className="flex flex-col items-center gap-4 py-4 text-center">
+      <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center">
+        <CheckCircle className="w-7 h-7 text-emerald-500" />
+      </div>
+      <div>
+        <p className="text-lg font-bold text-gray-900">Payment confirmed!</p>
+        <p className="text-sm text-gray-500 mt-1">Your {plan.name} plan is now active.</p>
+      </div>
+      <a href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`} target="_blank" rel="noreferrer"
+        className="flex items-center gap-1.5 text-xs text-indigo-600 hover:underline">
+        <ExternalLink className="w-3.5 h-3.5" /> View on Solana Explorer
+      </a>
+      <Link href="/register" className="mt-2 px-6 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+        Create your account →
+      </Link>
+    </div>
+  );
+
+  if (!publicKey) return (
+    <div className="flex flex-col items-center gap-3 py-2">
+      <p className="text-sm text-gray-500 text-center">Connect your Solana wallet to pay</p>
+      <WalletMultiButton style={{ background: "#4f46e5", borderRadius: "9999px", fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "14px" }} />
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your wallet</p>
+        <p className="text-xs font-mono bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 break-all text-gray-700">{publicKey.toBase58()}</p>
+      </div>
+      <div className="space-y-1">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Sending to</p>
+        <p className="text-xs font-mono bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 break-all text-gray-700">{RECEIVER}</p>
+      </div>
+      <div className="space-y-1">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount (SOL)</p>
+        <input
+          type="number" min="0" step="0.001" value={amount}
+          onChange={e => setAmount(e.target.value)}
+          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+        />
+      </div>
+      <button
+        onClick={handlePay}
+        disabled={status === "loading" || !amount}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {status === "loading" ? <><Loader2 className="w-4 h-4 animate-spin" /> Confirming…</> : `Pay ${amount} SOL`}
+      </button>
+      {status === "error" && <p className="text-xs text-red-600 text-center">{errorMsg}</p>}
+    </div>
+  );
+}
+
+export default function CheckoutPage() {
+  const search = useSearch();
+  const params = new URLSearchParams(search);
+  const planKey = (params.get("plan") || "starter") as keyof typeof PLANS;
+  const plan = PLANS[planKey] || PLANS.starter;
+
+  const network = WalletAdapterNetwork.Devnet;
+  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+
+  return (
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={[]} autoConnect>
+        <WalletModalProvider>
+          <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
+            style={{ background: "linear-gradient(160deg, #eeeaf8 0%, #e8e4f5 40%, #ddd8f0 100%)" }}>
+
+            {/* Logo + back */}
+            <div className="w-full max-w-md mb-6 flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Back
+              </Link>
+              <img src="/Medialayer-Indigo.svg" alt="MediaLayer" className="h-6" />
+              <div className="w-12" />
+            </div>
+
+            <div className="w-full max-w-md space-y-4">
+              {/* Plan card */}
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0px_4px_16px_rgba(0,0,0,0.06)]">
+                <div className="flex justify-between items-start mb-5">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Plan</p>
+                    <p className="text-xl font-bold text-[#1a1f3c] mt-1">{plan.name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-indigo-600">{plan.price}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">one-time · ≈ {plan.sol} SOL</p>
+                  </div>
+                </div>
+                <ul className="space-y-2">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
+                      <CheckCircle className="w-4 h-4 text-indigo-500 shrink-0" /> {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Payment card */}
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0px_4px_16px_rgba(0,0,0,0.06)]">
+                <h2 className="text-sm font-bold text-gray-900 mb-4">Pay with Solana</h2>
+                <PaymentForm plan={plan} />
+              </div>
+
+              <p className="text-center text-xs text-gray-400">
+                Payments processed on Solana blockchain. No refunds after confirmation.
+              </p>
+            </div>
+          </div>
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
+  );
+}

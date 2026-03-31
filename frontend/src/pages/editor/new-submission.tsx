@@ -221,7 +221,8 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           finalThumbnailUrl = await uploadThumbnail(thumbnailFile);
           setThumbnailUrl(finalThumbnailUrl);
         } catch (thumbErr: any) {
-          console.warn("[thumbnail] Upload failed, submitting without thumbnail:", thumbErr?.message);
+          console.warn("[thumbnail] Upload failed:", thumbErr?.message);
+          toast({ title: "Thumbnail skipped", description: `Could not upload thumbnail: ${thumbErr?.message || "unknown error"}. Video will be submitted without it.`, variant: "destructive" });
           // Non-fatal — continue submission without thumbnail
         }
       }

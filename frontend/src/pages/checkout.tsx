@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSearch, Link } from "wouter";
-import { ArrowLeft, CheckCircle, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -8,7 +8,8 @@ import {
   useWallet,
 } from "@solana/wallet-adapter-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import { WalletModalProvider, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { WalletModalProvider, WalletMultiButton, useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { PhantomWalletAdapter, SolflareWalletAdapter, TorusWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -18,6 +19,18 @@ const PLANS = {
   starter: { name: "Starter", price: "$50", sol: "0.5", features: ["1 creator account", "Up to 3 editors", "Unlimited video reviews", "Direct YouTube publishing", "Lifetime access"] },
   pro: { name: "Pro", price: "$100", sol: "1.0", features: ["Unlimited creator accounts", "Unlimited editors", "Unlimited video reviews", "Priority support", "Audit logs & analytics", "Lifetime access"] },
 } as const;
+
+function ChangeWalletButton() {
+  const { setVisible } = useWalletModal();
+  return (
+    <button
+      onClick={() => setVisible(true)}
+      className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+    >
+      <RefreshCw className="w-3 h-3" /> Change wallet
+    </button>
+  );
+}
 
 function PaymentForm({ plan }: { plan: typeof PLANS[keyof typeof PLANS] }) {
   const { connection } = useConnection();
@@ -74,7 +87,10 @@ function PaymentForm({ plan }: { plan: typeof PLANS[keyof typeof PLANS] }) {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your wallet</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your wallet</p>
+          <ChangeWalletButton />
+        </div>
         <p className="text-xs font-mono bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 break-all text-gray-700">{publicKey.toBase58()}</p>
       </div>
       <div className="space-y-1">
@@ -109,10 +125,15 @@ export default function CheckoutPage() {
 
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const wallets = useMemo(() => [
+    new PhantomWalletAdapter(),
+    new SolflareWalletAdapter(),
+    new TorusWalletAdapter(),
+  ], []);
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={[]} autoConnect>
+      <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
             style={{ background: "linear-gradient(160deg, #eeeaf8 0%, #e8e4f5 40%, #ddd8f0 100%)" }}>

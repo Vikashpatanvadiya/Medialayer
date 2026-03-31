@@ -53,6 +53,7 @@ export default function VideoDetail() {
   const [isUploading, setIsUploading] = useState(false);
   const [isRollingBack, setIsRollingBack] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [privacyStatus, setPrivacyStatus] = useState<"public" | "unlisted" | "private">("public");
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [videoSrcLoading, setVideoSrcLoading] = useState(false);
 
@@ -127,7 +128,9 @@ export default function VideoDetail() {
     try {
       const token = localStorage.getItem("layer_token");
       const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/youtube/upload/${video.id}`, {
-        method: "POST", headers: { Authorization: `Bearer ${token}` },
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ privacyStatus }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
@@ -483,7 +486,30 @@ export default function VideoDetail() {
                       Disconnect
                     </button>
                   </div>
-                  {/* Brief: solid purple primary CTA */}
+                  {/* Privacy selector */}
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-gray-500 font-medium">Visibility</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["public", "unlisted", "private"] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => setPrivacyStatus(opt)}
+                          className={`px-2 py-2 rounded-lg text-xs font-semibold border transition-colors capitalize ${
+                            privacyStatus === opt
+                              ? "bg-indigo-600 text-white border-indigo-600"
+                              : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
+                          }`}
+                        >
+                          {opt === "public" ? "🌐 Public" : opt === "unlisted" ? "🔗 Unlisted" : "🔒 Private"}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {privacyStatus === "public" && "Visible to everyone on YouTube"}
+                      {privacyStatus === "unlisted" && "Only people with the link can watch"}
+                      {privacyStatus === "private" && "Only you can see this video"}
+                    </p>
+                  </div>
                   <button
                     onClick={uploadToYouTube}
                     disabled={isUploading}
@@ -491,7 +517,6 @@ export default function VideoDetail() {
                   >
                     {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : <><Youtube className="w-4 h-4" /> Upload to YouTube</>}
                   </button>
-                  <p className="text-xs text-gray-500">Video will be uploaded as public on YouTube.</p>
                 </>
               ) : (
                 <>

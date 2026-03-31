@@ -47,6 +47,7 @@ export async function uploadVideoToYouTube(
   description: string,
   tags: string[],
   thumbnailUrl?: string | null,
+  privacyStatus: "public" | "unlisted" | "private" = "public",
   retries = 3,
 ): Promise<UploadResult & { refreshedTokens?: { access_token: string; refresh_token: string; expiry_date: number } }> {
   const auth = createOAuth2Client(tokens);
@@ -81,7 +82,7 @@ export async function uploadVideoToYouTube(
         part: ["snippet", "status"],
         requestBody: {
           snippet: { title, description, tags, categoryId: "22" },
-          status: { privacyStatus: "public" },
+          status: { privacyStatus },
         },
         media: { body: fs.createReadStream(filePath) },
       });

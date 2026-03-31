@@ -118,6 +118,7 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
   const videoId_ = videoId;
   const storedFilename_ = video.storedFilename!;
   const videoUrl_ = video.videoUrl;
+  const privacyStatus = (req.body?.privacyStatus as "public" | "unlisted" | "private") || "public";
   const rawTokens = user.youtubeTokens!;
   // Decrypt tokens for use — they are stored encrypted in DB
   const userTokens = {
@@ -147,6 +148,7 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
         video.description,
         (video.tags as string[]) || [],
         video.thumbnailUrl || null,
+        privacyStatus,
       );
 
       await db.update(videosTable)

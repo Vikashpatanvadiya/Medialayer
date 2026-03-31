@@ -52,7 +52,7 @@ router.post("/thumbnail-sign", requireAuth, requireRole("editor"), async (req, r
     const timestamp = Math.round(Date.now() / 1000);
 
     // Public type — YouTube must be able to fetch this URL directly
-    const paramsToSign = { timestamp, public_id: publicId, overwrite: true };
+    const paramsToSign = { timestamp, public_id: publicId };
 
     const signature = cloudinary.utils.api_sign_request(
       paramsToSign,

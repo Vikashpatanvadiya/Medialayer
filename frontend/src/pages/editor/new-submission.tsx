@@ -176,18 +176,16 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
       formData.append("timestamp", String(timestamp));
       formData.append("signature", signature);
       formData.append("public_id", public_id);
-      formData.append("overwrite", "true");
-      // No "type: authenticated" — must be public so YouTube can fetch it
+      // Note: do NOT append overwrite — keep FormData params matching exactly what was signed
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
         method: "POST",
         body: formData,
       });
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error?.message || `Thumbnail Cloudinary upload failed (${res.status})`);
-      }
       const result = await res.json();
+      if (!res.ok || result.error) {
+        throw new Error(result.error?.message || `Cloudinary image upload failed (${res.status})`);
+      }
       return result.secure_url as string;
     } finally {
       setIsUploadingThumbnail(false);

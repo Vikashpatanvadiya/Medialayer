@@ -26,7 +26,7 @@ const googleAuth: RequestHandler = (req, res) => {
   const client = getGoogleClient();
   const url = client.generateAuthUrl({
     access_type: "offline",
-    prompt: "select_account",
+    prompt: "consent",
     scope: ["openid", "email", "profile"],
     state: role || "editor",
   });

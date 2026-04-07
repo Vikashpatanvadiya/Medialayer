@@ -448,9 +448,9 @@ export default function LandingPage() {
             <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
               <thead>
                 <tr>
-                  <th className="text-left pb-4 font-normal w-2/5" />
+                  <th className="text-left pb-4 font-normal w-[30%]" />
                   {/* MediaLayer — pill column header */}
-                  <th className="pb-0 px-0 text-center w-[15%] align-bottom">
+                  <th className="pb-0 px-0 text-center w-[14%] align-bottom">
                     <div className="flex flex-col items-center gap-2 pt-4 pb-3 rounded-t-[20px]"
                       style={{ border: "1.5px solid var(--purple-3)", borderBottom: "none", background: "var(--purple-1)" }}>
                       <div className="w-10 h-10 rounded-full bg-[#111] flex items-center justify-center">
@@ -460,15 +460,16 @@ export default function LandingPage() {
                     </div>
                   </th>
                   {[
-                    { label: "Google Drive", bg: "#f0f0f0", text: "🗂" },
-                    { label: "WeTransfer",   bg: "#e8f4fd", text: "📦" },
-                    { label: "Email",        bg: "#f5f0ff", text: "📧" },
+                    { label: "Frame.io",      bg: "#e8f0fe", text: "🎬" },
+                    { label: "Dropbox Replay", bg: "#e8f4fd", text: "📽" },
+                    { label: "Google Drive",  bg: "#f0f0f0", text: "🗂" },
+                    { label: "Email",         bg: "#f5f0ff", text: "📧" },
                   ].map((col) => (
-                    <th key={col.label} className="pb-4 px-3 text-center w-[15%]">
+                    <th key={col.label} className="pb-4 px-2 text-center w-[14%]">
                       <div className="flex flex-col items-center gap-2">
                         <div className="w-10 h-10 rounded-[var(--radius-4)] flex items-center justify-center text-lg"
                           style={{ background: col.bg }}>{col.text}</div>
-                        <span className="text-xs font-medium" style={{ color: "var(--fg-3)" }}>{col.label}</span>
+                        <span className="text-[11px] font-medium leading-tight text-center" style={{ color: "var(--fg-3)" }}>{col.label}</span>
                       </div>
                     </th>
                   ))}
@@ -476,16 +477,17 @@ export default function LandingPage() {
               </thead>
               <tbody>
                 {([
-                  ["GDPR compliant",             "yes", "yes",     "partial", "no"],
-                  ["No file size limits",        "yes", "partial", "partial", "no"],
-                  ["Secure video review",        "yes", "no",      "no",      "no"],
-                  ["One-click YouTube publish",  "yes", "no",      "no",      "no"],
-                  ["Role-based access",          "yes", "partial", "no",      "no"],
-                  ["Feedback & approval flow",   "yes", "no",      "no",      "no"],
-                  ["No shared passwords",        "yes", "partial", "no",      "no"],
-                  ["Audit trail",                "yes", "partial", "no",      "no"],
-                  ["Direct YouTube publishing",  "yes", "no",      "no",      "no"],
-                ] as [string, string, string, string, string][]).map(([label, ml, drive, wt, email], i, arr) => (
+                  // label,                        ML,    Frame.io,  Dropbox,   Drive,     Email
+                  ["GDPR compliant",             "yes", "yes",     "yes",     "yes",     "no"],
+                  ["No file size limits",        "yes", "yes",     "yes",     "partial", "no"],
+                  ["Secure video review",        "yes", "yes",     "yes",     "partial", "no"],
+                  ["One-click YouTube publish",  "yes", "no",      "no",      "no",      "no"],
+                  ["Role-based access",          "yes", "yes",     "yes",     "yes",     "no"],
+                  ["Feedback & approval flow",   "yes", "yes",     "yes",     "partial", "no"],
+                  ["No shared passwords",        "yes", "yes",     "yes",     "yes",     "no"],
+                  ["Audit trail",                "yes", "yes",     "yes",     "yes",     "no"],
+                  ["Direct YouTube publishing",  "yes", "no",      "no",      "no",      "no"],
+                ] as [string,string,string,string,string,string][]).map(([label, ml, frameio, dropbox, drive, email], i, arr) => (
                   <tr key={label}>
                     <td className="py-3.5 pr-4 text-sm text-foreground" style={{ borderTop: "1px solid var(--gray-2)" }}>{label}</td>
                     {/* MediaLayer cell — inside pill */}
@@ -503,8 +505,8 @@ export default function LandingPage() {
                       }}>
                       <CellIcon v={ml} />
                     </td>
-                    {[drive, wt, email].map((v, j) => (
-                      <td key={j} className="py-3.5 px-3 text-center" style={{ borderTop: "1px solid var(--gray-2)" }}>
+                    {[frameio, dropbox, drive, email].map((v, j) => (
+                      <td key={j} className="py-3.5 px-2 text-center" style={{ borderTop: "1px solid var(--gray-2)" }}>
                         <CellIcon v={v} />
                       </td>
                     ))}

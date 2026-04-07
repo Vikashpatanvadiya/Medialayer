@@ -168,7 +168,7 @@ export default function LandingPage() {
               style={{ background: P, boxShadow: "0 4px 20px rgba(145,141,246,0.35)" }}>
               Start 14 day free trial
             </Link>
-            <a href="#features"
+            <a href="https://youtu.be/yByh_eDWNMI?si=GjZngWBRG0GAO0mx" target="_blank" rel="noreferrer"
               className="px-6 py-2.5 rounded-full text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors">
               See demo
             </a>

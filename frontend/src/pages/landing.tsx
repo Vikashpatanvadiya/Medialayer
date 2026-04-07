@@ -445,7 +445,7 @@ export default function LandingPage() {
           <Sub>See how MediaLayer stacks up against the most popular video collaboration tools on the market.</Sub>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
               <thead>
                 <tr>
                   <th className="text-left pb-4 font-normal w-2/5" />
@@ -486,23 +486,25 @@ export default function LandingPage() {
                   ["Audit trail",                "yes", "partial", "no",      "no"],
                   ["Direct YouTube publishing",  "yes", "no",      "no",      "no"],
                 ] as [string, string, string, string, string][]).map(([label, ml, drive, wt, email], i, arr) => (
-                  <tr key={label} style={{ borderTop: "1px solid var(--gray-2)" }}>
-                    <td className="py-3.5 pr-4 text-sm text-foreground">{label}</td>
+                  <tr key={label}>
+                    <td className="py-3.5 pr-4 text-sm text-foreground" style={{ borderTop: "1px solid var(--gray-2)" }}>{label}</td>
                     {/* MediaLayer cell — inside pill */}
                     <td className="py-3.5 px-0 text-center"
                       style={{
                         background: "var(--purple-1)",
                         borderLeft: "1.5px solid var(--purple-3)",
                         borderRight: "1.5px solid var(--purple-3)",
+                        borderTop: i === 0 ? "none" : "1px solid var(--purple-2)",
                         ...(i === arr.length - 1 ? {
                           borderBottom: "1.5px solid var(--purple-3)",
-                          borderRadius: "0 0 20px 20px",
+                          borderBottomLeftRadius: "20px",
+                          borderBottomRightRadius: "20px",
                         } : {}),
                       }}>
                       <CellIcon v={ml} />
                     </td>
                     {[drive, wt, email].map((v, j) => (
-                      <td key={j} className="py-3.5 px-3 text-center">
+                      <td key={j} className="py-3.5 px-3 text-center" style={{ borderTop: "1px solid var(--gray-2)" }}>
                         <CellIcon v={v} />
                       </td>
                     ))}

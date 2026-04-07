@@ -104,7 +104,7 @@ export default function AllVideos() {
               onClick={() => !isDeleting && setDeleteTarget(null)}
             />
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="relative bg-card rounded-3xl shadow-2xl border border-border/50 w-full max-w-md p-8 text-center"
+              className="relative bg-card rounded-3xl shadow-[var(--shadow-4)] border border-border/50 w-full max-w-md p-8 text-center"
             >
               <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-5">
                 <AlertTriangle className="w-8 h-8 text-destructive" />
@@ -114,8 +114,8 @@ export default function AllVideos() {
               <p className="font-semibold text-foreground mb-6">"{deleteTarget.title}"</p>
               <p className="text-xs text-muted-foreground mb-8">This cannot be undone.</p>
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</Button>
-                <Button variant="destructive" className="flex-1 rounded-xl" onClick={confirmDelete} disabled={isDeleting}>
+                <Button variant="outline" className="flex-1 rounded-[var(--radius-5)]" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</Button>
+                <Button variant="destructive" className="flex-1 rounded-[var(--radius-5)]" onClick={confirmDelete} disabled={isDeleting}>
                   {isDeleting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Deleting…</> : <><Trash2 className="w-4 h-4 mr-2" />Delete</>}
                 </Button>
               </div>

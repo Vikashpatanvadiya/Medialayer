@@ -23,6 +23,7 @@ import PrivacyPolicy from "@/pages/privacy";
 import TermsOfService from "@/pages/terms";
 import ProfilePage from "./pages/profile";
 import NotificationsPage from "./pages/notifications";
+import DesignSystemPage from "./pages/design-system";
 import GoogleAuthSuccess from "@/pages/auth-google-success";
 import CheckoutPage from "@/pages/checkout";
 
@@ -109,6 +110,10 @@ function Router() {
 
       <Route path="/dashboard/notifications">
         <ProtectedRoute component={NotificationsPage} />
+      </Route>
+
+      <Route path="/dashboard/design-system">
+        <ProtectedRoute component={DesignSystemPage} />
       </Route>
 
       {/* Video Detail */}

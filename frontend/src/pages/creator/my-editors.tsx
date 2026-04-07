@@ -100,11 +100,11 @@ export default function MyEditors() {
           {editors.map((editor) => (
             <div
               key={editor.id}
-              className="bg-card border border-border/50 rounded-2xl p-6 space-y-5 hover:border-primary/30 transition-colors"
+              className="bg-card border border-border/50 rounded-[var(--radius-6)] p-6 space-y-5 hover:border-primary/30 transition-colors"
             >
               {/* Avatar + Name */}
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-[#4338ca] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/20 shrink-0">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-[#4338ca] flex items-center justify-center text-white font-bold text-lg shadow-[var(--shadow-3)] shadow-primary/20 shrink-0">
                   {editor.name?.charAt(0).toUpperCase() ?? "?"}
                 </div>
                 <div className="overflow-hidden">
@@ -115,29 +115,29 @@ export default function MyEditors() {
 
               {/* Stats grid */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-secondary/50 rounded-xl p-3 flex items-center gap-2">
+                <div className="bg-secondary/50 rounded-[var(--radius-5)] p-3 flex items-center gap-2">
                   <Video className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div>
                     <p className="text-xs text-muted-foreground">Total</p>
                     <p className="font-bold text-foreground">{editor.totalVideos}</p>
                   </div>
                 </div>
-                <div className="bg-amber-500/10 rounded-xl p-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                <div className="bg-[var(--amber-1)]0/10 rounded-[var(--radius-5)] p-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[var(--amber-4)] shrink-0" />
                   <div>
                     <p className="text-xs text-muted-foreground">Pending</p>
                     <p className="font-bold text-foreground">{editor.pendingVideos}</p>
                   </div>
                 </div>
-                <div className="bg-emerald-500/10 rounded-xl p-3 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <div className="bg-[var(--green-1)]0/10 rounded-[var(--radius-5)] p-3 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--green-4)] shrink-0" />
                   <div>
                     <p className="text-xs text-muted-foreground">Approved</p>
                     <p className="font-bold text-foreground">{editor.approvedVideos}</p>
                   </div>
                 </div>
-                <div className="bg-blue-500/10 rounded-xl p-3 flex items-center gap-2">
-                  <Upload className="w-4 h-4 text-blue-500 shrink-0" />
+                <div className="bg-[var(--sky-1)]0/10 rounded-[var(--radius-5)] p-3 flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-[var(--sky-4)] shrink-0" />
                   <div>
                     <p className="text-xs text-muted-foreground">Uploaded</p>
                     <p className="font-bold text-foreground">{editor.uploadedVideos}</p>
@@ -157,7 +157,7 @@ export default function MyEditors() {
                 size="sm"
                 disabled={removing === editor.id}
                 onClick={() => removeEditor(editor.id, editor.name)}
-                className="w-full rounded-xl border-destructive/30 text-destructive hover:bg-destructive hover:text-white transition-colors"
+                className="w-full rounded-[var(--radius-5)] border-destructive/30 text-destructive hover:bg-destructive hover:text-white transition-colors"
               >
                 {removing === editor.id
                   ? <Loader2 className="w-4 h-4 animate-spin" />

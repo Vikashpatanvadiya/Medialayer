@@ -5,16 +5,16 @@ export default function NotFound() {
     <div className="min-h-screen flex flex-col bg-white">
 
       {/* Nav */}
-      <nav className="px-8 py-5 flex items-center justify-between border-b border-gray-100">
+      <nav className="px-8 py-5 flex items-center justify-between border-b border-border">
         <Link href="/">
           <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-extrabold text-[20px] tracking-tight text-[#1a1f3c]">
             MediaLayer
           </span>
         </Link>
-        <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
-          <Link href="/#features" className="hover:text-gray-900 transition-colors">Features</Link>
-          <Link href="/#pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
-          <Link href="/register" className="px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
+        <div className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
+          <Link href="/#features" className="hover:text-foreground transition-colors">Features</Link>
+          <Link href="/#pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+          <Link href="/register" className="px-4 py-2 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
             Get Started
           </Link>
         </div>
@@ -26,7 +26,7 @@ export default function NotFound() {
         {/* Glitch 404 visual */}
         <div className="relative mb-10 select-none" style={{ width: 520, maxWidth: "100%" }}>
           <div
-            className="rounded-2xl overflow-hidden flex items-center justify-center"
+            className="rounded-[var(--radius-6)] overflow-hidden flex items-center justify-center"
             style={{
               height: 280,
               background: "linear-gradient(135deg, #1a1f3c 0%, #2d1b69 40%, #0f172a 100%)",
@@ -73,10 +73,10 @@ export default function NotFound() {
         </div>
 
         {/* Copy */}
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
           You weren't supposed to see this.
         </h1>
-        <p className="text-gray-500 text-base mb-8 max-w-sm">
+        <p className="text-muted-foreground text-base mb-8 max-w-sm">
           Sorry, but this page doesn't exist. Would be a great place for a video, though.
         </p>
 
@@ -84,13 +84,13 @@ export default function NotFound() {
         <div className="flex flex-col items-center gap-3">
           <Link
             href="/"
-            className="px-6 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200"
+            className="px-6 py-2.5 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors shadow-[var(--shadow-1)] shadow-primary/10"
           >
             Go to Homepage
           </Link>
           <Link
             href="/login"
-            className="text-sm text-gray-500 hover:text-gray-800 underline underline-offset-2 transition-colors"
+            className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
           >
             Sign in to your account
           </Link>

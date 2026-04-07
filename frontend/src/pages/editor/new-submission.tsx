@@ -280,7 +280,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative bg-card w-full max-w-2xl rounded-3xl shadow-2xl border border-border/50 overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative bg-card w-full max-w-2xl rounded-3xl shadow-[var(--shadow-4)] border border-border/50 overflow-hidden flex flex-col max-h-[90vh]"
       >
         <div className="flex items-center justify-between p-6 border-b border-border/50 bg-secondary/30">
           <h2 className="text-xl font-bold">New Video Submission</h2>
@@ -297,14 +297,14 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
               <label className="text-sm font-semibold text-foreground">Video File</label>
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors ${
+                className={`relative border-2 border-dashed rounded-[var(--radius-6)] p-8 text-center cursor-pointer transition-colors ${
                   selectedFile ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/50 hover:bg-secondary/50"
                 }`}
               >
                 <input ref={fileInputRef} type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
                 {!selectedFile ? (
                   <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-[var(--radius-6)] bg-secondary flex items-center justify-center">
                       <Upload className="w-7 h-7 text-muted-foreground" />
                     </div>
                     <div>
@@ -314,7 +314,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-[var(--radius-6)] bg-primary/10 flex items-center justify-center">
                       <Film className="w-7 h-7 text-primary" />
                     </div>
                     <div>
@@ -345,7 +345,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
               )}
 
               {uploadStage === "done" && (
-                <div className="flex items-center gap-2 text-sm text-emerald-600 mt-2">
+                <div className="flex items-center gap-2 text-sm text-[var(--green-4)] mt-2">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Video uploaded — ready to submit</span>
                 </div>
@@ -356,18 +356,18 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-foreground">Send to Creator</label>
               {linkedCreators.length === 0 ? (
-                <div className="px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-amber-700">
+                <div className="px-4 py-3 rounded-[var(--radius-5)] bg-[var(--amber-1)]0/10 border border-amber-500/20 text-sm text-amber-700">
                   No creators linked yet. Go back and add a creator first.
                 </div>
               ) : linkedCreators.length === 1 ? (
-                <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                <div className="px-4 py-3 rounded-[var(--radius-5)] bg-[var(--green-1)]0/10 border border-emerald-500/20 text-sm text-[var(--green-4)] dark:text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   Submitting to <span className="font-semibold">{linkedCreators[0].name}</span>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   {linkedCreators.map(c => (
-                    <label key={c.id} className={`cursor-pointer border rounded-xl p-3 flex items-center gap-2 transition-all ${form.watch("creatorId") === c.id ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:bg-secondary"}`}>
+                    <label key={c.id} className={`cursor-pointer border rounded-[var(--radius-5)] p-3 flex items-center gap-2 transition-all ${form.watch("creatorId") === c.id ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:bg-secondary"}`}>
                       <input type="radio" value={c.id} {...form.register("creatorId")} className="hidden" />
                       <CheckCircle2 className={`w-4 h-4 shrink-0 ${form.watch("creatorId") === c.id ? "text-primary" : "text-muted-foreground opacity-30"}`} />
                       <span className="text-sm font-medium truncate">{c.name}</span>
@@ -383,7 +383,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
               <label className="text-sm font-semibold text-foreground">Video Title</label>
               <input
                 {...form.register("title")}
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground"
+                className="w-full px-4 py-3 rounded-[var(--radius-5)] bg-background border border-border text-foreground placeholder:text-muted-foreground"
                 placeholder="e.g. VLOG: My trip to Japan"
               />
               {form.formState.errors.title && <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>}
@@ -395,7 +395,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
               <textarea
                 {...form.register("description")}
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground resize-none"
+                className="w-full px-4 py-3 rounded-[var(--radius-5)] bg-background border border-border text-foreground placeholder:text-muted-foreground resize-none"
                 placeholder="YouTube description, notes for creator..."
               />
               {form.formState.errors.description && <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>}
@@ -409,7 +409,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
                 </label>
                 <input
                   {...form.register("tags")}
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground"
+                  className="w-full px-4 py-3 rounded-[var(--radius-5)] bg-background border border-border text-foreground placeholder:text-muted-foreground"
                   placeholder="vlog, travel, 4k"
                 />
               </div>
@@ -426,7 +426,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
                   className="hidden"
                 />
                 {thumbnailPreview ? (
-                  <div className="relative rounded-xl overflow-hidden border border-border group cursor-pointer" onClick={() => thumbnailInputRef.current?.click()}>
+                  <div className="relative rounded-[var(--radius-5)] overflow-hidden border border-border group cursor-pointer" onClick={() => thumbnailInputRef.current?.click()}>
                     <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-28 object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-white text-xs font-semibold">Change image</span>
@@ -435,9 +435,9 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
                 ) : (
                   <div
                     onClick={() => thumbnailInputRef.current?.click()}
-                    className="border-2 border-dashed border-border rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-secondary/50 transition-colors"
+                    className="border-2 border-dashed border-border rounded-[var(--radius-5)] p-4 flex items-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-secondary/50 transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-[var(--radius-4)] bg-secondary flex items-center justify-center shrink-0">
                       <ImageIcon className="w-5 h-5 text-muted-foreground" />
                     </div>
                     <div>
@@ -458,12 +458,12 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         </div>
 
         <div className="p-6 border-t border-border/50 bg-secondary/30 flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose} className="rounded-xl px-6">Cancel</Button>
+          <Button variant="outline" onClick={onClose} className="rounded-[var(--radius-5)] px-6">Cancel</Button>
           <Button
             type="submit"
             form="submission-form"
             disabled={isUploading || uploadStage === "processing" || isUploadingThumbnail || !selectedFile || form.formState.isSubmitting}
-            className="rounded-xl px-8"
+            className="rounded-[var(--radius-5)] px-8"
           >
             {isUploading ? (
               <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Uploading…</>

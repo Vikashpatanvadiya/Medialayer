@@ -3,8 +3,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Camera } from "lucide-react";
 import { apiUrl } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const tabList = ["My account", "Notifications", "Integrations"];
+const tabList = ["My account", "Integrations"];
 
 export default function ProfilePage() {
   const { user, refetchUser } = useAuth();
@@ -20,10 +23,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("layer_token");
       const res = await fetch(apiUrl("/api/auth/profile"), {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: `${firstName} ${lastName}`.trim() }),
       });
       if (!res.ok) throw new Error("Failed to update");
@@ -36,27 +36,23 @@ export default function ProfilePage() {
     }
   };
 
-  const inputClass =
-    "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-colors";
-
   return (
     <div className="max-w-2xl">
-      {/* Page header */}
       <div className="mb-6">
-        <p className="text-sm text-gray-500 mb-0.5">{user?.name}</p>
-        <h1 className="text-[28px] font-bold text-gray-900">Personal Settings</h1>
+        <p className="text-sm text-muted-foreground mb-0.5">{user?.name}</p>
+        <h1 className="text-[28px] font-bold text-foreground">Personal Settings</h1>
       </div>
 
-      {/* Tabs — ref: underline style, purple active */}
-      <div className="flex items-center gap-6 border-b border-gray-200 mb-8">
+      {/* Tabs */}
+      <div className="flex items-center gap-6 border-b border-border mb-8">
         {tabList.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`pb-3 text-sm font-medium transition-colors relative ${
               activeTab === tab
-                ? "text-gray-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-indigo-600"
-                : "text-gray-400 hover:text-gray-600"
+                ? "text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab}
@@ -66,129 +62,85 @@ export default function ProfilePage() {
 
       {activeTab === "My account" && (
         <div className="space-y-10">
-
-          {/* Name and photos */}
           <section>
-            <h2 className="text-[18px] font-bold text-gray-900 mb-1">Name and photos</h2>
-            <p className="text-sm text-gray-500 mb-6">
-              Changing your name below will update your name on your profile.
-            </p>
+            <h2 className="text-lg font-bold text-foreground mb-1">Name and photos</h2>
+            <p className="text-sm text-muted-foreground mb-6">Changing your name below will update your name on your profile.</p>
 
-            {/* Avatar row — ref: circle avatar + upload circle */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-500 shrink-0">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold text-muted-foreground shrink-0">
                 {user?.name?.charAt(0).toUpperCase() ?? "?"}
               </div>
-              <button className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
-                <Camera className="w-5 h-5 text-gray-400" />
+              <button className="w-16 h-16 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary hover:bg-accent transition-colors">
+                <Camera className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-5">
-              <div>
-                <label className="block text-sm text-gray-900 mb-1.5">First name</label>
-                <input
-                  className={inputClass}
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="First name"
-                />
+              <div className="space-y-1.5">
+                <Label>First name</Label>
+                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
               </div>
-              <div>
-                <label className="block text-sm text-gray-900 mb-1.5">Last name</label>
-                <input
-                  className={inputClass}
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Last name"
-                />
+              <div className="space-y-1.5">
+                <Label>Last name</Label>
+                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Brief: solid purple primary CTA, 8px radius, white text */}
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm"
-              >
+              <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
-              </button>
-              <button
-                onClick={() => {
-                  setFirstName(user?.name?.split(" ")[0] || "");
-                  setLastName(user?.name?.split(" ").slice(1).join(" ") || "");
-                }}
-                className="px-5 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-              >
+              </Button>
+              <Button variant="ghost" onClick={() => {
+                setFirstName(user?.name?.split(" ")[0] || "");
+                setLastName(user?.name?.split(" ").slice(1).join(" ") || "");
+              }}>
                 Cancel
-              </button>
+              </Button>
             </div>
           </section>
 
-          {/* Contact Info */}
           <section>
-            <h2 className="text-[18px] font-bold text-gray-900 mb-1">Contact Info</h2>
-            <p className="text-sm text-gray-500 mb-6">
-              Your email address is used to sign in and receive notifications.
-            </p>
-
+            <h2 className="text-lg font-bold text-foreground mb-1">Contact Info</h2>
+            <p className="text-sm text-muted-foreground mb-6">Your email address is used to sign in and receive notifications.</p>
             <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm text-gray-900 mb-1.5">Email</label>
-                <input
-                  className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}
-                  value={user?.email || ""}
-                  readOnly
-                />
+              <div className="space-y-1.5">
+                <Label>Email</Label>
+                <Input value={user?.email || ""} readOnly className="opacity-60 cursor-not-allowed" />
               </div>
-              <div>
-                <label className="block text-sm text-gray-900 mb-1.5">Role</label>
-                <input
-                  className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed capitalize`}
-                  value={user?.role || ""}
-                  readOnly
-                />
+              <div className="space-y-1.5">
+                <Label>Role</Label>
+                <Input value={user?.role || ""} readOnly className="opacity-60 cursor-not-allowed capitalize" />
               </div>
             </div>
           </section>
 
-          {/* Danger zone */}
-          <section className="border border-red-100 rounded-lg p-5 bg-red-50/50">
-            <h2 className="text-[15px] font-bold text-red-600 mb-1">Danger Zone</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Permanently delete your account and all associated data. This cannot be undone.
-            </p>
-            <button
+          <section className="border border-destructive/20 rounded-[var(--radius-5)] p-5 bg-destructive/5">
+            <h2 className="text-sm font-bold text-destructive mb-1">Danger Zone</h2>
+            <p className="text-sm text-muted-foreground mb-4">Permanently delete your account and all associated data.</p>
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={async () => {
                 if (!confirm("Delete your account? This cannot be undone.")) return;
                 const token = localStorage.getItem("layer_token");
-                await fetch(apiUrl("/api/auth/account"), {
-                  method: "DELETE",
-                  headers: { Authorization: `Bearer ${token}` },
-                });
+                await fetch(apiUrl("/api/auth/account"), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
                 localStorage.removeItem("layer_token");
                 window.location.href = "/";
               }}
-              className="px-4 py-2 rounded-lg border border-red-300 text-red-600 text-sm font-semibold hover:bg-red-100 transition-colors"
             >
               Delete Account
-            </button>
+            </Button>
           </section>
         </div>
       )}
 
-      {activeTab === "Notifications" && (
-        <div className="text-sm text-gray-500">Notification settings coming soon.</div>
-      )}
-
       {activeTab === "Integrations" && (
         <div className="space-y-4">
-          <h2 className="text-[18px] font-bold text-gray-900 mb-1">Connected Accounts</h2>
-          <p className="text-sm text-gray-500 mb-6">Connect external accounts to enhance your workflow.</p>
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white shadow-[0px_4px_8px_rgba(0,0,0,0.04)]">
+          <h2 className="text-lg font-bold text-foreground mb-1">Connected Accounts</h2>
+          <p className="text-sm text-muted-foreground mb-6">Connect external accounts to enhance your workflow.</p>
+          <div className="flex items-center justify-between p-4 border border-border rounded-[var(--radius-5)] bg-card shadow-[var(--shadow-1)]">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-[var(--radius-4)] bg-muted flex items-center justify-center">
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -197,13 +149,11 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">Google</p>
-                <p className="text-xs text-gray-500">Connect your Google account</p>
+                <p className="text-sm font-semibold text-foreground">Google</p>
+                <p className="text-xs text-muted-foreground">Connect your Google account</p>
               </div>
             </div>
-            <button className="px-4 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-              Connect
-            </button>
+            <Button variant="outline" size="sm">Connect</Button>
           </div>
         </div>
       )}

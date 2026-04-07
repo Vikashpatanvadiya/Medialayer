@@ -1,16 +1,25 @@
 import { Video } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
-import { BeautifulBadge } from "./beautiful-badge";
 import { Play, Clock, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 
-export function getStatusColor(status: string) {
-  switch (status) {
-    case 'approved': return 'success';
-    case 'rejected': return 'destructive';
-    case 'uploaded': return 'info';
-    default: return 'warning';
-  }
+const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
+  pending:  { bg: "var(--amber-1)",  color: "var(--amber-4)"  },
+  approved: { bg: "var(--green-1)",  color: "var(--green-4)"  },
+  rejected: { bg: "var(--red-1)",    color: "var(--red-4)"    },
+  uploaded: { bg: "var(--sky-1)",    color: "var(--sky-4)"    },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const s = STATUS_STYLES[status] ?? { bg: "var(--bg-3)", color: "var(--fg-3)" };
+  return (
+    <span
+      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize backdrop-blur-sm"
+      style={{ background: s.bg, color: s.color }}
+    >
+      {status}
+    </span>
+  );
 }
 
 export function getThumbnailUrl(url: string | undefined, defaultVideoUrl: string) {
@@ -40,7 +49,7 @@ export function VideoCard({ video, rolePath, onDelete }: VideoCardProps) {
 
   return (
     <Link href={`/dashboard/${rolePath}/video/${video.id}`}>
-      <div className="group cursor-pointer bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col h-full shadow-[0px_4px_8px_rgba(0,0,0,0.08)] hover:shadow-[0px_6px_16px_rgba(0,0,0,0.12)] transition-shadow relative">
+      <div className="group cursor-pointer bg-card border border-border rounded-[var(--radius-4)] overflow-hidden flex flex-col h-full shadow-[var(--shadow-2)] hover:shadow-[var(--shadow-3)] transition-shadow relative">
         <div className="relative aspect-video overflow-hidden bg-muted">
           <img
             src={thumb}
@@ -48,14 +57,12 @@ export function VideoCard({ video, rolePath, onDelete }: VideoCardProps) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:scale-110 duration-300">
+            <div className="w-12 h-12 rounded-full bg-card/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:scale-110 duration-300">
               <Play className="w-5 h-5 text-white ml-1 fill-white" />
             </div>
           </div>
           <div className="absolute top-3 right-3">
-            <BeautifulBadge variant={getStatusColor(video.status)} className="capitalize backdrop-blur-md shadow-lg border-none">
-              {video.status}
-            </BeautifulBadge>
+            <StatusBadge status={video.status} />
           </div>
 
           {canDelete && (
@@ -70,21 +77,21 @@ export function VideoCard({ video, rolePath, onDelete }: VideoCardProps) {
         </div>
 
         <div className="p-5 flex-1 flex flex-col">
-          <h3 className="font-semibold text-base text-[#333] line-clamp-1 group-hover:text-indigo-600 transition-colors">{video.title}</h3>
-          <p className="text-sm text-[#6c757d] mt-1 line-clamp-2 leading-relaxed flex-1">
+          <h3 className="font-semibold text-base text-foreground line-clamp-1 group-hover:text-primary transition-colors">{video.title}</h3>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2 leading-relaxed flex-1">
             {video.description || "No description provided."}
           </p>
 
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
+              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
                 {(video.editor?.name || "E").charAt(0).toUpperCase()}
               </div>
-              <span className="text-xs font-medium text-[#6c757d] truncate max-w-[100px]">
+              <span className="text-xs font-medium text-muted-foreground truncate max-w-[100px]">
                 {video.editor?.name || "Editor"}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-[#6c757d] font-medium">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
               <Clock className="w-3.5 h-3.5" />
               {formatDistanceToNow(new Date(video.createdAt))} ago
             </div>

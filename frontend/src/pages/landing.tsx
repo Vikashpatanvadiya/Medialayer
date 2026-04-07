@@ -460,15 +460,16 @@ export default function LandingPage() {
                     </div>
                   </th>
                   {[
-                    { label: "Frame.io",      bg: "#e8f0fe", text: "🎬" },
-                    { label: "Dropbox Replay", bg: "#e8f4fd", text: "📽" },
-                    { label: "Google Drive",  bg: "#f0f0f0", text: "🗂" },
-                    { label: "Email",         bg: "#f5f0ff", text: "📧" },
+                    { label: "Frame.io",       logo: "https://www.frame.io/favicon.ico" },
+                    { label: "Dropbox Replay", logo: "https://www.dropbox.com/static/images/favicon.ico" },
+                    { label: "Google Drive",   logo: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
+                    { label: "Email",          logo: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
                   ].map((col) => (
                     <th key={col.label} className="pb-4 px-2 text-center w-[14%]">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-10 h-10 rounded-[var(--radius-4)] flex items-center justify-center text-lg"
-                          style={{ background: col.bg }}>{col.text}</div>
+                        <div className="w-10 h-10 rounded-[var(--radius-4)] flex items-center justify-center bg-white border border-border shadow-sm overflow-hidden">
+                          <img src={col.logo} alt={col.label} className="w-6 h-6 object-contain" />
+                        </div>
                         <span className="text-[11px] font-medium leading-tight text-center" style={{ color: "var(--fg-3)" }}>{col.label}</span>
                       </div>
                     </th>

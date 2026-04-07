@@ -450,8 +450,8 @@ export default function LandingPage() {
                 <tr>
                   <th className="text-left pb-4 font-normal w-2/5" />
                   {/* MediaLayer — pill column header */}
-                  <th className="pb-0 px-3 text-center w-[15%] align-bottom">
-                    <div className="inline-flex rounded-t-[20px] pt-4 pb-3 px-2 flex-col items-center gap-2"
+                  <th className="pb-0 px-0 text-center w-[15%] align-bottom">
+                    <div className="flex flex-col items-center gap-2 pt-4 pb-3 rounded-t-[20px]"
                       style={{ border: "1.5px solid var(--purple-3)", borderBottom: "none", background: "var(--purple-1)" }}>
                       <div className="w-10 h-10 rounded-full bg-[#111] flex items-center justify-center">
                         <img src="/favicon.svg" alt="MediaLayer" className="w-5 h-5 brightness-0 invert" />
@@ -476,20 +476,20 @@ export default function LandingPage() {
               </thead>
               <tbody>
                 {([
-                  ["GDPR compliant",             "yes", "partial", "no",  "no"],
-                  ["No file size limits",        "yes", "no",      "no",  "no"],
-                  ["Secure video review",        "yes", "no",      "no",  "no"],
-                  ["One-click YouTube publish",  "yes", "no",      "no",  "no"],
-                  ["Role-based access",          "yes", "no",      "no",  "no"],
-                  ["Feedback & approval flow",   "yes", "no",      "no",  "no"],
-                  ["No shared passwords",        "yes", "no",      "no",  "no"],
-                  ["Audit trail",                "yes", "no",      "no",  "no"],
-                  ["Direct YouTube publishing",  "yes", "no",      "no",  "no"],
+                  ["GDPR compliant",             "yes", "yes",     "partial", "no"],
+                  ["No file size limits",        "yes", "partial", "partial", "no"],
+                  ["Secure video review",        "yes", "no",      "no",      "no"],
+                  ["One-click YouTube publish",  "yes", "no",      "no",      "no"],
+                  ["Role-based access",          "yes", "partial", "no",      "no"],
+                  ["Feedback & approval flow",   "yes", "no",      "no",      "no"],
+                  ["No shared passwords",        "yes", "partial", "no",      "no"],
+                  ["Audit trail",                "yes", "partial", "no",      "no"],
+                  ["Direct YouTube publishing",  "yes", "no",      "no",      "no"],
                 ] as [string, string, string, string, string][]).map(([label, ml, drive, wt, email], i, arr) => (
                   <tr key={label} style={{ borderTop: "1px solid var(--gray-2)" }}>
                     <td className="py-3.5 pr-4 text-sm text-foreground">{label}</td>
                     {/* MediaLayer cell — inside pill */}
-                    <td className="py-3.5 px-3 text-center"
+                    <td className="py-3.5 px-0 text-center"
                       style={{
                         background: "var(--purple-1)",
                         borderLeft: "1.5px solid var(--purple-3)",

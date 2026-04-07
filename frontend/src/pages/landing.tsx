@@ -450,8 +450,8 @@ export default function LandingPage() {
                 <tr>
                   <th className="text-left pb-4 font-normal w-2/5" />
                   {/* MediaLayer — pill column header */}
-                  <th className="pb-0 px-3 text-center w-[15%]">
-                    <div className="rounded-t-[20px] pt-4 pb-3 px-2 flex flex-col items-center gap-2"
+                  <th className="pb-0 px-3 text-center w-[15%] align-bottom">
+                    <div className="inline-flex rounded-t-[20px] pt-4 pb-3 px-2 flex-col items-center gap-2"
                       style={{ border: "1.5px solid var(--purple-3)", borderBottom: "none", background: "var(--purple-1)" }}>
                       <div className="w-10 h-10 rounded-full bg-[#111] flex items-center justify-center">
                         <img src="/favicon.svg" alt="MediaLayer" className="w-5 h-5 brightness-0 invert" />

@@ -463,7 +463,6 @@ export default function LandingPage() {
                     { label: "Frame.io",       logo: "https://www.frame.io/favicon.ico" },
                     { label: "Dropbox Replay", logo: "https://www.dropbox.com/static/images/favicon.ico" },
                     { label: "Google Drive",   logo: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
-                    { label: "Email",          logo: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
                   ].map((col) => (
                     <th key={col.label} className="pb-4 px-2 text-center w-[14%]">
                       <div className="flex flex-col items-center gap-2">
@@ -478,17 +477,17 @@ export default function LandingPage() {
               </thead>
               <tbody>
                 {([
-                  // label,                        ML,    Frame.io,  Dropbox,   Drive,     Email
-                  ["GDPR compliant",             "yes", "yes",     "yes",     "yes",     "no"],
-                  ["No file size limits",        "yes", "yes",     "yes",     "partial", "no"],
-                  ["Secure video review",        "yes", "yes",     "yes",     "partial", "no"],
-                  ["One-click YouTube publish",  "yes", "no",      "no",      "no",      "no"],
-                  ["Role-based access",          "yes", "yes",     "yes",     "yes",     "no"],
-                  ["Feedback & approval flow",   "yes", "yes",     "yes",     "partial", "no"],
-                  ["No shared passwords",        "yes", "yes",     "yes",     "yes",     "no"],
-                  ["Audit trail",                "yes", "yes",     "yes",     "yes",     "no"],
-                  ["Direct YouTube publishing",  "yes", "no",      "no",      "no",      "no"],
-                ] as [string,string,string,string,string,string][]).map(([label, ml, frameio, dropbox, drive, email], i, arr) => (
+                  // label,                        ML,    Frame.io,  Dropbox,   Drive
+                  ["GDPR compliant",             "yes", "yes",     "yes",     "yes"],
+                  ["No file size limits",        "yes", "yes",     "yes",     "partial"],
+                  ["Secure video review",        "yes", "yes",     "yes",     "partial"],
+                  ["One-click YouTube publish",  "yes", "no",      "no",      "no"],
+                  ["Role-based access",          "yes", "yes",     "yes",     "yes"],
+                  ["Feedback & approval flow",   "yes", "yes",     "yes",     "partial"],
+                  ["No shared passwords",        "yes", "yes",     "yes",     "yes"],
+                  ["Audit trail",                "yes", "yes",     "yes",     "yes"],
+                  ["Direct YouTube publishing",  "yes", "no",      "no",      "no"],
+                ] as [string,string,string,string,string][]).map(([label, ml, frameio, dropbox, drive], i, arr) => (
                   <tr key={label}>
                     <td className="py-3.5 pr-4 text-sm text-foreground" style={{ borderTop: "1px solid var(--gray-2)" }}>{label}</td>
                     {/* MediaLayer cell — inside pill */}
@@ -506,7 +505,7 @@ export default function LandingPage() {
                       }}>
                       <CellIcon v={ml} />
                     </td>
-                    {[frameio, dropbox, drive, email].map((v, j) => (
+                    {[frameio, dropbox, drive].map((v, j) => (
                       <td key={j} className="py-3.5 px-2 text-center" style={{ borderTop: "1px solid var(--gray-2)" }}>
                         <CellIcon v={v} />
                       </td>
@@ -599,7 +598,7 @@ export default function LandingPage() {
               style={{ background: P, boxShadow: "0 4px 20px rgba(145,141,246,0.4)" }}>
               Start 14 day free trial
             </Link>
-            <a href="#features"
+            <a href="https://youtu.be/yByh_eDWNMI?si=GjZngWBRG0GAO0mx" target="_blank" rel="noreferrer"
               className="px-7 py-3 rounded-full text-sm font-medium"
               style={{ background: "rgba(255,255,255,0.6)", color: "#4c1d95", border: "1px solid rgba(145,141,246,0.3)" }}>
               See demo

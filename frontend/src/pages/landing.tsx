@@ -122,7 +122,7 @@ export default function LandingPage() {
           style={{ background: "#1a1a2e", boxShadow: "0 2px 24px rgba(0,0,0,0.3)" }}>
           <Link href="/" className="flex items-center justify-center w-7 h-7 rounded-full mr-1"
             style={{ background: "rgba(255,255,255,0.12)" }}>
-            <img src="/favicon.svg" alt="MediaLayer" className="w-4 h-4" />
+            <img src="/favicon.svg" alt="MediaLayer" className="w-4 h-4 brightness-0 invert" />
           </Link>
           {[
             { label: "Features",    href: "#features",    route: false },

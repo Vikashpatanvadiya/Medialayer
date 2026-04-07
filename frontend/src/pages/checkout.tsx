@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearch, Link } from "wouter";
 import { ArrowLeft, CheckCircle, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { WalletModalProvider, WalletMultiButton, useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { PhantomWalletAdapter, SolflareWalletAdapter, TorusWalletAdapter } from "@solana/wallet-adapter-wallets";
+import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -123,12 +123,16 @@ export default function CheckoutPage() {
   const planKey = (params.get("plan") || "starter") as keyof typeof PLANS;
   const plan = PLANS[planKey] || PLANS.starter;
 
+  // Clear any stale wallet session from localStorage on mount
+  useEffect(() => {
+    localStorage.removeItem("walletName");
+  }, []);
+
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
   const wallets = useMemo(() => [
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter(),
-    new TorusWalletAdapter(),
   ], []);
 
   return (

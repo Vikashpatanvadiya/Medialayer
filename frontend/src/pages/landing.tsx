@@ -1,9 +1,28 @@
 import { Link } from "wouter";
 import { useState } from "react";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 import { Upload, Eye, CheckCircle, Youtube, Shield, Lock, Users, ArrowRight, ChevronDown, Check, X, BarChart3 } from "lucide-react";
 
 const P = "var(--purple-4)";
 const P1 = "var(--purple-1)";
+
+// ── Animation helpers ─────────────────────────────────────────────────────────
+function FadeUp({ children, delay = 0, className }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 function Tag({ children }: { children: React.ReactNode }) {
   return <p className="text-xs font-semibold uppercase tracking-widest text-center mb-3" style={{ color: P }}>{children}</p>;
@@ -150,19 +169,36 @@ export default function LandingPage() {
       {/* ── 2. HERO — white bg, centered, feature tabs + gradient mockup ── */}
       <section className="pt-28 pb-0 bg-background">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <a href="#features" className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6 border transition-colors hover:opacity-80"
+          <motion.a
+            href="#features"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6 border transition-colors hover:opacity-80"
             style={{ background: P1, color: P, borderColor: "var(--purple-2)" }}>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: P }}>NEW</span>
             Early Access — Limited Spots
             <ArrowRight className="w-3 h-3" />
-          </a>
-          <h1 className="text-4xl md:text-[52px] font-bold leading-[1.1] mb-4 text-foreground" style={{ letterSpacing: "-0.03em" }}>
+          </motion.a>
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="text-4xl md:text-[52px] font-bold leading-[1.1] mb-4 text-foreground" style={{ letterSpacing: "-0.03em" }}>
             Video-first collaboration<br />for creators & editors
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground mb-8 max-w-lg mx-auto leading-relaxed">
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="text-sm md:text-base text-muted-foreground mb-8 max-w-lg mx-auto leading-relaxed">
             Your editor uploads. You review securely. One click publishes to YouTube. No downloads, no shared passwords.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
             <Link href="/register"
               className="px-6 py-2.5 rounded-full text-white text-sm font-semibold"
               style={{ background: P, boxShadow: "0 4px 20px rgba(145,141,246,0.35)" }}>
@@ -172,20 +208,26 @@ export default function LandingPage() {
               className="px-6 py-2.5 rounded-full text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors">
               See demo
             </a>
-          </div>
-          <FeatureTabs />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+            <FeatureTabs />
+          </motion.div>
         </div>
       </section>
 
       {/* ── 4. FEATURES ── */}
       <section id="features" className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
-          <Tag>Features</Tag>
-          <H2>Everything you need to<br />manage your video workflow</H2>
-          <Sub>From secure uploads to direct YouTube publishing — MediaLayer handles the entire creator-editor pipeline.</Sub>
+          <FadeUp><Tag>Features</Tag></FadeUp>
+          <FadeUp delay={0.05}><H2>Everything you need to<br />manage your video workflow</H2></FadeUp>
+          <FadeUp delay={0.1}><Sub>From secure uploads to direct YouTube publishing — MediaLayer handles the entire creator-editor pipeline.</Sub></FadeUp>
 
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             {/* Card 1 — Secure Upload */}
+            <FadeUp delay={0.05}>
             <div className="rounded-[var(--radius-6)] p-6 flex flex-col" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center mb-3" style={{ background: "var(--green-1)" }}>
                 <Upload className="w-4 h-4" style={{ color: "var(--green-4)" }} />
@@ -218,8 +260,10 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
+            </FadeUp>
 
             {/* Card 2 — In-browser review */}
+            <FadeUp delay={0.1}>
             <div className="rounded-[var(--radius-6)] p-6 flex flex-col" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center mb-3" style={{ background: "var(--sky-1)" }}>
                 <Eye className="w-4 h-4" style={{ color: "var(--sky-4)" }} />
@@ -263,8 +307,10 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
+            </FadeUp>
 
             {/* Card 3 — Approval flow */}
+            <FadeUp delay={0.05}>
             <div className="rounded-[var(--radius-6)] p-6 flex flex-col" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center mb-3" style={{ background: P1 }}>
                 <CheckCircle className="w-4 h-4" style={{ color: P }} />
@@ -296,8 +342,10 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+            </FadeUp>
 
             {/* Card 4 — YouTube publish */}
+            <FadeUp delay={0.1}>
             <div className="rounded-[var(--radius-6)] p-6 flex flex-col" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center mb-3" style={{ background: "var(--red-1)" }}>
                 <Youtube className="w-4 h-4" style={{ color: "var(--red-4)" }} />
@@ -330,10 +378,12 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
+            </FadeUp>
           </div>
 
           {/* Bottom row — 2 smaller cards */}
           <div className="grid md:grid-cols-2 gap-4">
+            <FadeUp delay={0.05}>
             <div className="rounded-[var(--radius-5)] p-5 flex items-start gap-4" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center shrink-0" style={{ background: "var(--green-1)" }}>
                 <Shield className="w-4 h-4" style={{ color: "var(--green-4)" }} />
@@ -343,6 +393,8 @@ export default function LandingPage() {
                 <p className="text-xs text-muted-foreground leading-relaxed">No shared passwords. OAuth-based login. AES-256 encrypted tokens. Signed URLs that expire in 1 hour.</p>
               </div>
             </div>
+            </FadeUp>
+            <FadeUp delay={0.1}>
             <div className="rounded-[var(--radius-5)] p-5 flex items-start gap-4" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center shrink-0" style={{ background: "var(--amber-1)" }}>
                 <Users className="w-4 h-4" style={{ color: "var(--amber-4)" }} />
@@ -352,6 +404,7 @@ export default function LandingPage() {
                 <p className="text-xs text-muted-foreground leading-relaxed">Separate dashboards for creators and editors. Connect via invite code. Everyone sees only what they need.</p>
               </div>
             </div>
+            </FadeUp>
           </div>
         </div>
       </section>
@@ -359,12 +412,13 @@ export default function LandingPage() {
       {/* ── 5. HOW IT WORKS ── */}
       <section id="how-it-works" className="py-24 px-6 bg-background">
         <div className="max-w-4xl mx-auto">
-          <Tag>How it works</Tag>
-          <H2>Get started in minutes</H2>
-          <Sub>Setting things up is as simple as inviting your editor and connecting YouTube. No complex setup or confusing configuration.</Sub>
+          <FadeUp><Tag>How it works</Tag></FadeUp>
+          <FadeUp delay={0.05}><H2>Get started in minutes</H2></FadeUp>
+          <FadeUp delay={0.1}><Sub>Setting things up is as simple as inviting your editor and connecting YouTube. No complex setup or confusing configuration.</Sub></FadeUp>
 
           <div className="grid md:grid-cols-3 gap-4">
             {/* Step 1 */}
+            <FadeUp delay={0.05}>
             <div className="rounded-[var(--radius-6)] overflow-hidden" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               {/* Visual — blobs + white circle icon */}
               <div className="h-52 flex items-center justify-center relative overflow-hidden">
@@ -387,8 +441,10 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
+            </FadeUp>
 
             {/* Step 2 */}
+            <FadeUp delay={0.1}>
             <div className="rounded-[var(--radius-6)] overflow-hidden" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               <div className="h-52 flex items-center justify-center relative overflow-hidden">
                 <div className="absolute w-24 h-24 rounded-full blur-2xl opacity-40" style={{ background: "var(--purple-3)", left: "10%", top: "15%" }} />
@@ -408,8 +464,10 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
+            </FadeUp>
 
             {/* Step 3 */}
+            <FadeUp delay={0.15}>
             <div className="rounded-[var(--radius-6)] overflow-hidden" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
               <div className="h-52 flex flex-col justify-center px-5 gap-2">
                 {[
@@ -433,6 +491,7 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
+            </FadeUp>
           </div>
         </div>
       </section>
@@ -440,9 +499,9 @@ export default function LandingPage() {
       {/* ── 6. COMPARISON ── */}
       <section id="comparison" className="py-24 px-6 bg-background">
         <div className="max-w-4xl mx-auto">
-          <Tag>Comparison</Tag>
-          <H2>How MediaLayer compares</H2>
-          <Sub>See how MediaLayer stacks up against the most popular video collaboration tools on the market.</Sub>
+          <FadeUp><Tag>Comparison</Tag></FadeUp>
+          <FadeUp delay={0.05}><H2>How MediaLayer compares</H2></FadeUp>
+          <FadeUp delay={0.1}><Sub>See how MediaLayer stacks up against the most popular video collaboration tools on the market.</Sub></FadeUp>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
@@ -521,11 +580,12 @@ export default function LandingPage() {
       {/* ── 7. PRICING ── */}
       <section id="pricing" className="py-24 px-6" style={{ background: "var(--bg-1)", border: "1px solid var(--gray-2)" }}>
         <div className="max-w-3xl mx-auto">
-          <Tag>Pricing</Tag>
-          <H2>Simplified pricing</H2>
-          <Sub>No confusing tiers. Pay once and get lifetime access — everything included.</Sub>
+          <FadeUp><Tag>Pricing</Tag></FadeUp>
+          <FadeUp delay={0.05}><H2>Simplified pricing</H2></FadeUp>
+          <FadeUp delay={0.1}><Sub>No confusing tiers. Pay once and get lifetime access — everything included.</Sub></FadeUp>
 
           <div className="grid md:grid-cols-2 gap-5">
+            <FadeUp delay={0.1}>
             <div className="bg-card rounded-[var(--radius-6)] border border-border p-7 flex flex-col" style={{ boxShadow: "var(--shadow-2)" }}>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Starter</p>
               <div className="flex items-end gap-1 mb-1">
@@ -544,7 +604,8 @@ export default function LandingPage() {
                 Get started <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-
+            </FadeUp>
+            <FadeUp delay={0.15}>
             <div className="rounded-[var(--radius-6)] p-7 flex flex-col relative overflow-hidden"
               style={{ background: P, boxShadow: "0 8px 32px rgba(145,141,246,0.35)" }}>
               <span className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}>Most popular</span>
@@ -566,6 +627,7 @@ export default function LandingPage() {
                 Get started <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
+            </FadeUp>
           </div>
           <p className="text-center text-xs text-muted-foreground mt-5">No subscriptions · No hidden fees · Pay once, own it forever</p>
         </div>
@@ -574,18 +636,21 @@ export default function LandingPage() {
       {/* ── 8. FAQ ── */}
       <section id="faq" className="py-24 px-6">
         <div className="max-w-2xl mx-auto">
-          <Tag>FAQ</Tag>
-          <H2>Frequently asked questions</H2>
-          <Sub>Quick answers to common questions about pricing, privacy, setup, and more.</Sub>
+          <FadeUp><Tag>FAQ</Tag></FadeUp>
+          <FadeUp delay={0.05}><H2>Frequently asked questions</H2></FadeUp>
+          <FadeUp delay={0.1}><Sub>Quick answers to common questions about pricing, privacy, setup, and more.</Sub></FadeUp>
+          <FadeUp delay={0.15}>
           <div className="rounded-[var(--radius-6)] border border-border bg-card px-6" style={{ boxShadow: "var(--shadow-1)" }}>
             {FAQ.map((item) => <FaqItem key={item.q} {...item} />)}
           </div>
+          </FadeUp>
         </div>
       </section>
 
       {/* ── 9. FINAL CTA ── */}
       <section className="py-24 px-6" style={{ background: "linear-gradient(160deg, #ede9fe 0%, #ddd6fe 60%, #c4b5fd 100%)" }}>
         <div className="max-w-xl mx-auto text-center">
+          <FadeUp>
           <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#1e1b4b", letterSpacing: "-0.025em" }}>
             See what's driving your video workflow
           </h2>
@@ -604,6 +669,7 @@ export default function LandingPage() {
               See demo
             </a>
           </div>
+          </FadeUp>
         </div>
       </section>
 

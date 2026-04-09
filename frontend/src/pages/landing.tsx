@@ -2,7 +2,10 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Upload, Eye, CheckCircle, Youtube, Shield, Lock, Users, ArrowRight, ChevronDown, Check, X, BarChart3 } from "lucide-react";
+import { Upload, Eye, CheckCircle, Youtube, Shield, Users, ArrowRight, ChevronDown, Check, Lock, BarChart3 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 const P = "var(--purple-4)";
 const P1 = "var(--purple-1)";
@@ -220,192 +223,110 @@ export default function LandingPage() {
 
       {/* ── 4. FEATURES ── */}
       <section id="features" className="py-24 px-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <FadeUp><Tag>Features</Tag></FadeUp>
           <FadeUp delay={0.05}><H2>Everything you need to<br />manage your video workflow</H2></FadeUp>
           <FadeUp delay={0.1}><Sub>From secure uploads to direct YouTube publishing — MediaLayer handles the entire creator-editor pipeline.</Sub></FadeUp>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            {/* Card 1 — Secure Upload */}
-            <FadeUp delay={0.05}>
-            <div className="rounded-[var(--radius-6)] p-6 flex flex-col" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
-              <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center mb-3" style={{ background: "var(--green-1)" }}>
-                <Upload className="w-4 h-4" style={{ color: "var(--green-4)" }} />
-              </div>
-              <p className="text-sm font-semibold mb-1" style={{ color: "var(--green-4)" }}>Secure upload</p>
-              <p className="text-xl font-bold text-foreground leading-snug mb-4" style={{ letterSpacing: "-0.02em" }}>
-                Your editor uploads directly.<br />No file sharing needed.
-              </p>
-              <ul className="space-y-1.5 mb-4">
-                {["No Google Drive or WeTransfer", "Up to 2GB per video", "Private Cloudinary storage"].map(b => (
-                  <li key={b} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--green-4)" }} /> {b}
-                  </li>
-                ))}
-              </ul>
-              <a href="#how-it-works" className="text-xs font-medium flex items-center gap-1 mb-5" style={{ color: "var(--green-4)" }}>
-                Learn more <ArrowRight className="w-3 h-3" />
-              </a>
-              <div className="rounded-[var(--radius-4)] border border-border overflow-hidden mt-auto" style={{ background: "var(--bg-1)", border: "1px solid var(--gray-2)" }}>
-                {[["MP4", 1243, 1243], ["MOV", 412, 1243], ["AVI", 87, 1243], ["MKV", 34, 1243]].map(([fmt, count, max]) => (
-                  <div key={String(fmt)} className="flex items-center justify-between px-4 py-2.5 border-b border-border last:border-0">
-                    <span className="text-xs text-muted-foreground">{fmt}</span>
-                    <div className="flex items-center gap-3">
-                      <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-4)" }}>
-                        <div className="h-full rounded-full" style={{ width: `${(Number(count) / Number(max)) * 100}%`, background: "var(--green-3)" }} />
-                      </div>
-                      <span className="text-xs font-medium text-foreground w-10 text-right">{count.toLocaleString()}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            </FadeUp>
-
-            {/* Card 2 — In-browser review */}
-            <FadeUp delay={0.1}>
-            <div className="rounded-[var(--radius-6)] p-6 flex flex-col" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
-              <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center mb-3" style={{ background: "var(--sky-1)" }}>
-                <Eye className="w-4 h-4" style={{ color: "var(--sky-4)" }} />
-              </div>
-              <p className="text-sm font-semibold mb-1" style={{ color: "var(--sky-4)" }}>In-browser review</p>
-              <p className="text-xl font-bold text-foreground leading-snug mb-4" style={{ letterSpacing: "-0.02em" }}>
-                Watch videos securely<br />as they happen.
-              </p>
-              <ul className="space-y-1.5 mb-4">
-                {["Signed URLs — no public links", "1-hour expiry for security", "No downloads ever needed"].map(b => (
-                  <li key={b} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--sky-4)" }} /> {b}
-                  </li>
-                ))}
-              </ul>
-              <a href="#how-it-works" className="text-xs font-medium flex items-center gap-1 mb-5" style={{ color: "var(--sky-4)" }}>
-                Learn more <ArrowRight className="w-3 h-3" />
-              </a>
-              <div className="rounded-[var(--radius-4)] border border-border overflow-hidden mt-auto" style={{ background: "var(--bg-1)", border: "1px solid var(--gray-2)" }}>
-                {[
-                  { name: "Product Launch v3", editor: "Jordan K.", time: "now", status: "pending" },
-                  { name: "Tutorial Series Ep.4", editor: "Alex R.", time: "2m", status: "approved" },
-                  { name: "Brand Story Cut", editor: "Sam L.", time: "5m", status: "pending" },
-                  { name: "Q4 Campaign Final", editor: "Jordan K.", time: "12m", status: "approved" },
-                ].map((v) => (
-                  <div key={v.name} className="flex items-center justify-between px-4 py-2.5 border-b border-border last:border-0">
-                    <div>
-                      <p className="text-xs font-medium text-foreground">{v.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{v.editor}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                        style={v.status === "approved"
-                          ? { background: "var(--green-1)", color: "var(--green-4)" }
-                          : { background: "var(--amber-1)", color: "var(--amber-4)" }}>
-                        {v.status}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">{v.time}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            </FadeUp>
-
-            {/* Card 3 — Approval flow */}
-            <FadeUp delay={0.05}>
-            <div className="rounded-[var(--radius-6)] p-6 flex flex-col" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
-              <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center mb-3" style={{ background: P1 }}>
-                <CheckCircle className="w-4 h-4" style={{ color: P }} />
-              </div>
-              <p className="text-sm font-semibold mb-1" style={{ color: P }}>Approval flow</p>
-              <p className="text-xl font-bold text-foreground leading-snug mb-4" style={{ letterSpacing: "-0.02em" }}>
-                See the complete journey<br />of every video submission.
-              </p>
-              <ul className="space-y-1.5 mb-4">
-                {["Full submission history", "Rejection feedback loop", "Instant editor notifications"].map(b => (
-                  <li key={b} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Check className="w-3.5 h-3.5 shrink-0" style={{ color: P }} /> {b}
-                  </li>
-                ))}
-              </ul>
-              <a href="#how-it-works" className="text-xs font-medium flex items-center gap-1 mb-5" style={{ color: P }}>
-                Learn more <ArrowRight className="w-3 h-3" />
-              </a>
-              <div className="rounded-[var(--radius-4)] border border-border mt-auto flex flex-col items-center justify-center py-8" style={{ background: "var(--bg-1)", border: "1px solid var(--gray-2)" }}>
-                <div className="w-20 h-20 rounded-full border-4 flex items-center justify-center mb-2" style={{ borderColor: "var(--green-3)" }}>
-                  <span className="text-2xl font-bold text-foreground">98%</span>
+          <FadeUp delay={0.1}>
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden grid md:grid-cols-2">
+            {[
+              {
+                icon: <Upload className="w-6 h-6 text-emerald-500" />,
+                blob: "M60,20 C80,5 95,25 90,50 C85,75 70,90 50,88 C30,86 5,75 5,50 C5,25 40,35 60,20Z",
+                bg: "#dcfce7", iconColor: "#22c55e",
+                title: "Secure upload.",
+                desc: "Your editor uploads directly — no file sharing needed.",
+                bullets: ["No Google Drive or WeTransfer", "Up to 2GB per video", "Private Cloudinary storage"],
+              },
+              {
+                icon: <Eye className="w-6 h-6 text-sky-500" />,
+                blob: "M55,15 C78,8 92,30 88,55 C84,80 65,92 42,88 C19,84 8,65 12,42 C16,19 32,22 55,15Z",
+                bg: "#e0f2fe", iconColor: "#0ea5e9",
+                title: "In-browser review.",
+                desc: "Watch videos securely without downloading anything.",
+                bullets: ["Signed URLs — no public links", "1-hour expiry for security", "No downloads ever needed"],
+              },
+              {
+                icon: <CheckCircle className="w-6 h-6 text-violet-500" />,
+                blob: "M50,12 C72,5 90,22 88,48 C86,74 68,90 44,90 C20,90 6,72 8,48 C10,24 28,19 50,12Z",
+                bg: "#ede9fe", iconColor: "#8b5cf6",
+                title: "Approval flow.",
+                desc: "One-click approve or reject with feedback. Editor notified instantly.",
+                bullets: ["Full submission history", "Rejection feedback loop", "Instant editor notifications"],
+              },
+              {
+                icon: <Youtube className="w-6 h-6 text-red-500" />,
+                blob: "M58,18 C80,10 94,32 90,56 C86,80 66,92 44,88 C22,84 6,68 10,44 C14,20 36,26 58,18Z",
+                bg: "#fee2e2", iconColor: "#ef4444",
+                title: "YouTube publishing.",
+                desc: "Push approved videos directly to your channel. No re-uploading.",
+                bullets: ["Direct YouTube OAuth", "No re-uploading ever", "Per-video publish tracking"],
+              },
+              {
+                icon: <Shield className="w-6 h-6 text-emerald-500" />,
+                blob: "M52,14 C74,6 92,26 90,52 C88,78 68,92 44,90 C20,88 4,70 6,46 C8,22 30,22 52,14Z",
+                bg: "#dcfce7", iconColor: "#22c55e",
+                title: "Privacy-first.",
+                desc: "No shared passwords. OAuth-based login. AES-256 encrypted tokens. Signed URLs that expire in 1 hour.",
+                bullets: [],
+              },
+              {
+                icon: <Users className="w-6 h-6 text-amber-500" />,
+                blob: "M56,16 C78,8 94,28 90,54 C86,80 66,94 42,90 C18,86 4,68 8,44 C12,20 34,24 56,16Z",
+                bg: "#fef9c3", iconColor: "#f59e0b",
+                title: "Role-based access.",
+                desc: "Separate dashboards for creators and editors. Connect via invite code. Everyone sees only what they need.",
+                bullets: [],
+              },
+            ].map((f, i) => (
+              <div key={f.title}
+                className={[
+                  "flex items-start gap-5 p-7",
+                  i % 2 === 0 ? "md:border-r border-border" : "",
+                  i < 4 ? "border-b border-border" : "",
+                ].join(" ")}>
+                {/* Blob icon */}
+                <div className="shrink-0 relative w-16 h-16">
+                  {/* White sticker border — slightly scaled up white blob behind */}
+                  <svg viewBox="-8 -8 116 116" className="absolute inset-0 w-full h-full">
+                    <path d={f.blob} fill="white" />
+                  </svg>
+                  {/* Colored blob with grid lines */}
+                  <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
+                    <defs>
+                      <clipPath id={`clip-${i}`}><path d={f.blob} /></clipPath>
+                    </defs>
+                    <path d={f.blob} fill={f.bg} />
+                    {[20,35,50,65,80].map(x => (
+                      <line key={`v${x}`} x1={x} y1="0" x2={x} y2="100" stroke={f.iconColor} strokeWidth="0.5" strokeOpacity="0.18" clipPath={`url(#clip-${i})`} />
+                    ))}
+                    {[20,35,50,65,80].map(y => (
+                      <line key={`h${y}`} x1="0" y1={y} x2="100" y2={y} stroke={f.iconColor} strokeWidth="0.5" strokeOpacity="0.18" clipPath={`url(#clip-${i})`} />
+                    ))}
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">{f.icon}</div>
                 </div>
-                <p className="text-sm font-semibold text-foreground">Approval rate</p>
-                <p className="text-xs text-muted-foreground mt-1 text-center max-w-[160px]">Most videos get approved on the first review.</p>
-                <div className="flex items-center gap-3 mt-3 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: "var(--red-4)" }} /> Rejected</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: "var(--amber-3)" }} /> Pending</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: "var(--green-3)" }} /> Approved</span>
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground mb-1">
+                    <span className="font-bold">{f.title}</span>{" "}
+                    <span className="text-muted-foreground">{f.desc}</span>
+                  </p>
+                  {f.bullets.length > 0 && (
+                    <ul className="space-y-0.5 mt-2">
+                      {f.bullets.map(b => (
+                        <li key={b} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Check className="w-3 h-3 shrink-0" style={{ color: f.iconColor }} /> {b}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
-            </div>
-            </FadeUp>
-
-            {/* Card 4 — YouTube publish */}
-            <FadeUp delay={0.1}>
-            <div className="rounded-[var(--radius-6)] p-6 flex flex-col" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
-              <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center mb-3" style={{ background: "var(--red-1)" }}>
-                <Youtube className="w-4 h-4" style={{ color: "var(--red-4)" }} />
-              </div>
-              <p className="text-sm font-semibold mb-1" style={{ color: "var(--red-4)" }}>YouTube publishing</p>
-              <p className="text-xl font-bold text-foreground leading-snug mb-4" style={{ letterSpacing: "-0.02em" }}>
-                See how your videos perform<br />after publishing.
-              </p>
-              <ul className="space-y-1.5 mb-4">
-                {["Direct YouTube OAuth", "No re-uploading ever", "Per-video publish tracking"].map(b => (
-                  <li key={b} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--red-4)" }} /> {b}
-                  </li>
-                ))}
-              </ul>
-              <a href="#how-it-works" className="text-xs font-medium flex items-center gap-1 mb-5" style={{ color: "var(--red-4)" }}>
-                Learn more <ArrowRight className="w-3 h-3" />
-              </a>
-              <div className="rounded-[var(--radius-4)] border border-border overflow-hidden mt-auto" style={{ background: "var(--bg-1)", border: "1px solid var(--gray-2)" }}>
-                {[
-                  { label: "Published this month", value: "24" },
-                  { label: "Avg. time to publish", value: "4 min" },
-                  { label: "Total videos", value: "142" },
-                  { label: "YouTube connected", value: "✓ Active" },
-                ].map((s) => (
-                  <div key={s.label} className="flex items-center justify-between px-4 py-2.5 border-b border-border last:border-0">
-                    <span className="text-xs text-muted-foreground">{s.label}</span>
-                    <span className="text-xs font-semibold text-foreground">{s.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            </FadeUp>
+            ))}
           </div>
-
-          {/* Bottom row — 2 smaller cards */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <FadeUp delay={0.05}>
-            <div className="rounded-[var(--radius-5)] p-5 flex items-start gap-4" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
-              <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center shrink-0" style={{ background: "var(--green-1)" }}>
-                <Shield className="w-4 h-4" style={{ color: "var(--green-4)" }} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground mb-1">Privacy-first</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">No shared passwords. OAuth-based login. AES-256 encrypted tokens. Signed URLs that expire in 1 hour.</p>
-              </div>
-            </div>
-            </FadeUp>
-            <FadeUp delay={0.1}>
-            <div className="rounded-[var(--radius-5)] p-5 flex items-start gap-4" style={{ background: "var(--bg-2)", boxShadow: "var(--shadow-2)" }}>
-              <div className="w-8 h-8 rounded-[var(--radius-4)] flex items-center justify-center shrink-0" style={{ background: "var(--amber-1)" }}>
-                <Users className="w-4 h-4" style={{ color: "var(--amber-4)" }} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground mb-1">Role-based access</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">Separate dashboards for creators and editors. Connect via invite code. Everyone sees only what they need.</p>
-              </div>
-            </div>
-            </FadeUp>
-          </div>
+          </FadeUp>
         </div>
       </section>
 

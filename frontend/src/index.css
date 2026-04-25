@@ -182,7 +182,7 @@
 
 @theme inline {
   --font-sans: 'Inter Variable', system-ui, sans-serif;
-  --font-display: 'Inter Variable', system-ui, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
   --font-mono: 'SF Mono', Menlo, monospace;
 
   --color-background: hsl(var(--background-hsl));
@@ -288,5 +288,20 @@
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: max-content;
+  white-space: nowrap;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
 }
 

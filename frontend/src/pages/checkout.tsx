@@ -91,26 +91,34 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
         })
       );
 
-      const sig = await sendTransaction(tx, connection, { skipPreflight: false });
+      // skipPreflight=true + maxRetries=5 ensures tx actually lands on Devnet
+      const sig = await sendTransaction(tx, connection, {
+        skipPreflight: true,
+        preflightCommitment: "confirmed",
+        maxRetries: 5,
+      });
       setTxSig(sig);
 
-      // Poll for confirmation — resilient on Devnet
+      // Poll up to 90s — Devnet can be slow
       let confirmed = false;
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 45; i++) {
         await new Promise(r => setTimeout(r, 2000));
-        const sigStatus = await connection.getSignatureStatus(sig, { searchTransactionHistory: true });
-        const conf = sigStatus?.value?.confirmationStatus;
-        if (conf === "confirmed" || conf === "finalized") { confirmed = true; break; }
-        if (sigStatus?.value?.err) throw new Error("Transaction failed on-chain: " + JSON.stringify(sigStatus.value.err));
+        try {
+          const sigStatus = await connection.getSignatureStatus(sig, { searchTransactionHistory: true });
+          const conf = sigStatus?.value?.confirmationStatus;
+          if (conf === "confirmed" || conf === "finalized") { confirmed = true; break; }
+          if (sigStatus?.value?.err) throw new Error("Transaction failed on-chain: " + JSON.stringify(sigStatus.value.err));
+        } catch (pollErr: any) {
+          if (pollErr.message?.includes("failed on-chain")) throw pollErr;
+        }
       }
-      if (!confirmed) throw new Error("Transaction not confirmed after 60s — check Solana Explorer.");
+      if (!confirmed) throw new Error("Transaction not confirmed after 90s — check Solana Explorer.");
 
       setStatus("verifying");
 
       const token = localStorage.getItem("layer_token");
 
       if (token) {
-        // ── Logged in: activate immediately ──────────────────────────────────
         const verifyRes = await fetch(apiUrl("/api/payments/verify-plan"), {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -121,14 +129,12 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
         setStatus("success");
       } else {
-        // ── Not logged in: store payment and redirect to login/register ──────
         localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({
           txSignature: sig,
           plan: planKey,
           walletAddress: publicKey.toString(),
         }));
         setStatus("success");
-        // Show success briefly then redirect to register
       }
     } catch (e: any) {
       setErrorMsg(e.message || "Transaction failed");
@@ -258,7 +264,10 @@ export default function CheckoutPage() {
     localStorage.removeItem("walletName");
   }, []);
 
-  const endpoint = useMemo(() => "https://api.devnet.solana.com", []);
+  const endpoint = useMemo(() => {
+    // Use env var if set (e.g. Helius/QuickNode), fallback to public devnet
+    return (import.meta as any).env?.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com";
+  }, []);
   const wallets = useMemo(() => [
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter(),

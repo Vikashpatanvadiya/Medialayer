@@ -154,6 +154,35 @@ export default function ProfilePage() {
                 <Input value={user?.role || ""} readOnly className="opacity-60 cursor-not-allowed capitalize" />
               </div>
             </div>
+            {/* Plan status */}
+            <div className="mt-4 p-4 rounded-[var(--radius-5)] border border-border bg-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {user?.plan && user.plan !== "free"
+                      ? `${user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan`
+                      : "Free Plan"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {user?.plan && user.plan !== "free"
+                      ? `Active since ${user.planActivatedAt ? new Date(user.planActivatedAt).toLocaleDateString() : "recently"} · Lifetime access`
+                      : "3 video uploads per month"}
+                  </p>
+                </div>
+                {(!user?.plan || user.plan === "free") && (
+                  <a href="/checkout?plan=starter"
+                    className="px-4 py-2 rounded-full bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors">
+                    Upgrade
+                  </a>
+                )}
+                {user?.plan && user.plan !== "free" && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold"
+                    style={{ background: "var(--purple-1)", color: "var(--purple-4)" }}>
+                    ✦ Active
+                  </span>
+                )}
+              </div>
+            </div>
           </section>
 
           <section className="border border-destructive/20 rounded-[var(--radius-5)] p-5 bg-destructive/5">

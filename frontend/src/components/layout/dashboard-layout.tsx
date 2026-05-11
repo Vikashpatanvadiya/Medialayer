@@ -122,7 +122,15 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               <PopoverContent align="end" className="w-48 p-1.5 rounded-[var(--radius-5)] shadow-[var(--shadow-3)]">
                 <div className="px-3 py-2 border-b border-border mb-1">
                   <p className="text-sm font-semibold text-foreground">{user.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                    {user.plan && user.plan !== "free" && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                        style={{ background: "var(--purple-1)", color: "var(--purple-4)" }}>
+                        {user.plan}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Link href="/dashboard/profile">
                   <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-4)] text-sm text-muted-foreground hover:bg-muted/50 transition-colors cursor-pointer">

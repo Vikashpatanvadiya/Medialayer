@@ -87,6 +87,18 @@ export default function CreatorDashboard() {
           Welcome back, {user?.name?.split(" ")[0]} 👋
         </h1>
         <p className="text-muted-foreground mt-1 text-base">Here's what's happening with your videos today.</p>
+        {/* Plan badge */}
+        {user?.plan && user.plan !== "free" ? (
+          <div className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-xs font-semibold"
+            style={{ background: "var(--purple-1)", color: "var(--purple-4)", border: "1px solid var(--purple-2)" }}>
+            ✦ {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan Active
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-2 mt-3">
+            <span className="text-xs text-muted-foreground">Free plan ·</span>
+            <a href="/checkout?plan=starter" className="text-xs text-primary font-medium hover:underline">Upgrade →</a>
+          </div>
+        )}
       </div>
 
       {isLoading ? (

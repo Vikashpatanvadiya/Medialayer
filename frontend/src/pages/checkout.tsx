@@ -48,12 +48,32 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
     setStatus("loading");
     setErrorMsg("");
     try {
-      const tx = new Transaction().add(
-        SystemProgram.transfer({ fromPubkey: publicKey, toPubkey: new PublicKey(RECEIVER), lamports: parseFloat(amount) * LAMPORTS_PER_SOL })
+      // Get a fresh blockhash with expiry info — needed for reliable confirmation
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+
+      const tx = new Transaction({
+        recentBlockhash: blockhash,
+        feePayer: publicKey,
+      }).add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(RECEIVER),
+          lamports: Math.round(parseFloat(amount) * LAMPORTS_PER_SOL),
+        })
       );
-      const sig = await sendTransaction(tx, connection);
-      await connection.confirmTransaction(sig, "confirmed");
+
+      const sig = await sendTransaction(tx, connection, { skipPreflight: false });
       setTxSig(sig);
+
+      // Use blockhash-based confirmation — much more reliable than string commitment
+      const confirmation = await connection.confirmTransaction(
+        { signature: sig, blockhash, lastValidBlockHeight },
+        "confirmed"
+      );
+
+      if (confirmation.value.err) {
+        throw new Error("Transaction failed on-chain: " + JSON.stringify(confirmation.value.err));
+      }
 
       // Verify on-chain with backend and activate plan
       setStatus("verifying");
@@ -78,7 +98,14 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
 
       setStatus("success");
     } catch (e: any) {
-      setErrorMsg(e.message || "Transaction failed");
+      // If it's a timeout error, the tx may have still gone through — show the sig
+      const msg = e?.message || "Transaction failed";
+      const isTimeout = msg.includes("was not confirmed") || msg.includes("timed out") || msg.includes("30.00 seconds");
+      if (isTimeout && txSig) {
+        setErrorMsg(`Confirmation timed out. Check your transaction on Solana Explorer — it may have succeeded. If confirmed, contact support with your tx signature.`);
+      } else {
+        setErrorMsg(msg);
+      }
       setStatus("error");
     }
   };
@@ -160,7 +187,11 @@ export default function CheckoutPage() {
   }, []);
 
   const network = WalletAdapterNetwork.Devnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  // Use a faster public Devnet RPC — the default clusterApiUrl is rate-limited
+  const endpoint = useMemo(
+    () => process.env.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com",
+    []
+  );
   const wallets = useMemo(() => [
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter(),

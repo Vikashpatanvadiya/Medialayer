@@ -211,21 +211,11 @@ export default function VideoDetail() {
       return;
     }
 
-    // Get editor's wallet address from backend
-    const token = localStorage.getItem("layer_token");
-    const videoRes = await fetch(apiUrl(`/api/videos/${video.id}`), { headers: { Authorization: `Bearer ${token}` } });
-    const videoData = await videoRes.json();
-    // We need the editor's solanaWalletAddress — fetch it via a separate call
-    const editorRes = await fetch(apiUrl("/api/users/my-editors"), { headers: { Authorization: `Bearer ${token}` } });
-    const editorData = await editorRes.json();
-    const editorInfo = editorData.editors?.find((e: any) => e.id === video.editorId);
-
-    // Fallback: try to get wallet from video detail endpoint (not exposed yet)
-    // We'll call the pay-editor route which will validate on-chain
     setIsPayingEditor(true);
     try {
-      // Build and send the Solana transaction
-      // We need the editor's wallet — fetch it from a dedicated endpoint
+      const token = localStorage.getItem("layer_token");
+
+      // Fetch editor's wallet address
       const walletRes = await fetch(apiUrl(`/api/users/editor-wallet/${video.editorId}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -235,15 +225,26 @@ export default function VideoDetail() {
       }
       const { walletAddress: editorWallet } = await walletRes.json();
 
-      const tx = new Transaction().add(
+      // Get fresh blockhash for reliable confirmation
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+      const tx = new Transaction({
+        recentBlockhash: blockhash,
+        feePayer: publicKey,
+      }).add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
           toPubkey: new PublicKey(editorWallet),
           lamports,
         })
       );
-      const sig = await sendTransaction(tx, connection);
-      await connection.confirmTransaction(sig, "confirmed");
+      const sig = await sendTransaction(tx, connection, { skipPreflight: false });
+
+      // Blockhash-based confirmation — no 30s timeout issue
+      const confirmation = await connection.confirmTransaction(
+        { signature: sig, blockhash, lastValidBlockHeight },
+        "confirmed"
+      );
+      if (confirmation.value.err) throw new Error("Transaction failed on-chain");
 
       // Record on backend
       const recordRes = await fetch(apiUrl(`/api/payments/pay-editor/${video.id}`), {

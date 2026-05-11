@@ -732,7 +732,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/checkout?plan=starter" className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors">
+                <Link href="/login?redirect=/checkout?plan=starter" className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors">
                   Get started <ArrowRight className="w-4 h-4" />
                 </Link>
               </motion.div>
@@ -759,7 +759,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/checkout?plan=pro" className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-white text-sm font-semibold hover:bg-white/90 transition-colors" style={{ color: P }}>
+                <Link href="/login?redirect=/checkout?plan=pro" className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-white text-sm font-semibold hover:bg-white/90 transition-colors" style={{ color: P }}>
                   Get started <ArrowRight className="w-4 h-4" />
                 </Link>
               </motion.div>

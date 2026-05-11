@@ -35,6 +35,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   const params = new URLSearchParams(window.location.search);
   const justVerified = params.get("verified") === "1";
   const verifiedEmail = params.get("email") || "";
+  const redirect = params.get("redirect") || "";
+  const fromPricing = redirect.includes("/checkout");
 
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -89,6 +91,16 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
               style={{ background: "var(--green-1)", borderColor: "var(--green-2)", color: "var(--green-4)" }}>
               <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
               Email verified. Enter your password to sign in.
+            </div>
+          )}
+
+          {fromPricing && !justVerified && (
+            <div className="flex items-start gap-2 rounded-[var(--radius-4)] border p-3 text-sm"
+              style={{ background: "var(--purple-1)", borderColor: "var(--purple-2)", color: "var(--purple-4)" }}>
+              <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>Sign in to continue to checkout. Don't have an account?{" "}
+                <Link href={`/register?redirect=${encodeURIComponent(redirect)}`} className="font-semibold underline">Sign up</Link>
+              </span>
             </div>
           )}
 

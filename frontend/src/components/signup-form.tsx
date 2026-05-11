@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
@@ -58,6 +58,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 
   const params = new URLSearchParams(window.location.search);
   const defaultRole = (params.get("role") === "creator" ? "creator" : "editor") as "creator" | "editor";
+  const redirect = params.get("redirect") || "";
+  const fromPricing = redirect.includes("/checkout");
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -84,9 +86,17 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
               <h1 className="text-xl font-bold tracking-tight">Create your account</h1>
               <FieldDescription>
                 Already have an account?{" "}
-                <Link href="/login" className="underline underline-offset-4 hover:text-foreground font-medium">Sign in</Link>
+                <Link href={redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login"} className="underline underline-offset-4 hover:text-foreground font-medium">Sign in</Link>
               </FieldDescription>
             </div>
+
+            {fromPricing && (
+              <div className="flex items-start gap-2 rounded-[var(--radius-4)] border p-3 text-sm"
+                style={{ background: "var(--purple-1)", borderColor: "var(--purple-2)", color: "var(--purple-4)" }}>
+                <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>Create your account to proceed to checkout and activate your plan.</span>
+              </div>
+            )}
 
             <Field>
               <FieldLabel htmlFor="name">Full name</FieldLabel>

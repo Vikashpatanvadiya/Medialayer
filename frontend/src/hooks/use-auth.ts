@@ -56,7 +56,14 @@ export function useAuth() {
         queryClient.setQueryData(['/api/auth/me'], data.user);
         // Activate any pending Solana payment
         await activatePendingPayment(data.token, queryClient);
-        setLocation(data.user.role === 'creator' ? '/dashboard/creator' : '/dashboard/editor');
+        // Honour ?redirect= param if present (e.g. from pricing page)
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        if (redirect) {
+          setLocation(redirect);
+        } else {
+          setLocation(data.user.role === 'creator' ? '/dashboard/creator' : '/dashboard/editor');
+        }
       },
       onError: (err: any) => {
         toast({ 
@@ -71,11 +78,18 @@ export function useAuth() {
   const registerMutation = useRegister({
     mutation: {
       onSuccess: (data: any) => {
+        // Check if there's a redirect param — tell user to verify then they'll be redirected
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        if (redirect) {
+          // Store redirect so login page can pick it up after email verification
+          localStorage.setItem('layer_post_verify_redirect', redirect);
+        }
         toast({
           title: 'Check your email!',
           description: 'We sent a verification link to your email. Click it to activate your account.',
         });
-        setLocation('/login');
+        setLocation(redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login');
       },
       onError: (err: any) => {
         toast({ 

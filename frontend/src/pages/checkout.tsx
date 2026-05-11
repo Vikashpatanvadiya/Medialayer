@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearch, Link } from "wouter";
-import { ArrowLeft, CheckCircle, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import { useSearch, Link, useLocation } from "wouter";
+import { ArrowLeft, CheckCircle, ExternalLink, Loader2, RefreshCw, LogIn, UserPlus } from "lucide-react";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -10,12 +10,16 @@ import {
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { WalletModalProvider, WalletMultiButton, useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
-import { clusterApiUrl, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { useQueryClient } from "@tanstack/react-query";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import { apiUrl } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 
 const RECEIVER = "9oBgTB8ZQ5qkeEbUP65QWaVKG2BfcY8iUUcgPWAov5W";
+
+// localStorage key to persist pending payment across login/register
+const PENDING_PAYMENT_KEY = "layer_pending_payment";
 
 const PLANS = {
   starter: { name: "Starter", price: "$50", sol: "0.5", features: ["1 creator account", "Up to 3 editors", "Unlimited video reviews", "Direct YouTube publishing", "Lifetime access"] },
@@ -25,10 +29,8 @@ const PLANS = {
 function ChangeWalletButton() {
   const { setVisible } = useWalletModal();
   return (
-    <button
-      onClick={() => setVisible(true)}
-      className="flex items-center gap-1.5 text-xs text-primary hover:text-primary font-medium transition-colors"
-    >
+    <button onClick={() => setVisible(true)}
+      className="flex items-center gap-1.5 text-xs text-primary font-medium transition-colors hover:opacity-80">
       <RefreshCw className="w-3 h-3" /> Change wallet
     </button>
   );
@@ -37,24 +39,51 @@ function ChangeWalletButton() {
 function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]; planKey: string }) {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [amount, setAmount] = useState<string>(plan.sol);
+  const [, setLocation] = useLocation();
+  const [amount] = useState<string>(plan.sol);
   const [status, setStatus] = useState<"idle" | "loading" | "verifying" | "success" | "error">("idle");
   const [txSig, setTxSig] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // On mount: if user just logged in and there's a pending payment, auto-activate it
+  useEffect(() => {
+    if (!user) return;
+    const pending = localStorage.getItem(PENDING_PAYMENT_KEY);
+    if (!pending) return;
+    try {
+      const { txSignature, plan: pendingPlan, walletAddress } = JSON.parse(pending);
+      if (!txSignature || !pendingPlan) return;
+      localStorage.removeItem(PENDING_PAYMENT_KEY);
+      setTxSig(txSignature);
+      setStatus("verifying");
+      const token = localStorage.getItem("layer_token");
+      fetch(apiUrl("/api/payments/verify-plan"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ txSignature, plan: pendingPlan, walletAddress }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+            setStatus("success");
+          } else {
+            setErrorMsg(data.error || "Plan activation failed");
+            setStatus("error");
+          }
+        })
+        .catch(() => { setErrorMsg("Plan activation failed"); setStatus("error"); });
+    } catch {}
+  }, [user]);
 
   const handlePay = async () => {
     if (!publicKey || !amount) return;
     setStatus("loading");
     setErrorMsg("");
     try {
-      // Get a fresh blockhash with expiry info — needed for reliable confirmation
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-
-      const tx = new Transaction({
-        recentBlockhash: blockhash,
-        feePayer: publicKey,
-      }).add(
+      const tx = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
           toPubkey: new PublicKey(RECEIVER),
@@ -65,70 +94,93 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
       const sig = await sendTransaction(tx, connection, { skipPreflight: false });
       setTxSig(sig);
 
-      // Use blockhash-based confirmation — much more reliable than string commitment
-      const confirmation = await connection.confirmTransaction(
-        { signature: sig, blockhash, lastValidBlockHeight },
-        "confirmed"
-      );
-
-      if (confirmation.value.err) {
-        throw new Error("Transaction failed on-chain: " + JSON.stringify(confirmation.value.err));
+      // Poll for confirmation — resilient on Devnet
+      let confirmed = false;
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const sigStatus = await connection.getSignatureStatus(sig, { searchTransactionHistory: true });
+        const conf = sigStatus?.value?.confirmationStatus;
+        if (conf === "confirmed" || conf === "finalized") { confirmed = true; break; }
+        if (sigStatus?.value?.err) throw new Error("Transaction failed on-chain: " + JSON.stringify(sigStatus.value.err));
       }
+      if (!confirmed) throw new Error("Transaction not confirmed after 60s — check Solana Explorer.");
 
-      // Verify on-chain with backend and activate plan
       setStatus("verifying");
+
       const token = localStorage.getItem("layer_token");
+
       if (token) {
+        // ── Logged in: activate immediately ──────────────────────────────────
         const verifyRes = await fetch(apiUrl("/api/payments/verify-plan"), {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            txSignature: sig,
-            plan: planKey,
-            walletAddress: publicKey.toString(),
-          }),
+          body: JSON.stringify({ txSignature: sig, plan: planKey, walletAddress: publicKey.toString() }),
         });
-        if (!verifyRes.ok) {
-          const data = await verifyRes.json().catch(() => ({}));
-          throw new Error(data?.error || "Plan activation failed");
-        }
-        // Invalidate user cache so plan shows immediately in dashboard
+        const data = await verifyRes.json().catch(() => ({}));
+        if (!verifyRes.ok) throw new Error(data?.error || "Plan activation failed");
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      }
-
-      setStatus("success");
-    } catch (e: any) {
-      // If it's a timeout error, the tx may have still gone through — show the sig
-      const msg = e?.message || "Transaction failed";
-      const isTimeout = msg.includes("was not confirmed") || msg.includes("timed out") || msg.includes("30.00 seconds");
-      if (isTimeout && txSig) {
-        setErrorMsg(`Confirmation timed out. Check your transaction on Solana Explorer — it may have succeeded. If confirmed, contact support with your tx signature.`);
+        setStatus("success");
       } else {
-        setErrorMsg(msg);
+        // ── Not logged in: store payment and redirect to login/register ──────
+        localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({
+          txSignature: sig,
+          plan: planKey,
+          walletAddress: publicKey.toString(),
+        }));
+        setStatus("success");
+        // Show success briefly then redirect to register
       }
+    } catch (e: any) {
+      setErrorMsg(e.message || "Transaction failed");
       setStatus("error");
     }
   };
 
-  if (status === "success") return (
-    <div className="flex flex-col items-center gap-4 py-4 text-center">
-      <div className="w-14 h-14 rounded-full bg-[var(--green-1)] flex items-center justify-center">
-        <CheckCircle className="w-7 h-7 text-[var(--green-4)]" />
+  // ── Success state ──────────────────────────────────────────────────────────
+  if (status === "success") {
+    const isLoggedIn = !!localStorage.getItem("layer_token");
+    return (
+      <div className="flex flex-col items-center gap-4 py-4 text-center">
+        <div className="w-14 h-14 rounded-full bg-[var(--green-1)] flex items-center justify-center">
+          <CheckCircle className="w-7 h-7 text-[var(--green-4)]" />
+        </div>
+        <div>
+          <p className="text-lg font-bold text-foreground">Payment confirmed!</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoggedIn
+              ? `Your ${plan.name} plan is now active.`
+              : "Payment received! Create your account to activate your plan."}
+          </p>
+        </div>
+        {txSig && (
+          <a href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`} target="_blank" rel="noreferrer"
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+            <ExternalLink className="w-3.5 h-3.5" /> View on Solana Explorer
+          </a>
+        )}
+        {isLoggedIn ? (
+          <Link href="/dashboard/creator"
+            className="mt-2 px-6 py-2.5 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+            Go to Dashboard →
+          </Link>
+        ) : (
+          <div className="w-full space-y-2 mt-2">
+            <p className="text-xs text-muted-foreground">Your payment is saved. Create an account or log in to activate your plan.</p>
+            <Link href={`/register?plan=${planKey}`}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+              <UserPlus className="w-4 h-4" /> Create account & activate plan
+            </Link>
+            <Link href={`/login?plan=${planKey}`}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-full border border-border text-sm font-semibold hover:bg-muted transition-colors">
+              <LogIn className="w-4 h-4" /> Already have an account? Log in
+            </Link>
+          </div>
+        )}
       </div>
-      <div>
-        <p className="text-lg font-bold text-foreground">Payment confirmed!</p>
-        <p className="text-sm text-muted-foreground mt-1">Your {plan.name} plan is now active.</p>
-      </div>
-      <a href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 text-xs text-primary hover:underline">
-        <ExternalLink className="w-3.5 h-3.5" /> View on Solana Explorer
-      </a>
-      <Link href="/register" className="mt-2 px-6 py-2.5 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
-        Create your account →
-      </Link>
-    </div>
-  );
+    );
+  }
 
+  // ── No wallet connected ────────────────────────────────────────────────────
   if (!publicKey) return (
     <div className="flex flex-col items-center gap-3 py-2">
       <p className="text-sm text-muted-foreground text-center">Connect your Solana wallet to pay</p>
@@ -136,8 +188,23 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
     </div>
   );
 
+  // ── Payment form ───────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
+      {/* Auth status banner */}
+      {!user && (
+        <div className="flex items-center gap-2 p-3 rounded-[var(--radius-4)] bg-amber-50 border border-amber-200 text-xs text-amber-700">
+          <span>⚠️</span>
+          <span>You're not logged in. After paying, you'll be asked to create an account to activate your plan.</span>
+        </div>
+      )}
+      {user && (
+        <div className="flex items-center gap-2 p-3 rounded-[var(--radius-4)] bg-[var(--green-1)] border border-[var(--green-2)] text-xs text-[var(--green-4)]">
+          <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+          <span>Logged in as <strong>{user.name}</strong> — plan will activate immediately after payment.</span>
+        </div>
+      )}
+
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Your wallet</p>
@@ -151,15 +218,11 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
       </div>
       <div className="space-y-1">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount (SOL)</p>
-        <input
-          type="number" min="0" step="0.001" value={amount}
-          onChange={e => setAmount(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-[var(--radius-5)] border border-border text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-ring/20"
-        />
+        <p className="text-sm font-bold text-foreground px-4 py-2.5 rounded-[var(--radius-5)] border border-border bg-muted/30">{amount} SOL ≈ {plan.price}</p>
       </div>
       <button
         onClick={handlePay}
-        disabled={status === "loading" || status === "verifying" || !amount}
+        disabled={status === "loading" || status === "verifying"}
         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--radius-5)] bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status === "loading" ? (
@@ -170,7 +233,17 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
           `Pay ${amount} SOL`
         )}
       </button>
-      {status === "error" && <p className="text-xs text-[var(--red-4)] text-center">{errorMsg}</p>}
+      {status === "error" && (
+        <div className="space-y-1">
+          <p className="text-xs text-[var(--red-4)] text-center">{errorMsg}</p>
+          {txSig && (
+            <a href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`} target="_blank" rel="noreferrer"
+              className="flex items-center justify-center gap-1 text-xs text-primary hover:underline">
+              <ExternalLink className="w-3 h-3" /> Check tx on Explorer
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -181,17 +254,11 @@ export default function CheckoutPage() {
   const planKey = (params.get("plan") || "starter") as keyof typeof PLANS;
   const plan = PLANS[planKey] || PLANS.starter;
 
-  // Clear any stale wallet session from localStorage on mount
   useEffect(() => {
     localStorage.removeItem("walletName");
   }, []);
 
-  const network = WalletAdapterNetwork.Devnet;
-  // Use a faster public Devnet RPC — the default clusterApiUrl is rate-limited
-  const endpoint = useMemo(
-    () => process.env.VITE_SOLANA_RPC_URL || "https://api.devnet.solana.com",
-    []
-  );
+  const endpoint = useMemo(() => "https://api.devnet.solana.com", []);
   const wallets = useMemo(() => [
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter(),
@@ -204,7 +271,6 @@ export default function CheckoutPage() {
           <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
             style={{ background: "linear-gradient(160deg, #eeeaf8 0%, #e8e4f5 40%, #ddd8f0 100%)" }}>
 
-            {/* Logo + back */}
             <div className="w-full max-w-md mb-6 flex items-center justify-between">
               <Link href="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Back

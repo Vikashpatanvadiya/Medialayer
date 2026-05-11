@@ -20,13 +20,32 @@ export default function GoogleAuthSuccess() {
 
     localStorage.setItem("layer_token", token);
 
+    // Activate any pending Solana payment before redirecting
+    const PENDING_PAYMENT_KEY = "layer_pending_payment";
+    const pending = localStorage.getItem(PENDING_PAYMENT_KEY);
+
     // Fetch user and redirect
     fetch(apiUrl("/api/auth/me"), {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
-      .then(user => {
+      .then(async user => {
         queryClient.setQueryData(["/api/auth/me"], user);
+        // Activate pending payment if exists
+        if (pending) {
+          try {
+            const { txSignature, plan, walletAddress } = JSON.parse(pending);
+            if (txSignature && plan) {
+              localStorage.removeItem(PENDING_PAYMENT_KEY);
+              await fetch(apiUrl("/api/payments/verify-plan"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ txSignature, plan, walletAddress }),
+              });
+              queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+            }
+          } catch {}
+        }
         setLocation(user.role === "creator" ? "/dashboard/creator" : "/dashboard/editor");
       })
       .catch(() => setLocation("/login"));

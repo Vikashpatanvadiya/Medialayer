@@ -11,12 +11,36 @@ import {
   User
 } from '@workspace/api-client-react';
 import { toast } from '@/hooks/use-toast';
+import { apiUrl } from '@/lib/api';
+
+const PENDING_PAYMENT_KEY = "layer_pending_payment";
+
+async function activatePendingPayment(token: string, queryClient: ReturnType<typeof useQueryClient>) {
+  const pending = localStorage.getItem(PENDING_PAYMENT_KEY);
+  if (!pending) return;
+  try {
+    const { txSignature, plan, walletAddress } = JSON.parse(pending);
+    if (!txSignature || !plan) return;
+    localStorage.removeItem(PENDING_PAYMENT_KEY);
+    const res = await fetch(apiUrl("/api/payments/verify-plan"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ txSignature, plan, walletAddress }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast({ title: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan activated!`, description: "Your Solana payment has been verified." });
+    } else {
+      toast({ title: "Plan activation failed", description: data?.error || "Contact support with your tx signature.", variant: "destructive" });
+    }
+  } catch {}
+}
 
 export function useAuth() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   
-  // Rely on the hook for current user, but manually manage loading state until initial fetch
   const { data: user, isLoading: isUserLoading, error, refetch } = useGetCurrentUser({
     query: {
       retry: false,
@@ -26,10 +50,12 @@ export function useAuth() {
 
   const loginMutation = useLogin({
     mutation: {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         localStorage.setItem('layer_token', data.token);
         toast({ title: 'Welcome back!', description: 'Successfully logged in.' });
         queryClient.setQueryData(['/api/auth/me'], data.user);
+        // Activate any pending Solana payment
+        await activatePendingPayment(data.token, queryClient);
         setLocation(data.user.role === 'creator' ? '/dashboard/creator' : '/dashboard/editor');
       },
       onError: (err: any) => {
@@ -45,7 +71,6 @@ export function useAuth() {
   const registerMutation = useRegister({
     mutation: {
       onSuccess: (data: any) => {
-        // New flow: no token returned, just a message to check email
         toast({
           title: 'Check your email!',
           description: 'We sent a verification link to your email. Click it to activate your account.',
@@ -61,6 +86,7 @@ export function useAuth() {
       }
     }
   });
+
   const logoutMutation = useLogout({
     mutation: {
       onSettled: () => {

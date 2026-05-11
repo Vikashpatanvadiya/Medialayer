@@ -225,12 +225,7 @@ export default function VideoDetail() {
       }
       const { walletAddress: editorWallet } = await walletRes.json();
 
-      // Get fresh blockhash for reliable confirmation
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-      const tx = new Transaction({
-        recentBlockhash: blockhash,
-        feePayer: publicKey,
-      }).add(
+      const tx = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
           toPubkey: new PublicKey(editorWallet),
@@ -239,12 +234,16 @@ export default function VideoDetail() {
       );
       const sig = await sendTransaction(tx, connection, { skipPreflight: false });
 
-      // Blockhash-based confirmation — no 30s timeout issue
-      const confirmation = await connection.confirmTransaction(
-        { signature: sig, blockhash, lastValidBlockHeight },
-        "confirmed"
-      );
-      if (confirmation.value.err) throw new Error("Transaction failed on-chain");
+      // Poll for confirmation — resilient against blockhash expiry on Devnet
+      let confirmed = false;
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const sigStatus = await connection.getSignatureStatus(sig, { searchTransactionHistory: true });
+        const conf = sigStatus?.value?.confirmationStatus;
+        if (conf === "confirmed" || conf === "finalized") { confirmed = true; break; }
+        if (sigStatus?.value?.err) throw new Error("Transaction failed on-chain");
+      }
+      if (!confirmed) throw new Error("Transaction not confirmed after 60s");
 
       // Record on backend
       const recordRes = await fetch(apiUrl(`/api/payments/pay-editor/${video.id}`), {

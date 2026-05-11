@@ -9,6 +9,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@metaplex-foundation/mpl-core": "^1.10.0",
+    "@metaplex-foundation/umi": "^1.5.1",
+    "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
+    "@solana/web3.js": "^1.98.4",
     "@types/nodemailer": "^7.0.11",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
@@ -16,13 +20,13 @@
     "cloudinary": "^2.5.1",
     "compression": "^1.7.5",
     "cookie-parser": "^1.4.7",
-    "express-rate-limit": "^7.5.0",
-    "helmet": "^8.0.0",
     "cors": "^2",
     "dotenv": "^17.3.1",
     "drizzle-orm": "catalog:",
     "express": "^5",
+    "express-rate-limit": "^7.5.0",
     "googleapis": "^171.4.0",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.3"

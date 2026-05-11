@@ -6,6 +6,7 @@ import { CreateVideoBody, RejectVideoBody } from "@workspace/api-zod";
 import { logAction } from "../lib/logger.js";
 import { sendEmail, emailTemplates } from "../lib/mailer.js";
 import { deleteFromCloudinary } from "../lib/cloudinary.js";
+import { checkUploadLimit, PlanLimitError } from "../lib/planLimits.js";
 
 const router = Router();
 
@@ -32,6 +33,12 @@ function formatVideo(
     youtubeUrl: video.youtubeUrl ?? undefined,
     // hasFile: true if we have a storedFilename OR if videoUrl is a Cloudinary URL (legacy uploads)
     hasFile: !!video.storedFilename || video.videoUrl?.includes("cloudinary.com"),
+    // Solana editor payment
+    editorBountyLamports: video.editorBountyLamports ?? undefined,
+    editorPaymentTxSig: video.editorPaymentTxSig ?? undefined,
+    editorPaymentStatus: video.editorPaymentStatus ?? "none",
+    // NFT certificate
+    nftMintAddress: video.nftMintAddress ?? undefined,
     createdAt: video.createdAt,
     updatedAt: video.updatedAt,
     creator: creator
@@ -86,6 +93,17 @@ router.post("/", requireAuth, requireRole("editor"), async (req, res) => {
   if (links.length === 0) {
     res.status(403).json({ error: "You must link to a creator before submitting videos. Ask your creator for their invite code." });
     return;
+  }
+
+  // Check plan upload limit
+  try {
+    await checkUploadLimit(req.user!.userId);
+  } catch (err) {
+    if (err instanceof PlanLimitError) {
+      res.status(403).json({ error: err.message, code: "PLAN_LIMIT_EXCEEDED" });
+      return;
+    }
+    throw err;
   }
 
   const { title, description, tags, thumbnailUrl, fileSize, duration } = parsed.data;

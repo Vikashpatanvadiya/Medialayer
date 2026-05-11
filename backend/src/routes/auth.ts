@@ -20,6 +20,9 @@ function formatUser(user: typeof usersTable.$inferSelect) {
     name: user.name,
     role: user.role,
     inviteCode: user.inviteCode ?? undefined,
+    plan: user.plan ?? "free",
+    planActivatedAt: user.planActivatedAt ?? undefined,
+    solanaWalletAddress: user.solanaWalletAddress ?? undefined,
     createdAt: user.createdAt,
   };
 }

@@ -4,6 +4,9 @@ export interface User {
   name: string;
   role: "creator" | "editor";
   inviteCode?: string;
+  plan?: "free" | "starter" | "pro";
+  planActivatedAt?: string;
+  solanaWalletAddress?: string;
   createdAt: string;
 }
 
@@ -23,6 +26,12 @@ export interface Video {
   duration?: number;
   youtubeVideoId?: string;
   youtubeUrl?: string;
+  // Solana editor payment
+  editorBountyLamports?: number;
+  editorPaymentTxSig?: string;
+  editorPaymentStatus?: "none" | "pending" | "paid" | "failed";
+  // NFT certificate
+  nftMintAddress?: string;
   createdAt: string;
   updatedAt: string;
   creator?: Pick<User, "id" | "email" | "name" | "role" | "createdAt">;

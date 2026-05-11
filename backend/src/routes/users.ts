@@ -104,6 +104,60 @@ router.delete("/remove-editor/:editorId", requireAuth, requireRole("creator"), a
   res.json({ message: "Editor removed" });
 });
 
+// Save/update Solana wallet address for any user (editor or creator)
+router.post("/wallet", requireAuth, async (req, res) => {
+  const { walletAddress } = req.body as { walletAddress?: string };
+  if (!walletAddress?.trim()) {
+    res.status(400).json({ error: "walletAddress is required" });
+    return;
+  }
+
+  // Solana addresses are base58-encoded 32-byte public keys — 32 to 44 chars
+  const addr = walletAddress.trim();
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr)) {
+    res.status(400).json({ error: `Invalid Solana wallet address (got ${addr.length} chars)` });
+    return;
+  }
+
+  try {
+    await db
+      .update(usersTable)
+      .set({ solanaWalletAddress: addr })
+      .where(eq(usersTable.id, req.user!.userId));
+
+    res.json({ success: true, walletAddress: addr });
+  } catch (err: any) {
+    console.error("[wallet] DB update failed:", err?.message);
+    res.status(500).json({ error: "Database error: " + (err?.message || "unknown") });
+  }
+});
+
+// Get editor's wallet address (for creator-to-editor payments)
+router.get("/editor-wallet/:editorId", requireAuth, requireRole("creator"), async (req, res) => {
+  const { editorId } = req.params as { editorId: string };
+  const [editor] = await db
+    .select({ solanaWalletAddress: usersTable.solanaWalletAddress })
+    .from(usersTable)
+    .where(eq(usersTable.id, editorId))
+    .limit(1);
+
+  if (!editor?.solanaWalletAddress) {
+    res.status(404).json({ error: "Editor has not set up a Solana wallet address" });
+    return;
+  }
+
+  res.json({ walletAddress: editor.solanaWalletAddress });
+});
+
+// Remove Solana wallet address
+router.delete("/wallet", requireAuth, async (req, res) => {
+  await db
+    .update(usersTable)
+    .set({ solanaWalletAddress: null })
+    .where(eq(usersTable.id, req.user!.userId));
+  res.json({ success: true });
+});
+
 // Creator sends email invites to editors
 router.post("/invite", requireAuth, requireRole("creator"), async (req, res) => {
   const { emails, message } = req.body as { emails: string[]; message?: string };

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer, bigint } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 export const videosTable = pgTable("videos", {
@@ -17,6 +17,12 @@ export const videosTable = pgTable("videos", {
   duration: integer("duration"),
   youtubeVideoId: text("youtube_video_id"),
   youtubeUrl: text("youtube_url"),
+  // Solana editor payment fields
+  editorBountyLamports: bigint("editor_bounty_lamports", { mode: "number" }),
+  editorPaymentTxSig: text("editor_payment_tx_sig"),
+  editorPaymentStatus: text("editor_payment_status", { enum: ["none", "pending", "paid", "failed"] }).default("none"),
+  // NFT certificate
+  nftMintAddress: text("nft_mint_address"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

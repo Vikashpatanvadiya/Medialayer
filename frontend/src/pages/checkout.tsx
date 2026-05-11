@@ -11,7 +11,9 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { WalletModalProvider, WalletMultiButton, useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { useQueryClient } from "@tanstack/react-query";
 import "@solana/wallet-adapter-react-ui/styles.css";
+import { apiUrl } from "@/lib/api";
 
 const RECEIVER = "9oBgTB8ZQ5qkeEbUP65QWaVKG2BfcY8iUUcgPWAov5W";
 
@@ -32,11 +34,12 @@ function ChangeWalletButton() {
   );
 }
 
-function PaymentForm({ plan }: { plan: typeof PLANS[keyof typeof PLANS] }) {
+function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]; planKey: string }) {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
+  const queryClient = useQueryClient();
   const [amount, setAmount] = useState<string>(plan.sol);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "verifying" | "success" | "error">("idle");
   const [txSig, setTxSig] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -51,6 +54,28 @@ function PaymentForm({ plan }: { plan: typeof PLANS[keyof typeof PLANS] }) {
       const sig = await sendTransaction(tx, connection);
       await connection.confirmTransaction(sig, "confirmed");
       setTxSig(sig);
+
+      // Verify on-chain with backend and activate plan
+      setStatus("verifying");
+      const token = localStorage.getItem("layer_token");
+      if (token) {
+        const verifyRes = await fetch(apiUrl("/api/payments/verify-plan"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            txSignature: sig,
+            plan: planKey,
+            walletAddress: publicKey.toString(),
+          }),
+        });
+        if (!verifyRes.ok) {
+          const data = await verifyRes.json().catch(() => ({}));
+          throw new Error(data?.error || "Plan activation failed");
+        }
+        // Invalidate user cache so plan shows immediately in dashboard
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      }
+
       setStatus("success");
     } catch (e: any) {
       setErrorMsg(e.message || "Transaction failed");
@@ -107,10 +132,16 @@ function PaymentForm({ plan }: { plan: typeof PLANS[keyof typeof PLANS] }) {
       </div>
       <button
         onClick={handlePay}
-        disabled={status === "loading" || !amount}
+        disabled={status === "loading" || status === "verifying" || !amount}
         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--radius-5)] bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {status === "loading" ? <><Loader2 className="w-4 h-4 animate-spin" /> Confirming…</> : `Pay ${amount} SOL`}
+        {status === "loading" ? (
+          <><Loader2 className="w-4 h-4 animate-spin" /> Confirming on Solana…</>
+        ) : status === "verifying" ? (
+          <><Loader2 className="w-4 h-4 animate-spin" /> Activating plan…</>
+        ) : (
+          `Pay ${amount} SOL`
+        )}
       </button>
       {status === "error" && <p className="text-xs text-[var(--red-4)] text-center">{errorMsg}</p>}
     </div>
@@ -176,7 +207,7 @@ export default function CheckoutPage() {
               {/* Payment card */}
               <div className="bg-white rounded-[var(--radius-6)] p-6 border border-border shadow-[0px_4px_16px_rgba(0,0,0,0.06)]">
                 <h2 className="text-sm font-bold text-foreground mb-4">Pay with Solana</h2>
-                <PaymentForm plan={plan} />
+                <PaymentForm plan={plan} planKey={planKey} />
               </div>
 
               <p className="text-center text-xs text-muted-foreground/70">

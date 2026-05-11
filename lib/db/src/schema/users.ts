@@ -17,6 +17,12 @@ export const usersTable = pgTable("users", {
     expiry_date: number;
   } | null>().default(null),
   youtubeChannelName: text("youtube_channel_name"),
+  // Solana / subscription fields
+  plan: text("plan", { enum: ["free", "starter", "pro"] }).default("free").notNull(),
+  planActivatedAt: timestamp("plan_activated_at"),
+  planTxSignature: text("plan_tx_signature"),
+  planExpiresAt: timestamp("plan_expires_at"),
+  solanaWalletAddress: text("solana_wallet_address"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

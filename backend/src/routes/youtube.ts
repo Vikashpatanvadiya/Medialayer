@@ -184,6 +184,17 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
 
       fs.unlink(filePath, () => {});
       console.log("YT upload complete:", result.youtubeUrl);
+
+      // Trigger NFT certificate mint in background (fire-and-forget)
+      const backendUrl = process.env.BACKEND_URL || "http://localhost:3000";
+      // We call our own API endpoint internally using the creator's JWT
+      // Re-sign a short-lived token for the internal call
+      const { signToken } = await import("../lib/auth.js");
+      const internalToken = signToken({ userId: video.creatorId, email: "", role: "creator" });
+      fetch(`${backendUrl}/api/nft/mint-certificate/${videoId_}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${internalToken}`, "Content-Type": "application/json" },
+      }).catch((err) => console.error("[nft] Auto-mint trigger failed:", err?.message));
     } catch (err: any) {
       console.error("YT upload failed:", err?.message || err);
       await db.update(videosTable)

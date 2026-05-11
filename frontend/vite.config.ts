@@ -13,7 +13,11 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    nodePolyfills({ include: ["buffer", "crypto", "stream", "util", "process"] }),
+    nodePolyfills({
+      include: ["buffer", "crypto", "stream", "util", "process", "vm", "events", "path", "os"],
+      globals: { Buffer: true, global: true, process: true },
+      protocolImports: true,
+    }),
   ],
   resolve: {
     alias: {

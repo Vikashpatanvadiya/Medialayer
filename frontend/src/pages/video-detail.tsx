@@ -6,12 +6,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Check, X, Loader2, ExternalLink, Calendar,
   User as UserIcon, Tag, Youtube, CheckCircle2, AlertCircle,
-  RotateCcw, Trash2,
+  RotateCcw, Trash2, Wallet, Send,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { apiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -61,6 +64,12 @@ export default function VideoDetail() {
   const isCreator = user?.role === "creator";
   const { status: ytStatus, loading: ytLoading, refetch: refetchYt } = useYouTubeStatus(isCreator);
   const { data: video, isLoading, error } = useGetVideo(id, { query: { enabled: !!id && !!user } });
+
+  // Solana wallet for creator-to-editor payments
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction, connected: walletConnected } = useWallet();
+  const [payEditorAmount, setPayEditorAmount] = useState("0.1");
+  const [isPayingEditor, setIsPayingEditor] = useState(false);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -192,6 +201,67 @@ export default function VideoDetail() {
     } catch (err: any) {
       toast({ title: "Delete failed", description: err.message, variant: "destructive" });
     } finally { setIsDeleting(false); }
+  };
+
+  const payEditor = async () => {
+    if (!video || !publicKey) return;
+    const lamports = Math.round(parseFloat(payEditorAmount) * LAMPORTS_PER_SOL);
+    if (!lamports || lamports <= 0) {
+      toast({ title: "Invalid amount", description: "Enter a valid SOL amount.", variant: "destructive" });
+      return;
+    }
+
+    // Get editor's wallet address from backend
+    const token = localStorage.getItem("layer_token");
+    const videoRes = await fetch(apiUrl(`/api/videos/${video.id}`), { headers: { Authorization: `Bearer ${token}` } });
+    const videoData = await videoRes.json();
+    // We need the editor's solanaWalletAddress — fetch it via a separate call
+    const editorRes = await fetch(apiUrl("/api/users/my-editors"), { headers: { Authorization: `Bearer ${token}` } });
+    const editorData = await editorRes.json();
+    const editorInfo = editorData.editors?.find((e: any) => e.id === video.editorId);
+
+    // Fallback: try to get wallet from video detail endpoint (not exposed yet)
+    // We'll call the pay-editor route which will validate on-chain
+    setIsPayingEditor(true);
+    try {
+      // Build and send the Solana transaction
+      // We need the editor's wallet — fetch it from a dedicated endpoint
+      const walletRes = await fetch(apiUrl(`/api/users/editor-wallet/${video.editorId}`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!walletRes.ok) {
+        const d = await walletRes.json().catch(() => ({}));
+        throw new Error(d.error || "Editor has not set up a Solana wallet. Ask them to add it in their profile settings.");
+      }
+      const { walletAddress: editorWallet } = await walletRes.json();
+
+      const tx = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(editorWallet),
+          lamports,
+        })
+      );
+      const sig = await sendTransaction(tx, connection);
+      await connection.confirmTransaction(sig, "confirmed");
+
+      // Record on backend
+      const recordRes = await fetch(apiUrl(`/api/payments/pay-editor/${video.id}`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ txSignature: sig, bountyLamports: lamports }),
+      });
+      const recordData = await recordRes.json();
+      if (!recordRes.ok) throw new Error(recordData.error || "Failed to record payment");
+
+      queryClient.invalidateQueries({ queryKey: [`/api/videos/${id}`] });
+      toast({
+        title: `Sent ${payEditorAmount} SOL to editor!`,
+        description: `Tx: ${sig.slice(0, 8)}…`,
+      });
+    } catch (err: any) {
+      toast({ title: "Payment failed", description: err.message, variant: "destructive" });
+    } finally { setIsPayingEditor(false); }
   };
 
   // ── loading / error states ──────────────────────────────────────────────────
@@ -515,6 +585,88 @@ export default function VideoDetail() {
                   </button>
                 </>
               )}
+            </div>
+          )}
+
+          {/* Pay Editor card — creators only, on approved/uploaded videos */}
+          {isCreator && (video.status === "approved" || video.status === "uploaded") && (
+            <div className="bg-card border border-border rounded-[var(--radius-4)] p-5 shadow-[var(--shadow-2)] space-y-4">
+              <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2 pb-3 border-b border-border">
+                <Wallet className="w-4 h-4 text-primary" /> Pay Editor
+              </h3>
+
+              {video.editorPaymentStatus === "paid" && video.editorPaymentTxSig ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-[var(--green-4)] text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="font-semibold">
+                      Paid {video.editorBountyLamports ? `${(video.editorBountyLamports / 1_000_000_000).toFixed(4)} SOL` : ""}
+                    </span>
+                  </div>
+                  <a
+                    href={`https://explorer.solana.com/tx/${video.editorPaymentTxSig}?cluster=${import.meta.env.VITE_SOLANA_NETWORK || "devnet"}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> View on Solana Explorer
+                  </a>
+                </div>
+              ) : !publicKey ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Connect your Solana wallet to pay the editor directly on-chain.</p>
+                  <WalletMultiButton style={{ background: "#4f46e5", borderRadius: "8px", fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "13px", height: "36px", width: "100%" }} />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount (SOL)</p>
+                    <input
+                      type="number"
+                      min="0.001"
+                      step="0.001"
+                      value={payEditorAmount}
+                      onChange={(e) => setPayEditorAmount(e.target.value)}
+                      className="w-full px-3 py-2 rounded-[var(--radius-4)] border border-border text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-ring/20"
+                    />
+                  </div>
+                  <button
+                    onClick={payEditor}
+                    disabled={isPayingEditor || !payEditorAmount}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-[var(--radius-4)] bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-colors disabled:opacity-60"
+                  >
+                    {isPayingEditor ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
+                    ) : (
+                      <><Send className="w-4 h-4" /> Send {payEditorAmount} SOL</>
+                    )}
+                  </button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Payment goes directly to the editor's Solana wallet on-chain.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* NFT Certificate card — show when minted */}
+          {video.nftMintAddress && (
+            <div className="bg-card border border-border rounded-[var(--radius-4)] p-5 shadow-[var(--shadow-2)] space-y-3">
+              <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2 pb-3 border-b border-border">
+                🏆 Delivery Certificate
+              </h3>
+              <div className="flex items-center gap-2 text-[var(--green-4)] text-sm">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="font-semibold">NFT minted on Solana</span>
+              </div>
+              <a
+                href={`https://explorer.solana.com/address/${video.nftMintAddress}?cluster=${import.meta.env.VITE_SOLANA_NETWORK || "devnet"}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> View certificate on Explorer
+              </a>
             </div>
           )}
         </div>

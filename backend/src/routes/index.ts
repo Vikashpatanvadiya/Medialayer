@@ -10,6 +10,8 @@ import uploadRouter from "./upload.js";
 import logsRouter from "./logs.js";
 import streamRouter from "./stream.js";
 import feedbackRouter from "./feedback.js";
+import paymentsRouter from "./payments.js";
+import nftRouter from "./nft.js";
 
 const router: IRouter = Router();
 
@@ -24,5 +26,7 @@ router.use("/upload", uploadRouter);
 router.use("/logs", logsRouter);
 router.use("/stream", streamRouter);
 router.use(feedbackRouter);
+router.use("/payments", paymentsRouter);
+router.use("/nft", nftRouter);
 
 export default router;

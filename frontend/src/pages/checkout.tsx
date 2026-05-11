@@ -222,13 +222,20 @@ function PaymentForm({ plan, planKey }: { plan: typeof PLANS[keyof typeof PLANS]
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sending to</p>
         <p className="text-xs font-mono bg-muted/50 border border-border rounded-[var(--radius-4)] px-3 py-2 break-all text-foreground">{RECEIVER}</p>
       </div>
+      {/* Self-transfer warning */}
+      {publicKey && publicKey.toBase58() === RECEIVER && (
+        <div className="flex items-start gap-2 p-3 rounded-[var(--radius-4)] bg-[var(--red-1)] border border-[var(--red-2)] text-xs text-[var(--red-4)]">
+          <span>⚠️</span>
+          <span>Your connected wallet is the platform wallet. Please connect a <strong>different</strong> Phantom account to pay. Click "Change wallet" above.</span>
+        </div>
+      )}
       <div className="space-y-1">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount (SOL)</p>
         <p className="text-sm font-bold text-foreground px-4 py-2.5 rounded-[var(--radius-5)] border border-border bg-muted/30">{amount} SOL ≈ {plan.price}</p>
       </div>
       <button
         onClick={handlePay}
-        disabled={status === "loading" || status === "verifying"}
+        disabled={status === "loading" || status === "verifying" || (!!publicKey && publicKey.toBase58() === RECEIVER)}
         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--radius-5)] bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status === "loading" ? (

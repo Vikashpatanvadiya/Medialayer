@@ -1,4 +1,4 @@
-import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { Connection, clusterApiUrl } from "@solana/web3.js";
 
 export function getConnection(): Connection {
   const network = (process.env.SOLANA_NETWORK || "devnet") as "devnet" | "mainnet-beta" | "testnet";
@@ -45,9 +45,16 @@ export async function verifySOLTransfer(
 
     if (receiverIdx === -1) return { valid: false, error: "Wrong receiver — platform wallet not found in tx" };
 
-    const received =
-      (tx.meta.postBalances[receiverIdx] ?? 0) -
-      (tx.meta.preBalances[receiverIdx] ?? 0);
+    const preBalance = tx.meta!.preBalances[receiverIdx] ?? 0;
+    const postBalance = tx.meta!.postBalances[receiverIdx] ?? 0;
+    const received = postBalance - preBalance;
+
+    if (received <= 0) {
+      return {
+        valid: false,
+        error: `Receiver balance did not increase — wallet may be the sender, not the recipient`,
+      };
+    }
 
     if (received < expectedLamports) {
       return {
@@ -89,9 +96,16 @@ export async function verifyEditorPayment(
 
     if (receiverIdx === -1) return { valid: false, error: "Editor wallet not found in transaction" };
 
-    const received =
-      (tx.meta.postBalances[receiverIdx] ?? 0) -
-      (tx.meta.preBalances[receiverIdx] ?? 0);
+    const preBalance = tx.meta!.preBalances[receiverIdx] ?? 0;
+    const postBalance = tx.meta!.postBalances[receiverIdx] ?? 0;
+    const received = postBalance - preBalance;
+
+    if (received <= 0) {
+      return {
+        valid: false,
+        error: `Receiver balance did not increase — wallet may be the sender, not the recipient`,
+      };
+    }
 
     if (received < expectedLamports) {
       return {

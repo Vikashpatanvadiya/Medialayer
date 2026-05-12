@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { PublicKey } from "@solana/web3.js";
 
 const tabList = ["My account", "Integrations"];
 
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("My account");
   const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
+  const [walletInput, setWalletInput] = useState(user?.solanaWalletAddress || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingWallet, setIsSavingWallet] = useState(false);
 
@@ -53,6 +55,40 @@ export default function ProfilePage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || `Server error ${res.status}`);
       await refetchUser();
+      toast({ title: "Wallet saved", description: "Your Solana wallet address has been saved." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Could not save wallet address.", variant: "destructive" });
+    } finally {
+      setIsSavingWallet(false);
+    }
+  };
+
+  const handleSaveManualWallet = async () => {
+    const addr = walletInput.trim();
+    if (!addr) {
+      toast({ title: "Invalid wallet", description: "Enter a Solana wallet address.", variant: "destructive" });
+      return;
+    }
+    try {
+      // Validate base58 and 32-byte key.
+      new PublicKey(addr);
+    } catch {
+      toast({ title: "Invalid wallet", description: "Please enter a valid Solana wallet address.", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingWallet(true);
+    try {
+      const token = localStorage.getItem("layer_token");
+      const res = await fetch(apiUrl("/api/users/wallet"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ walletAddress: addr }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `Server error ${res.status}`);
+      await refetchUser();
+      setWalletInput(addr);
       toast({ title: "Wallet saved", description: "Your Solana wallet address has been saved." });
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Could not save wallet address.", variant: "destructive" });
@@ -245,44 +281,56 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {user?.solanaWalletAddress ? (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium">Saved address</p>
-                <p className="text-xs font-mono bg-muted/50 border border-border rounded-[var(--radius-4)] px-3 py-2 break-all text-foreground">
-                  {user.solanaWalletAddress}
-                </p>
-                <div className="flex items-center gap-2">
-                  {connected && publicKey && publicKey.toString() !== user.solanaWalletAddress && (
-                    <Button size="sm" onClick={handleSaveWallet} disabled={isSavingWallet}>
-                      {isSavingWallet ? <Loader2 className="w-3 h-3 animate-spin" /> : "Update to connected wallet"}
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={handleRemoveWallet}
-                    className="border-[var(--red-2)] text-[var(--red-4)] hover:bg-[var(--red-1)]">
-                    Remove
-                  </Button>
+            <div className="space-y-3">
+              {user?.solanaWalletAddress && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium">Saved address</p>
+                  <p className="text-xs font-mono bg-muted/50 border border-border rounded-[var(--radius-4)] px-3 py-2 break-all text-foreground">
+                    {user.solanaWalletAddress}
+                  </p>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
+              )}
+
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground font-medium">Connect wallet (optional)</p>
                 {!connected ? (
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs text-muted-foreground">Connect your Phantom or Solflare wallet to save your address.</p>
+                    <p className="text-xs text-muted-foreground">Connect Phantom or Solflare, then save the connected address.</p>
                     <WalletMultiButton style={{ background: "#4f46e5", borderRadius: "8px", fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "13px", height: "36px" }} />
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground font-medium">Connected wallet</p>
                     <p className="text-xs font-mono bg-muted/50 border border-border rounded-[var(--radius-4)] px-3 py-2 break-all text-foreground">
                       {publicKey?.toString()}
                     </p>
                     <Button size="sm" onClick={handleSaveWallet} disabled={isSavingWallet}>
-                      {isSavingWallet ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save this wallet address"}
+                      {isSavingWallet ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save connected wallet"}
                     </Button>
                   </div>
                 )}
               </div>
-            )}
+
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground font-medium">Or enter wallet manually</p>
+                <Input
+                  value={walletInput}
+                  onChange={(e) => setWalletInput(e.target.value)}
+                  placeholder="Paste Solana wallet address"
+                  className="font-mono text-xs"
+                />
+                <div className="flex items-center gap-2">
+                  <Button size="sm" onClick={handleSaveManualWallet} disabled={isSavingWallet || !walletInput.trim()}>
+                    {isSavingWallet ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save entered wallet"}
+                  </Button>
+                  {user?.solanaWalletAddress && (
+                    <Button variant="outline" size="sm" onClick={handleRemoveWallet}
+                      className="border-[var(--red-2)] text-[var(--red-4)] hover:bg-[var(--red-1)]">
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

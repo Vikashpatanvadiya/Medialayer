@@ -70,6 +70,8 @@ export default function VideoDetail() {
   const { publicKey, sendTransaction, connected: walletConnected } = useWallet();
   const [payEditorAmount, setPayEditorAmount] = useState("0.1");
   const [isPayingEditor, setIsPayingEditor] = useState(false);
+  const [isMintingNft, setIsMintingNft] = useState(false);
+  const [nftError, setNftError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -262,6 +264,71 @@ export default function VideoDetail() {
     } catch (err: any) {
       toast({ title: "Payment failed", description: err.message, variant: "destructive" });
     } finally { setIsPayingEditor(false); }
+  };
+
+  const mintCertificate = async () => {
+    if (!video || !isCreator) return;
+    setNftError(null);
+    setIsMintingNft(true);
+    let pollingStarted = false;
+    try {
+      const token = localStorage.getItem("layer_token");
+      const res = await fetch(apiUrl(`/api/nft/mint-certificate/${video.id}`), {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data?.error || `Mint failed (${res.status})`;
+        setNftError(msg);
+        toast({ title: "NFT mint failed", description: msg, variant: "destructive" });
+        return;
+      }
+
+      toast({
+        title: data?.alreadyMinted ? "Certificate already minted" : "Mint started",
+        description: data?.alreadyMinted
+          ? "The delivery certificate already exists."
+          : "Minting in background. This can take a few seconds.",
+      });
+
+      // Poll video details for up to 60s so user gets immediate feedback in UI.
+      const startedAt = Date.now();
+      pollingStarted = true;
+      const poll = setInterval(async () => {
+        try {
+          const token2 = localStorage.getItem("layer_token");
+          const r = await fetch(apiUrl(`/api/videos/${video.id}`), {
+            headers: { Authorization: `Bearer ${token2}` },
+          });
+          if (!r.ok) return;
+          const updated = await r.json();
+          if (updated.nftMintAddress) {
+            clearInterval(poll);
+            queryClient.setQueryData([`/api/videos/${id}`], updated);
+            queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+            toast({ title: "NFT certificate minted", description: "Certificate is now available on Solana Explorer." });
+            setIsMintingNft(false);
+            return;
+          }
+          if (Date.now() - startedAt > 60_000) {
+            clearInterval(poll);
+            setNftError("Mint is still processing. If it does not appear soon, open backend logs for mint failure details.");
+            setIsMintingNft(false);
+          }
+        } catch {
+          // Keep polling on transient client errors.
+        }
+      }, 3000);
+      return;
+    } catch (err: any) {
+      const msg = err?.message || "Could not start minting";
+      setNftError(msg);
+      toast({ title: "NFT mint failed", description: msg, variant: "destructive" });
+    } finally {
+      // Keep loading state while polling is active.
+      if (!pollingStarted) setIsMintingNft(false);
+    }
   };
 
   // ── loading / error states ──────────────────────────────────────────────────
@@ -649,24 +716,45 @@ export default function VideoDetail() {
             </div>
           )}
 
-          {/* NFT Certificate card — show when minted */}
-          {video.nftMintAddress && (
+          {/* NFT Certificate card — creators can mint/retry and see errors */}
+          {isCreator && video.status === "uploaded" && (
             <div className="bg-card border border-border rounded-[var(--radius-4)] p-5 shadow-[var(--shadow-2)] space-y-3">
               <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2 pb-3 border-b border-border">
                 🏆 Delivery Certificate
               </h3>
-              <div className="flex items-center gap-2 text-[var(--green-4)] text-sm">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="font-semibold">NFT minted on Solana</span>
-              </div>
-              <a
-                href={`https://explorer.solana.com/address/${video.nftMintAddress}?cluster=${import.meta.env.VITE_SOLANA_NETWORK || "devnet"}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 text-xs text-primary hover:underline"
-              >
-                <ExternalLink className="w-3.5 h-3.5" /> View certificate on Explorer
-              </a>
+
+              {video.nftMintAddress ? (
+                <>
+                  <div className="flex items-center gap-2 text-[var(--green-4)] text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="font-semibold">NFT minted on Solana</span>
+                  </div>
+                  <a
+                    href={`https://explorer.solana.com/address/${video.nftMintAddress}?cluster=${import.meta.env.VITE_SOLANA_NETWORK || "devnet"}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> View certificate on Explorer
+                  </a>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Mint an on-chain proof-of-delivery NFT after YouTube upload.
+                  </p>
+                  <Button onClick={mintCertificate} disabled={isMintingNft}>
+                    {isMintingNft ? <><Loader2 className="w-4 h-4 animate-spin" /> Minting…</> : "Mint NFT Certificate"}
+                  </Button>
+                </>
+              )}
+
+              {nftError && (
+                <div className="flex items-start gap-2 text-[var(--red-4)] text-xs bg-[var(--red-1)] border border-[var(--red-2)] rounded-[var(--radius-4)] p-2.5">
+                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>{nftError}</span>
+                </div>
+              )}
             </div>
           )}
         </div>

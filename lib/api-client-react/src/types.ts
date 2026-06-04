@@ -30,8 +30,6 @@ export interface Video {
   editorBountyLamports?: number;
   editorPaymentTxSig?: string;
   editorPaymentStatus?: "none" | "pending" | "paid" | "failed";
-  // NFT certificate
-  nftMintAddress?: string;
   createdAt: string;
   updatedAt: string;
   creator?: Pick<User, "id" | "email" | "name" | "role" | "createdAt">;

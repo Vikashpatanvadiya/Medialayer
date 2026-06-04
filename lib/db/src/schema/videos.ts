@@ -21,8 +21,6 @@ export const videosTable = pgTable("videos", {
   editorBountyLamports: bigint("editor_bounty_lamports", { mode: "number" }),
   editorPaymentTxSig: text("editor_payment_tx_sig"),
   editorPaymentStatus: text("editor_payment_status", { enum: ["none", "pending", "paid", "failed"] }).default("none"),
-  // NFT certificate
-  nftMintAddress: text("nft_mint_address"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

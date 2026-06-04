@@ -37,8 +37,6 @@ function formatVideo(
     editorBountyLamports: video.editorBountyLamports ?? undefined,
     editorPaymentTxSig: video.editorPaymentTxSig ?? undefined,
     editorPaymentStatus: video.editorPaymentStatus ?? "none",
-    // NFT certificate
-    nftMintAddress: video.nftMintAddress ?? undefined,
     createdAt: video.createdAt,
     updatedAt: video.updatedAt,
     creator: creator

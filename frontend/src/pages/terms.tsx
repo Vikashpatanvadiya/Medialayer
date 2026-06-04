@@ -129,7 +129,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">13. Contact</h2>
             <p>For questions about these Terms:</p>
-            <p className="mt-2 font-medium text-foreground">patanvadiyabansi6@gmail.com</p>
+            <p className="mt-2 font-medium text-foreground">medialayer.app@gmail.com</p>
           </section>
 
         </div>

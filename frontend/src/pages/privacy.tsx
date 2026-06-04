@@ -141,7 +141,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">11. Contact Us</h2>
             <p>If you have any questions about this Privacy Policy, please contact us at:</p>
-            <p className="mt-2 font-medium text-foreground">patanvadiyabansi6@gmail.com</p>
+            <p className="mt-2 font-medium text-foreground">medialayer.app@gmail.com</p>
           </section>
 
         </div>

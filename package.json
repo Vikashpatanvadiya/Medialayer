@@ -2,6 +2,10 @@
   "name": "medialayer",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "agentation:server": "npx -y agentation-mcp server",
+    "agentation:doctor": "npx agentation-mcp doctor"
+  },
   "devDependencies": {
     "agentation": "^3.0.2"
   },

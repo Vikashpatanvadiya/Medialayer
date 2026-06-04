@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -35,6 +35,12 @@ import CheckoutPage from "@/pages/checkout";
 
 // Initialize the global fetch interceptor once
 setupFetchInterceptor();
+
+const AgentationDev = import.meta.env.DEV
+  ? lazy(() =>
+      import("./components/AgentationDev").then((m) => ({ default: m.AgentationDev }))
+    )
+  : null;
 
 const queryClient = new QueryClient();
 
@@ -168,6 +174,11 @@ function App() {
                 <Router />
               </WouterRouter>
               <Toaster />
+              {AgentationDev && (
+                <Suspense fallback={null}>
+                  <AgentationDev />
+                </Suspense>
+              )}
             </TooltipProvider>
           </QueryClientProvider>
         </WalletModalProvider>

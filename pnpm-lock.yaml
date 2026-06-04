@@ -323,6 +323,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../lib/api-client-react
+      agentation:
+        specifier: ^3.0.2
+        version: 3.0.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1

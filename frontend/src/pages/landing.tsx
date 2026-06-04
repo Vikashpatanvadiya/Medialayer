@@ -1,9 +1,10 @@
 import { Link } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion, useInView, useScroll, useTransform, useSpring } from "framer-motion";
-import { Upload, Eye, CheckCircle, Youtube, Shield, Users, ArrowRight, ChevronDown, Check, Menu, X } from "lucide-react";
+import { Upload, Eye, CheckCircle, Youtube, ArrowRight, ChevronDown, Check, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { FeatureBento } from "@/components/landing/FeatureBento";
 
 const P = "var(--purple-4)";
 const P1 = "var(--purple-1)";
@@ -250,73 +251,6 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-// ── Comparison table icon ─────────────────────────────────────────────────────
-function CellIcon({ v }: { v: string }) {
-  if (v === "yes") return (
-    <svg className="w-5 h-5 mx-auto" viewBox="0 0 20 20" fill="none">
-      <circle cx="10" cy="10" r="9" stroke="var(--purple-3)" strokeWidth="1.5" />
-      <path d="M6.5 10l2.5 2.5 4.5-4.5" stroke="var(--purple-4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-  if (v === "partial") return (
-    <svg className="w-5 h-5 mx-auto" viewBox="0 0 20 20" fill="none">
-      <circle cx="10" cy="10" r="9" stroke="var(--amber-3)" strokeWidth="1.5" />
-      <path d="M7 10h6" stroke="var(--amber-4)" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-  return (
-    <svg className="w-4 h-4 mx-auto" viewBox="0 0 16 16" fill="none">
-      <path d="M4 4l8 8M12 4l-8 8" stroke="var(--gray-3)" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-// ── Feature data ──────────────────────────────────────────────────────────────
-const FEATURES = [
-  {
-    num: "01",
-    icon: <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1" className="w-8 h-8"><path d="M16 4v16M10 14l6 6 6-6M6 24h20" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    title: "Secure upload.",
-    desc: "Your editor uploads directly — no file sharing needed.",
-    bullets: ["No Google Drive or WeTransfer", "Up to 2GB per video", "Private Cloudinary storage"],
-  },
-  {
-    num: "02",
-    icon: <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1" className="w-8 h-8"><circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="4"/><path d="M6 16h4M22 16h4" strokeLinecap="round"/></svg>,
-    title: "In-browser review.",
-    desc: "Watch videos securely without downloading anything.",
-    bullets: ["Signed URLs — no public links", "1-hour expiry for security", "No downloads ever needed"],
-  },
-  {
-    num: "03",
-    icon: <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1" className="w-8 h-8"><path d="M6 16l7 7 13-13" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    title: "Approval flow.",
-    desc: "One-click approve or reject with feedback. Editor notified instantly.",
-    bullets: ["Full submission history", "Rejection feedback loop", "Instant editor notifications"],
-  },
-  {
-    num: "04",
-    icon: <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1" className="w-8 h-8"><rect x="4" y="8" width="24" height="16" rx="2"/><path d="M13 12l8 4-8 4V12z" strokeLinejoin="round"/></svg>,
-    title: "YouTube publishing.",
-    desc: "Push approved videos directly to your channel. No re-uploading.",
-    bullets: ["Direct YouTube OAuth", "No re-uploading ever", "Per-video publish tracking"],
-  },
-  {
-    num: "05",
-    icon: <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1" className="w-8 h-8"><path d="M16 4l3 9h9l-7 5 3 9-8-6-8 6 3-9-7-5h9z" strokeLinejoin="round"/></svg>,
-    title: "Privacy-first.",
-    desc: "No shared passwords. OAuth-based login. AES-256 encrypted tokens. Signed URLs that expire in 1 hour.",
-    bullets: [],
-  },
-  {
-    num: "06",
-    icon: <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1" className="w-8 h-8"><circle cx="12" cy="10" r="4"/><circle cx="22" cy="14" r="3"/><path d="M4 26c0-4 3.6-7 8-7s8 3 8 7M20 20c2.2.7 4 2.8 4 5" strokeLinecap="round"/></svg>,
-    title: "Role-based access.",
-    desc: "Separate dashboards for creators and editors. Connect via invite code.",
-    bullets: [],
-  },
-];
-
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const heroRef = useRef(null);
@@ -335,14 +269,6 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased" style={{ fontSize: "16px" }}>
       <CursorFollower />
-
-      {/* ── Column cage ── */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-40 flex justify-center">
-        <div className="w-full max-w-[1100px] mx-auto relative">
-          <span className="absolute inset-y-0 left-0 w-px" style={{ background: "rgba(0,0,0,0.10)" }} />
-          <span className="absolute inset-y-0 right-0 w-px" style={{ background: "rgba(0,0,0,0.10)" }} />
-        </div>
-      </div>
 
       {/* ── NAV ── */}
       <header className="fixed top-4 inset-x-0 z-50 px-4 flex justify-center">
@@ -527,63 +453,40 @@ export default function LandingPage() {
 
       {/* ── TICKER ── */}
       <Ticker />
-      <hr style={{ border: "none", borderTop: "1px solid var(--gray-2)", margin: 0 }} />
 
       {/* ── FEATURES ── */}
-      <section id="features" className="py-24 px-6" style={{ background: "#f7f7f7" }}>
+      <section id="features" className="py-24 px-6 sm:px-8" style={{ background: "#fafafa" }}>
         <div className="max-w-[1100px] mx-auto">
-
-          <FadeUp>
-            <div className="text-center mb-4">
-              <h2 className="block leading-[1.1]" style={{ fontSize: "52px", fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, letterSpacing: "-0.02em", color: "#111" }}>
-                Everything you need
-              </h2>
-              <h2 className="block leading-[1.1]" style={{ fontSize: "52px", fontWeight: 700, letterSpacing: "-0.03em", color: "#111" }}>
-                to manage your workflow
-              </h2>
-            </div>
-          </FadeUp>
-          <FadeUp delay={0.08}>
-            <p className="text-center mx-auto mb-12" style={{ fontSize: "16px", color: "#666", maxWidth: "480px", lineHeight: 1.6 }}>
-              From secure uploads to direct YouTube publishing — MediaLayer handles the entire creator-editor pipeline.
-            </p>
-          </FadeUp>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-            {[
-              { img: "/features/feature_1_card.png", title: "Secure upload", desc: "Your editor uploads directly — no Google Drive or WeTransfer. Up to 2GB, stored privately." },
-              { img: "/features/feature_2_card.png", title: "In-browser review", desc: "Watch videos securely without downloading. Signed URLs expire in 1 hour — no public links." },
-              { img: "/features/feature_3_card.png", title: "Approval flow", desc: "One-click approve or reject with feedback. Editor notified instantly. Full submission history." },
-              { img: "/features/feature_4_card.png", title: "YouTube publishing", desc: "Push approved videos directly to your channel via OAuth. No re-uploading, ever." },
-              { img: "/features/feature_5_card.png", title: "Role-based access", desc: "Separate dashboards for creators and editors. Connect via invite code." },
-              { img: null, title: "Privacy-first security", desc: "No shared passwords. AES-256 encrypted tokens. Signed URLs. Helmet security headers on every response." },
-            ].map((f, i) => (
-              <FadeUp key={i} delay={i * 0.05}>
-                <motion.div
-                  whileHover={{ y: -4 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="relative flex flex-col"
-                  style={{ background: "#ebebeb", borderRadius: "16px", boxShadow: "0 1px 2px rgba(0,0,0,0.06)", padding: "28px", minHeight: "320px" }}
-                >
-                  <div className="flex items-center justify-center mb-5" style={{ height: "180px" }}>
-                    {f.img ? (
-                      <img src={f.img} alt={f.title} style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }} />
-                    ) : (
-                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "rgba(145,141,246,0.12)" }}>
-                        <Shield className="w-8 h-8" style={{ color: P }} />
-                      </div>
-                    )}
-                  </div>
-                  <p style={{ fontWeight: 700, fontSize: "16px", color: "#111", marginBottom: "6px" }}>{f.title}</p>
-                  <p style={{ fontSize: "14px", color: "#555", lineHeight: 1.6 }}>{f.desc}</p>
-                  <span className="absolute" style={{ bottom: "24px", right: "24px", color: "#999", fontSize: "14px" }}>→</span>
-                </motion.div>
-              </FadeUp>
-            ))}
+          <p
+            className="text-center mb-3 uppercase tracking-[0.2em]"
+            style={{ fontSize: "11px", fontWeight: 600, color: "#999" }}
+          >
+            Features
+          </p>
+          <div className="text-center mb-4">
+            <h2
+              className="block leading-[1.1]"
+              style={{ fontSize: "clamp(36px, 4vw, 52px)", fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, letterSpacing: "-0.02em", color: "#111" }}
+            >
+              Everything you need
+            </h2>
+            <h2
+              className="block leading-[1.1]"
+              style={{ fontSize: "clamp(36px, 4vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", color: "#111" }}
+            >
+              to manage your workflow
+            </h2>
           </div>
+          <p
+            className="text-center mx-auto mb-12 sm:mb-14"
+            style={{ fontSize: "16px", color: "#666", maxWidth: "520px", lineHeight: 1.6 }}
+          >
+            From secure uploads to direct YouTube publishing — MediaLayer handles the entire creator–editor pipeline.
+          </p>
+
+          <FeatureBento />
         </div>
       </section>
-      <hr style={{ border: "none", borderTop: "1px solid var(--gray-2)", margin: 0 }} />
 
       {/* ── HOW IT WORKS ── */}
       <section id="how-it-works" className="py-32 px-16 bg-background">
@@ -628,85 +531,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-      <hr style={{ border: "none", borderTop: "1px solid var(--gray-2)", margin: 0 }} />
-
-      {/* ── COMPARISON ── */}
-      <section id="comparison" className="py-32 px-6 bg-background">
-        <div className="max-w-[1100px] mx-auto">
-          <FadeUp delay={0.05}><H2>How MediaLayer compares</H2></FadeUp>
-          <FadeUp delay={0.1}><Sub>See how MediaLayer stacks up against the most popular video collaboration tools on the market.</Sub></FadeUp>
-
-          <FadeUp delay={0.15}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
-              <thead>
-                <tr>
-                  <th className="text-left pb-4 font-normal w-[30%]" />
-                  <th className="pb-0 px-0 text-center w-[14%] align-bottom">
-                    <div className="flex flex-col items-center gap-2 pt-4 pb-3 rounded-t-[20px]"
-                      style={{ border: "1.5px solid var(--purple-3)", borderBottom: "none", background: "var(--purple-1)" }}>
-                      <div className="w-10 h-10 rounded-full bg-[#111] flex items-center justify-center">
-                        <img src="/favicon.svg" alt="MediaLayer" className="w-5 h-5 brightness-0 invert" />
-                      </div>
-                      <span className="text-xs font-medium" style={{ color: "var(--fg-3)" }}>MediaLayer</span>
-                    </div>
-                  </th>
-                  {[
-                    { label: "Frame.io",       logo: "https://www.frame.io/favicon.ico" },
-                    { label: "Dropbox Replay", logo: "https://www.dropbox.com/static/images/favicon.ico" },
-                    { label: "Google Drive",   logo: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
-                  ].map(col => (
-                    <th key={col.label} className="pb-4 px-2 text-center w-[14%]">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-border shadow-sm overflow-hidden">
-                          <img src={col.logo} alt={col.label} className="w-6 h-6 object-contain" />
-                        </div>
-                        <span className="text-[11px] font-medium leading-tight text-center" style={{ color: "var(--fg-3)" }}>{col.label}</span>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {([
-                  ["GDPR compliant",             "yes", "yes",     "yes",     "yes"],
-                  ["No file size limits",        "yes", "yes",     "yes",     "partial"],
-                  ["Secure video review",        "yes", "yes",     "yes",     "partial"],
-                  ["One-click YouTube publish",  "yes", "no",      "no",      "no"],
-                  ["Role-based access",          "yes", "yes",     "yes",     "yes"],
-                  ["Feedback & approval flow",   "yes", "yes",     "yes",     "partial"],
-                  ["No shared passwords",        "yes", "yes",     "yes",     "yes"],
-                  ["Audit trail",                "yes", "yes",     "yes",     "yes"],
-                  ["Direct YouTube publishing",  "yes", "no",      "no",      "no"],
-                ] as [string,string,string,string,string][]).map(([label, ml, frameio, dropbox, drive], i, arr) => (
-                  <tr key={label}>
-                    <td className="py-4 pr-4 text-foreground" style={{ borderTop: "1px solid var(--gray-2)", fontSize: "14px" }}>{label}</td>
-                    <td className="py-4 px-0 text-center" style={{
-                      background: "var(--purple-1)",
-                      borderLeft: "1.5px solid var(--purple-3)",
-                      borderRight: "1.5px solid var(--purple-3)",
-                      borderTop: i === 0 ? "none" : "1px solid var(--purple-2)",
-                      ...(i === arr.length - 1 ? { borderBottom: "1.5px solid var(--purple-3)", borderBottomLeftRadius: "20px", borderBottomRightRadius: "20px" } : {}),
-                    }}>
-                      <CellIcon v={ml} />
-                    </td>
-                    {[frameio, dropbox, drive].map((v, j) => (
-                      <td key={j} className="py-4 px-2 text-center" style={{ borderTop: "1px solid var(--gray-2)" }}>
-                        <CellIcon v={v} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          </FadeUp>
-        </div>
-      </section>
-      <hr style={{ border: "none", borderTop: "1px solid var(--gray-2)", margin: 0 }} />
 
       {/* ── PRICING ── */}
-      <section id="pricing" className="py-32 px-6" style={{ background: "var(--bg-1)" }}>
+      <section id="pricing" className="py-32 px-6 sm:px-8" style={{ background: "#fafafa" }}>
         <div className="max-w-[1100px] mx-auto">
           <FadeUp delay={0.05}><H2>Simplified pricing</H2></FadeUp>
           <FadeUp delay={0.1}><Sub>No confusing tiers. Pay once and get lifetime access — everything included.</Sub></FadeUp>
@@ -768,7 +595,6 @@ export default function LandingPage() {
           <p className="text-center text-xs text-muted-foreground mt-6">No subscriptions · No hidden fees · Pay once, own it forever</p>
         </div>
       </section>
-      <hr style={{ border: "none", borderTop: "1px solid var(--gray-2)", margin: 0 }} />
 
       {/* ── FAQ ── */}
       <section id="faq" className="py-32 px-6">
@@ -782,7 +608,6 @@ export default function LandingPage() {
           </FadeUp>
         </div>
       </section>
-      <hr style={{ border: "none", borderTop: "1px solid var(--gray-2)", margin: 0 }} />
 
       {/* ── FINAL CTA ── */}
       <section className="py-32 px-6" style={{ background: "linear-gradient(160deg, #ede9fe 0%, #ddd6fe 60%, #c4b5fd 100%)" }}>
@@ -823,54 +648,117 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-[#0e0e0e] text-white relative overflow-hidden">
+      <footer className="relative overflow-hidden bg-[#0e0e0e] text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(145,141,246,0.12) 0%, transparent 70%)",
+          }}
+        />
 
-        <div className="max-w-[1100px] mx-auto px-6 pt-14 pb-10 relative">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 pb-12">
-            <div>
-              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Product</p>
+        <div className="relative mx-auto max-w-[1100px] px-6 pb-10 pt-16 sm:px-8">
+          <div className="grid grid-cols-1 gap-12 pb-12 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-5">
+              <Link href="/" className="mb-5 inline-flex items-center gap-3 transition-opacity hover:opacity-90">
+                <img
+                  src="/logomark-medialayer-02.svg"
+                  alt=""
+                  className="h-10 w-10 shrink-0"
+                />
+                <span className="text-lg font-semibold tracking-tight text-white">
+                  MediaLayer
+                </span>
+              </Link>
+              <p className="mb-6 max-w-sm text-sm leading-relaxed text-white/50">
+                Video collaboration for creators and editors — upload, review, approve, and publish to YouTube without the chaos.
+              </p>
+              <div className="space-y-3">
+                <a
+                  href="mailto:medialayer.app@gmail.com"
+                  className="block text-sm text-white/60 transition-colors hover:text-white"
+                >
+                  medialayer.app@gmail.com
+                </a>
+                <a
+                  href="https://x.com/MediaLayer67324"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
+                >
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xs font-bold">
+                    𝕏
+                  </span>
+                  @MediaLayer67324
+                </a>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 lg:col-start-7">
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Product</p>
               <ul className="space-y-3 text-sm text-white/50">
-                <li><Link href="/login" className="hover:text-white transition-colors">Login</Link></li>
-                <li><Link href="/register" className="hover:text-white transition-colors">Register</Link></li>
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><Link href="/login" className="transition-colors hover:text-white">Login</Link></li>
+                <li><Link href="/register" className="transition-colors hover:text-white">Register</Link></li>
+                <li><a href="#features" className="transition-colors hover:text-white">Features</a></li>
+                <li><a href="#pricing" className="transition-colors hover:text-white">Pricing</a></li>
+                <li><a href="#faq" className="transition-colors hover:text-white">FAQ</a></li>
               </ul>
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Features</p>
+
+            <div className="lg:col-span-2">
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Platform</p>
               <ul className="space-y-3 text-sm text-white/50">
-                <li><span>Secure Upload</span></li>
-                <li><span>Video Review</span></li>
-                <li><span>YouTube Publish</span></li>
-                <li><span>Audit Trail</span></li>
+                <li><span>Secure upload</span></li>
+                <li><span>In-browser review</span></li>
+                <li><span>YouTube publishing</span></li>
+                <li><span>Role-based access</span></li>
               </ul>
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Comparison</p>
+
+            <div className="lg:col-span-3">
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Legal</p>
               <ul className="space-y-3 text-sm text-white/50">
-                <li><span>vs Google Drive</span></li>
-                <li><span>vs WeTransfer</span></li>
-                <li><span>vs Email</span></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Company</p>
-              <ul className="space-y-3 text-sm text-white/50">
-                <li><a href="mailto:hello@medialayer.app" className="hover:text-white transition-colors">Contact</a></li>
-                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link></li>
-                <li><Link href="/terms" className="hover:text-white transition-colors">Terms</Link></li>
+                <li><Link href="/privacy" className="transition-colors hover:text-white">Privacy policy</Link></li>
+                <li><Link href="/terms" className="transition-colors hover:text-white">Terms of service</Link></li>
+                <li>
+                  <a
+                    href="mailto:medialayer.app@gmail.com"
+                    className="transition-colors hover:text-white"
+                  >
+                    Support
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
 
-          <div className="h-px mb-8" style={{ background: "rgba(255,255,255,0.08)" }} />
+          <div className="mb-8 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="font-normal text-sm" style={{ fontFamily: SERIF, fontStyle: "italic" }}>MediaLayer</span>
-              <span className="text-white/30 text-sm">© 2026</span>
-            </div>
-            <p className="text-xs text-white/30">Built for creators who value their time.</p>
+          <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
+            <p className="text-sm text-white/35">
+              © {new Date().getFullYear()} MediaLayer. All rights reserved.
+            </p>
+            <p className="text-xs text-white/40">
+              Made by{" "}
+              <a
+                href="https://x.com/VPatanvadi89747"
+                target="_blank"
+                rel="noreferrer"
+                className="text-white/55 transition-colors hover:text-white"
+              >
+                @VPatanvadi89747
+              </a>
+              {" & "}
+              <a
+                href="https://x.com/npatanvadiya0"
+                target="_blank"
+                rel="noreferrer"
+                className="text-white/55 transition-colors hover:text-white"
+              >
+                @npatanvadiya0
+              </a>
+            </p>
           </div>
         </div>
       </footer>

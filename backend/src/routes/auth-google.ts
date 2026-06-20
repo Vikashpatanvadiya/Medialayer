@@ -59,10 +59,11 @@ const googleCallback: RequestHandler = async (req, res) => {
     const [existing] = await db.select().from(usersTable)
       .where(eq(usersTable.email, googleUser.email)).limit(1);
 
+    const validRole = (role === "creator" || role === "editor") ? role : "editor";
     let user = existing;
 
     if (!user) {
-      const validRole = (role === "creator" || role === "editor") ? role : "editor";
+      // New user — create with the requested role
       const [created] = await db.insert(usersTable).values({
         email: googleUser.email,
         name: googleUser.name || googleUser.email.split("@")[0],
@@ -73,9 +74,24 @@ const googleCallback: RequestHandler = async (req, res) => {
         verificationToken: null,
       }).returning();
       user = created;
-    } else if (!user.emailVerified) {
-      await db.update(usersTable).set({ emailVerified: true }).where(eq(usersTable.id, user.id));
-      user = { ...user, emailVerified: true };
+    } else {
+      // Existing user — if they explicitly chose a different role (e.g. upgrading
+      // from editor to creator via the "Join as Creator" button), update it.
+      // This handles the case where someone signed up as editor first and later
+      // wants a creator account.
+      const updates: Record<string, any> = {};
+      if (!user.emailVerified) updates.emailVerified = true;
+      if (user.role !== validRole) {
+        updates.role = validRole;
+        // Ensure creators always have an invite code
+        if (validRole === "creator" && !user.inviteCode) {
+          updates.inviteCode = generateInviteCode();
+        }
+      }
+      if (Object.keys(updates).length > 0) {
+        await db.update(usersTable).set(updates).where(eq(usersTable.id, user.id));
+        user = { ...user, ...updates };
+      }
     }
 
     const token = signToken({ userId: user.id, email: user.email, role: user.role as "creator" | "editor" });

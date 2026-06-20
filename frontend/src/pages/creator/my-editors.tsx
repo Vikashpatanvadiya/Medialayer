@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Users, Video, CheckCircle2, Clock, Upload, UserMinus } from "lucide-react";
+import { Loader2, Users, Video, CheckCircle2, Clock, Upload, UserMinus, UserPlus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { apiUrl } from "@/lib/api";
+import { InviteModal } from "@/components/ui/invite-modal";
 
 interface EditorStats {
   id: string;
@@ -24,13 +25,16 @@ export default function MyEditors() {
   const [editors, setEditors] = useState<EditorStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
 
   const removeEditor = async (editorId: string, editorName: string) => {
     if (!confirm(`Remove ${editorName} from your workspace?`)) return;
     setRemoving(editorId);
     try {
+      const token = localStorage.getItem("layer_token");
       const res = await fetch(apiUrl(`/api/users/remove-editor/${editorId}`), {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to remove editor");
@@ -80,10 +84,17 @@ export default function MyEditors() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-foreground">My Editors</h1>
-        <p className="text-muted-foreground mt-1">All editors who have submitted videos to you.</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-foreground">My Editors</h1>
+          <p className="text-muted-foreground mt-1">All editors who have submitted videos to you.</p>
+        </div>
+        <Button onClick={() => setShowInvite(true)} className="shrink-0 flex items-center gap-2">
+          <UserPlus className="w-4 h-4" /> Invite Editor
+        </Button>
       </div>
+
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
 
       {editors.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto">

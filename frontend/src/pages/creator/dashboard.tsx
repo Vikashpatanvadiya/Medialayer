@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useListVideos } from "@workspace/api-client-react";
 import { VideoCard } from "@/components/ui/video-card";
-import { Loader2, Video as VideoIcon, Clock, CheckCircle2, Upload, XCircle, Trash2, AlertTriangle } from "lucide-react";
+import { Loader2, Video as VideoIcon, Clock, CheckCircle2, Upload, XCircle, Trash2, AlertTriangle, UserPlus } from "lucide-react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { apiUrl } from "@/lib/api";
 import { ResponsiveContainer, LineChart, Line, Tooltip } from "recharts";
+import { InviteModal } from "@/components/ui/invite-modal";
 
 export default function CreatorDashboard() {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export default function CreatorDashboard() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("layer_token");
@@ -80,10 +82,10 @@ export default function CreatorDashboard() {
 
   return (
     <div className="space-y-12">
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
 
       {/* Welcome — brief: ~28px bold #333 heading */}
-      <div>
-        <h1 className="text-[28px] font-bold text-foreground leading-tight">
+      <div>        <h1 className="text-[28px] font-bold text-foreground leading-tight">
           Welcome back, {user?.name?.split(" ")[0]} 👋
         </h1>
         <p className="text-muted-foreground mt-1 text-base">Here's what's happening with your videos today.</p>
@@ -208,9 +210,17 @@ export default function CreatorDashboard() {
                   </span>
                 )}
               </h2>
-              <Link href="/dashboard/creator/videos">
-                <span className="text-sm text-primary hover:underline cursor-pointer font-medium">View all →</span>
-              </Link>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowInvite(true)}
+                  className="flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
+                >
+                  <UserPlus className="w-4 h-4" /> Invite Editor
+                </button>
+                <Link href="/dashboard/creator/videos">
+                  <span className="text-sm text-primary hover:underline cursor-pointer font-medium">View all →</span>
+                </Link>
+              </div>
             </div>
 
             {pending.length === 0 ? (

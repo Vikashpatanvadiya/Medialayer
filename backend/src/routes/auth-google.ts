@@ -35,7 +35,7 @@ const googleAuth: RequestHandler = (req, res) => {
 
 // Step 2: Google callback
 const googleCallback: RequestHandler = async (req, res) => {
-  const { code, state: role } = req.query as { code: string; state: string };
+  const { code, state } = req.query as { code: string; state: string };
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
   if (!code) {
@@ -59,32 +59,42 @@ const googleCallback: RequestHandler = async (req, res) => {
     const [existing] = await db.select().from(usersTable)
       .where(eq(usersTable.email, googleUser.email)).limit(1);
 
-    const validRole = (role === "creator" || role === "editor") ? role : "editor";
+    // "login" state means the user is signing in — never touch their role.
+    // "creator" / "editor" state means sign-up intent — apply the role only for new users
+    // or when the user explicitly chose a role on the register page.
+    const isLoginFlow = state === "login";
+    const requestedRole = (state === "creator" || state === "editor") ? state : "editor";
+
     let user = existing;
 
     if (!user) {
+      if (isLoginFlow) {
+        // No account found — redirect back to login with a helpful error
+        res.redirect(`${frontendUrl}/login?error=no_account`);
+        return;
+      }
       // New user — create with the requested role
       const [created] = await db.insert(usersTable).values({
         email: googleUser.email,
         name: googleUser.name || googleUser.email.split("@")[0],
         passwordHash: "google-oauth",
-        role: validRole,
-        inviteCode: validRole === "creator" ? generateInviteCode() : null,
+        role: requestedRole,
+        inviteCode: requestedRole === "creator" ? generateInviteCode() : null,
         emailVerified: true,
         verificationToken: null,
       }).returning();
       user = created;
     } else {
-      // Existing user — if they explicitly chose a different role (e.g. upgrading
-      // from editor to creator via the "Join as Creator" button), update it.
-      // This handles the case where someone signed up as editor first and later
-      // wants a creator account.
+      // Existing user signing in or re-authenticating via Google.
+      // Only update emailVerified if needed — NEVER change role during login.
+      // Role changes are only allowed on the register page (non-login flow) when
+      // the user explicitly picks a different role.
       const updates: Record<string, any> = {};
       if (!user.emailVerified) updates.emailVerified = true;
-      if (user.role !== validRole) {
-        updates.role = validRole;
-        // Ensure creators always have an invite code
-        if (validRole === "creator" && !user.inviteCode) {
+      if (!isLoginFlow && user.role !== requestedRole) {
+        // Sign-up flow with a different role — honour it (e.g. editor upgrading to creator)
+        updates.role = requestedRole;
+        if (requestedRole === "creator" && !user.inviteCode) {
           updates.inviteCode = generateInviteCode();
         }
       }

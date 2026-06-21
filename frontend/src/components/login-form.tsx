@@ -37,6 +37,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   const verifiedEmail = params.get("email") || "";
   const redirect = params.get("redirect") || "";
   const fromPricing = redirect.includes("/checkout");
+  const googleError = params.get("error");
 
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -94,6 +95,16 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
             </div>
           )}
 
+          {googleError === "no_account" && (
+            <div className="flex items-start gap-2 rounded-[var(--radius-4)] border p-3 text-sm"
+              style={{ background: "var(--amber-1)", borderColor: "var(--amber-2)", color: "var(--amber-4)" }}>
+              <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>No account found for that Google address.{" "}
+                <Link href="/register" className="font-semibold underline">Sign up</Link> first.
+              </span>
+            </div>
+          )}
+
           {fromPricing && !justVerified && (
             <div className="flex items-start gap-2 rounded-[var(--radius-4)] border p-3 text-sm"
               style={{ background: "var(--purple-1)", borderColor: "var(--purple-2)", color: "var(--purple-4)" }}>
@@ -136,15 +147,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
           <FieldSeparator>Or</FieldSeparator>
 
-          <Field className="grid gap-3 sm:grid-cols-2">
-            <Button variant="outline" type="button" asChild>
-              <a href={apiUrl("/api/auth/google?role=editor")}>
+          <Field>
+            <Button variant="outline" type="button" className="w-full" asChild>
+              <a href={apiUrl("/api/auth/google?role=login")}>
                 <GoogleIcon /> Continue with Google
-              </a>
-            </Button>
-            <Button variant="outline" type="button" asChild>
-              <a href={apiUrl("/api/auth/google?role=creator")}>
-                <GoogleIcon /> Sign in as Creator
               </a>
             </Button>
           </Field>

@@ -63,7 +63,18 @@ export default function VideoDetail() {
 
   const isCreator = user?.role === "creator";
   const { status: ytStatus, loading: ytLoading, refetch: refetchYt } = useYouTubeStatus(isCreator);
-  const { data: video, isLoading, error } = useGetVideo(id, { query: { enabled: !!id && !!user } });
+  const { data: video, isLoading, error } = useGetVideo(id, {
+    query: {
+      enabled: !!id && !!user,
+      refetchInterval: (query) => {
+        const v = query.state.data;
+        if (v?.status === "approved" && !v?.approvalTxSig && v?.approvalReceiptStatus !== "failed") {
+          return 3000;
+        }
+        return false;
+      },
+    },
+  });
 
   // Solana wallet for creator-to-editor payments
   const { connection } = useConnection();
@@ -291,6 +302,7 @@ export default function VideoDetail() {
   })();
 
   const backPath = `/dashboard/${user?.role}`;
+  const solanaCluster = import.meta.env.VITE_SOLANA_CLUSTER || import.meta.env.VITE_SOLANA_NETWORK || "devnet";
 
   // ── render ──────────────────────────────────────────────────────────────────
 
@@ -347,6 +359,35 @@ export default function VideoDetail() {
           </Button>
         </div>
       </div>
+
+      {/* Solana approval receipt */}
+      {video.status === "approved" && (
+        <div className="flex items-center gap-2 text-sm text-[var(--green-4)]">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          {video.approvalTxSig ? (
+            <span>
+              Approved — recorded on Solana{" "}
+              <a
+                href={`https://explorer.solana.com/tx/${video.approvalTxSig}?cluster=${solanaCluster}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-primary hover:underline inline-flex items-center gap-1"
+              >
+                View transaction <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </span>
+          ) : video.approvalReceiptStatus === "failed" ? (
+            <span className="text-muted-foreground">
+              Approved — on-chain receipt pending (will retry on next approval)
+            </span>
+          ) : (
+            <span className="text-muted-foreground inline-flex items-center gap-1.5">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Approved — recording on Solana…
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

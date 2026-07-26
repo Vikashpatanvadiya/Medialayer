@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, videosTable, usersTable, notificationsTable, editorCreatorsTable } from "@workspace/db";
+import { db, videosTable, usersTable, notificationsTable, editorCreatorsTable, approvalReceiptsTable } from "@workspace/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { requireAuth, requireRole } from "../lib/auth.js";
 import { CreateVideoBody, RejectVideoBody } from "@workspace/api-zod";
@@ -7,6 +7,7 @@ import { logAction } from "../lib/logger.js";
 import { sendEmail, emailTemplates } from "../lib/mailer.js";
 import { deleteFromCloudinary } from "../lib/cloudinary.js";
 import { checkUploadLimit, PlanLimitError } from "../lib/planLimits.js";
+import { getLatestApprovalReceipt, recordApprovalReceipt } from "../lib/recordApprovalReceipt.js";
 
 const router = Router();
 
@@ -14,6 +15,7 @@ function formatVideo(
   video: typeof videosTable.$inferSelect,
   creator?: typeof usersTable.$inferSelect,
   editor?: typeof usersTable.$inferSelect,
+  receipt?: typeof approvalReceiptsTable.$inferSelect | null,
 ) {
   return {
     id: video.id,
@@ -37,6 +39,10 @@ function formatVideo(
     editorBountyLamports: video.editorBountyLamports ?? undefined,
     editorPaymentTxSig: video.editorPaymentTxSig ?? undefined,
     editorPaymentStatus: video.editorPaymentStatus ?? "none",
+    // Solana approval receipt (SPL Memo)
+    approvalTxSig: receipt?.txSignature ?? undefined,
+    approvalVideoHash: receipt?.videoHash && receipt.videoHash !== "pending" ? receipt.videoHash : undefined,
+    approvalReceiptStatus: receipt?.status ?? undefined,
     createdAt: video.createdAt,
     updatedAt: video.updatedAt,
     creator: creator
@@ -173,8 +179,11 @@ router.get("/:id", requireAuth, async (req, res) => {
 
   const [creator] = await db.select().from(usersTable).where(eq(usersTable.id, video.creatorId)).limit(1);
   const [editor] = await db.select().from(usersTable).where(eq(usersTable.id, video.editorId)).limit(1);
+  const receipt = video.status === "approved" || video.status === "uploaded"
+    ? await getLatestApprovalReceipt(video.id)
+    : null;
 
-  res.json(formatVideo(video, creator, editor));
+  res.json(formatVideo(video, creator, editor, receipt));
 });
 
 router.post("/:id/approve", requireAuth, requireRole("creator"), async (req, res) => {
@@ -210,6 +219,13 @@ router.post("/:id/approve", requireAuth, requireRole("creator"), async (req, res
   }
 
   res.json(formatVideo(updated, creator, editor));
+
+  // Record immutable approval receipt on Solana (non-blocking side effect)
+  void recordApprovalReceipt({
+    videoId: video.id,
+    projectId: video.creatorId,
+    approverId: req.user!.userId,
+  });
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {

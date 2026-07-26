@@ -30,6 +30,10 @@ export interface Video {
   editorBountyLamports?: number;
   editorPaymentTxSig?: string;
   editorPaymentStatus?: "none" | "pending" | "paid" | "failed";
+  // Solana approval receipt (SPL Memo)
+  approvalTxSig?: string;
+  approvalVideoHash?: string;
+  approvalReceiptStatus?: "pending" | "confirmed" | "failed";
   createdAt: string;
   updatedAt: string;
   creator?: Pick<User, "id" | "email" | "name" | "role" | "createdAt">;

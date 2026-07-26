@@ -260,6 +260,7 @@ export default function LandingPage() {
 
   const navItems: Array<{ label: string; href: string; route?: boolean; external?: boolean }> = [
     { label: "Features", href: "#features" },
+    { label: "Demo",     href: "#demo" },
     { label: "Pricing",  href: "#pricing" },
     { label: "FAQ",      href: "#faq" },
     { label: "Blog",     href: "https://www.notion.so/MediaLayer-Documentation-3332bb9b545a80d8a9dbeff488a8bf79?source=copy_link", external: true },
@@ -532,8 +533,90 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── PRODUCT DEMO ── */}
+      <section id="demo" className="py-16 px-6 sm:px-8" style={{ background: "#fafafa" }}>
+        <div className="max-w-[1100px] mx-auto">
+          <FadeUp delay={0.05}>
+            <p
+              className="text-center mb-3 uppercase tracking-[0.2em]"
+              style={{ fontSize: "11px", fontWeight: 600, color: "#999" }}
+            >
+              Product Demo
+            </p>
+          </FadeUp>
+          <FadeUp delay={0.1}>
+            <div className="text-center mb-4">
+              <h2
+                className="block leading-[1.1]"
+                style={{ fontSize: "clamp(36px, 4vw, 52px)", fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, letterSpacing: "-0.02em", color: "#111" }}
+              >
+                See it in action
+              </h2>
+            </div>
+          </FadeUp>
+          <FadeUp delay={0.15}>
+            <p
+              className="text-center mx-auto mb-12"
+              style={{ fontSize: "16px", color: "#666", maxWidth: "520px", lineHeight: 1.6 }}
+            >
+              Watch how MediaLayer makes video collaboration effortless — from upload to YouTube in a few clicks.
+            </p>
+          </FadeUp>
+
+          <FadeUp delay={0.2}>
+            <div
+              className="relative mx-auto rounded-2xl overflow-hidden border border-border"
+              style={{
+                maxWidth: "900px",
+                boxShadow: "0 24px 80px rgba(0,0,0,0.12), 0 8px 24px rgba(145,141,246,0.12)",
+              }}
+            >
+              {/* Browser chrome */}
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-[#f5f5f5]">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+                  <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+                  <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+                </div>
+                <div className="flex-1 flex justify-center">
+                  <div className="rounded-full px-4 py-1 text-xs bg-white border border-border text-muted-foreground min-w-[240px] text-center">
+                    medialayer.app
+                  </div>
+                </div>
+              </div>
+
+              {/* Video */}
+              <video
+                src="/Demo.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full block bg-black"
+                style={{ aspectRatio: "16/9" }}
+                aria-label="MediaLayer product demo video"
+              />
+            </div>
+          </FadeUp>
+
+          <FadeUp delay={0.25}>
+            <div className="flex justify-center mt-8">
+              <Link href="/register">
+                <motion.button
+                  whileHover={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.15), 0 8px 24px rgba(0,0,0,0.3)" }}
+                  transition={{ duration: 0.2 }}
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full text-white text-sm font-semibold"
+                  style={{ background: "#111" }}
+                >
+                  Try it yourself <ArrowRight className="w-4 h-4" />
+                </motion.button>
+              </Link>
+            </div>
+          </FadeUp>
+        </div>
+      </section>
+
       {/* ── PRICING ── */}
-      <section id="pricing" className="py-32 px-6 sm:px-8" style={{ background: "#fafafa" }}>
+      <section id="pricing" className="py-32 px-6 sm:px-8 bg-background">
         <div className="max-w-[1100px] mx-auto">
           <FadeUp delay={0.05}><H2>Simplified pricing</H2></FadeUp>
           <FadeUp delay={0.1}><Sub>No confusing tiers. Pay once and get lifetime access — everything included.</Sub></FadeUp>
@@ -597,7 +680,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section id="faq" className="py-32 px-6">
+      <section id="faq" className="py-32 px-6" style={{ background: "#fafafa" }}>
         <div className="max-w-[1100px] mx-auto">
           <FadeUp delay={0.05}><H2>Frequently asked questions</H2></FadeUp>
           <FadeUp delay={0.1}><Sub>Quick answers to common questions about pricing, privacy, setup, and more.</Sub></FadeUp>

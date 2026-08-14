@@ -28,6 +28,10 @@ coverage
 backend/uploads/*
 !backend/uploads/.gitkeep
 
+# large demo video — serve from Cloudinary instead
+frontend/public/Demo.mp4
+Demo.mp4
+
 # local tooling
 .cache/
 .local/

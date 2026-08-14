@@ -3,6 +3,7 @@ import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PwaManager } from "@/components/pwa/pwa-manager";
 import { setupFetchInterceptor } from "./lib/fetch-interceptor";
 import { useAuth } from "./hooks/use-auth";
 import { Loader2 } from "lucide-react";
@@ -174,6 +175,7 @@ function App() {
                 <Router />
               </WouterRouter>
               <Toaster />
+              <PwaManager />
               {AgentationDev && (
                 <Suspense fallback={null}>
                   <AgentationDev />

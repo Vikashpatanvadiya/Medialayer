@@ -5,6 +5,7 @@ import { Upload, Eye, CheckCircle, Youtube, ArrowRight, ChevronDown, Check, Menu
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { FeatureBento } from "@/components/landing/FeatureBento";
+import { InstallButton } from "@/components/pwa/install-button";
 
 const P = "var(--purple-4)";
 const P1 = "var(--purple-1)";
@@ -301,6 +302,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-1 ml-1">
             <div className="hidden sm:flex items-center gap-1">
+              <InstallButton className="h-9 whitespace-nowrap rounded-full px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" />
               <Link href="/login" className="contents">
                 <Button variant="ghost" size="sm" className="rounded-full">Login</Button>
               </Link>
@@ -343,6 +345,7 @@ export default function LandingPage() {
                       <Link href="/login" className="contents">
                         <Button variant="outline">Login</Button>
                       </Link>
+                      <InstallButton className="h-9 justify-center rounded-md border border-border text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" />
                     </div>
                   </div>
                 </SheetContent>
@@ -372,7 +375,7 @@ export default function LandingPage() {
               <div className="mb-6">
                 <RevealLine delay={0.05}>
                   <h1
-                    className="text-[56px] md:text-[72px] lg:text-[80px] font-bold leading-[1.02] text-foreground"
+                    className="text-[40px] sm:text-[56px] md:text-[72px] lg:text-[80px] font-bold leading-[1.02] text-foreground"
                     style={{ letterSpacing: "-0.03em" }}
                   >
                     The layer that makes
@@ -380,7 +383,7 @@ export default function LandingPage() {
                 </RevealLine>
                 <RevealLine delay={0.13}>
                   <h1
-                    className="text-[56px] md:text-[72px] lg:text-[80px] font-bold leading-[1.02]"
+                    className="text-[40px] sm:text-[56px] md:text-[72px] lg:text-[80px] font-bold leading-[1.02]"
                     style={{ letterSpacing: "-0.03em", color: P }}
                   >
                     media move.

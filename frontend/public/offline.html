@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Offline — MediaLayer</title>
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      :root {
+        --fg: #181925;
+        --muted: #666;
+        --border: #e0e0e0;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: #fff;
+        color: var(--fg);
+        font-family: 'Inter Variable', Inter, system-ui, -apple-system, sans-serif;
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+        -webkit-font-smoothing: antialiased;
+      }
+      main { max-width: 340px; text-align: center; }
+      .mark {
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 28px;
+        display: grid;
+        place-items: center;
+        background: #111;
+        border-radius: 12px;
+      }
+      .mark svg { width: 22px; height: auto; display: block; }
+      h1 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin: 0 0 10px;
+      }
+      p {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--muted);
+        margin: 0 0 28px;
+      }
+      button {
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: #111;
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 28px;
+        cursor: pointer;
+        transition: opacity 0.2s cubic-bezier(0, 0, 0.2, 1);
+      }
+      button:hover { opacity: 0.85; }
+      .status {
+        margin-top: 22px;
+        font-size: 12px;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: #ff2f00;
+      }
+      body[data-online="true"] .dot { background: #33c758; }
+      @media (prefers-color-scheme: dark) {
+        :root { --fg: #f0f0f0; --muted: #999; --border: #2a2a2a; }
+        body { background: #0d0d0d; }
+        .mark { background: #fff; }
+        .mark svg path { fill: #111 !important; }
+        button { background: #fff; color: #111; }
+      }
+    </style>
+  </head>
+  <body data-online="false">
+    <main>
+      <div class="mark">
+        <svg viewBox="0 0 99 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M0 0H84.4861V15.3439H0V0Z" fill="#fff" />
+          <path d="M69.1422 79.4536V0.000427246L84.4861 0L84.4861 79.4536H69.1422Z" fill="#fff" />
+          <path d="M87.7656 79.4531L69.1422 79.4536L69.1422 64.1092H98.9436L87.7656 79.4531Z" fill="#fff" />
+          <path d="M53.2581 79.4536H35.4255V64.1096H63.9616L53.2581 79.4536Z" fill="#fff" />
+          <path d="M0 33.5363V79.4544H15.3439V15.3452L0 33.5363Z" fill="#fff" />
+          <path d="M35.4253 52.9371L35.4255 79.4536L50.7692 79.4531V34.9072L35.4253 52.9371Z" fill="#fff" />
+          <path d="M18.6234 79.4536L0 79.4544L2.78891e-05 64.1096H29.8015L18.6234 79.4536Z" fill="#fff" />
+        </svg>
+      </div>
+      <h1>You're offline</h1>
+      <p>MediaLayer needs a connection to load your videos and reviews. We'll pick up right where you left off.</p>
+      <button type="button" onclick="location.reload()">Try again</button>
+      <div class="status"><span class="dot"></span><span id="status-text">No connection</span></div>
+    </main>
+    <script>
+      function sync() {
+        var online = navigator.onLine;
+        document.body.dataset.online = String(online);
+        document.getElementById('status-text').textContent = online
+          ? 'Back online — reloading…'
+          : 'No connection';
+        if (online) setTimeout(function () { location.reload(); }, 600);
+      }
+      window.addEventListener('online', sync);
+      window.addEventListener('offline', sync);
+      sync();
+    </script>
+  </body>
+</html>

@@ -37,7 +37,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
       <SidebarInset className="rounded-[var(--radius-4)]">
         {/* Top bar */}
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
+        <header className="flex h-14 box-content shrink-0 items-center gap-2 border-b border-border bg-background px-4 pwa-safe-top">
           <SidebarTrigger className="-ml-1 size-4" />
 
           {/* Search */}
@@ -151,7 +151,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page content */}
-        <div className="flex flex-1 flex-col gap-4 p-6 sm:p-8 overflow-auto">
+        <div className="flex flex-1 flex-col gap-4 p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(2rem+env(safe-area-inset-bottom))] overflow-auto">
           <div className="max-w-7xl mx-auto w-full">
             {children}
           </div>

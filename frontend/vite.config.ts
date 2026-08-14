@@ -43,5 +43,12 @@ export default defineConfig({
   preview: {
     port,
     host: "0.0.0.0",
+    // Same proxy as dev, so a production build can be run against a local API.
+    proxy: {
+      "/api": {
+        target: `http://localhost:${process.env.API_PORT ?? "3000"}`,
+        changeOrigin: true,
+      },
+    },
   },
 });

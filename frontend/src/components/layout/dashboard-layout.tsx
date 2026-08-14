@@ -6,6 +6,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { MobileAppLayout } from "@/components/layout/mobile-app-layout";
+import { useMobileApp } from "@/hooks/use-mobile-app";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "wouter";
@@ -13,6 +15,7 @@ import { Link } from "wouter";
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const mobileApp = useMobileApp();
 
   const { data: notifData, refetch: refetchNotifs } = useListNotifications({
     query: { refetchInterval: 30000, enabled: !!user },
@@ -26,6 +29,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   const notifications = notifData?.notifications || [];
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  if (mobileApp) {
+    return <MobileAppLayout unreadCount={unreadCount}>{children}</MobileAppLayout>;
+  }
 
   return (
     <SidebarProvider>

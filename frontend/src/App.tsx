@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo } from "react";
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Redirect, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,6 +33,10 @@ import NotificationsPage from "./pages/notifications";
 import DesignSystemPage from "./pages/design-system";
 import GoogleAuthSuccess from "@/pages/auth-google-success";
 import CheckoutPage from "@/pages/checkout";
+import MobileOnboarding, { hasOnboarded } from "@/pages/mobile/onboarding";
+import { AppSplash } from "@/components/layout/app-splash";
+import { useMobileApp } from "@/hooks/use-mobile-app";
+import { usePwa } from "@/components/pwa/use-pwa";
 
 // Initialize the global fetch interceptor once
 setupFetchInterceptor();
@@ -68,6 +72,34 @@ function ProtectedRoute({ component: Component, allowedRole, children }: { compo
   );
 }
 
+/**
+ * What "/" means depends on how MediaLayer was opened. On a phone, or in the
+ * installed app, it behaves like an app — first run shows onboarding, later runs
+ * go straight to sign-in. Desktop browsers (and crawlers) get the marketing site.
+ */
+function RootEntry() {
+  const { user, isLoading } = useAuth();
+  const mobileApp = useMobileApp();
+  const { isStandalone } = usePwa();
+  const appMode = mobileApp || isStandalone;
+
+  const dashboard = (
+    <ProtectedRoute>
+      {user?.role === "creator" ? <CreatorDashboard /> : <EditorDashboard />}
+    </ProtectedRoute>
+  );
+
+  if (!appMode) {
+    return !isLoading && user ? dashboard : <LandingPage />;
+  }
+
+  if (isLoading) return <AppSplash />;
+  if (user) return dashboard;
+
+  // Onboarding is a phone experience; a desktop app window opens on sign-in.
+  return mobileApp && !hasOnboarded() ? <MobileOnboarding /> : <Redirect to="/login" />;
+}
+
 function Router() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
@@ -82,13 +114,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/">
-        {!isLoading && user ? (
-          <ProtectedRoute>
-            {user.role === 'creator' ? <CreatorDashboard /> : <EditorDashboard />}
-          </ProtectedRoute>
-        ) : (
-          <LandingPage />
-        )}
+        <RootEntry />
       </Route>
       
       <Route path="/login">

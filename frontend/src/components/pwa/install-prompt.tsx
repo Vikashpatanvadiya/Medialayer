@@ -30,13 +30,18 @@ function rememberDismissal() {
  * falls back to Add-to-Home-Screen instructions on iOS Safari.
  */
 export function InstallPrompt() {
-  const { canInstall, isStandalone, isIosSafari, updateReady } = usePwa();
+  const { canInstall, isStandalone, isIosSafari, updateReady, installSuppressed } = usePwa();
   const [visible, setVisible] = useState(false);
   const [showIosSteps, setShowIosSteps] = useState(false);
 
-  // One bottom overlay at a time — an available update is the more urgent one.
+  // One bottom overlay at a time — an available update is the more urgent one,
+  // and full-screen flows own the bottom of the screen outright.
   const eligible =
-    !isStandalone && !updateReady && (canInstall || isIosSafari) && !dismissedRecently();
+    !isStandalone &&
+    !updateReady &&
+    !installSuppressed &&
+    (canInstall || isIosSafari) &&
+    !dismissedRecently();
 
   useEffect(() => {
     if (!eligible) {
@@ -74,7 +79,7 @@ export function InstallPrompt() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 16, scale: 0.98 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-x-0 bottom-0 z-[100] flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:inset-x-auto sm:right-6 sm:justify-end"
+          className="pwa-bottom-overlay fixed inset-x-0 bottom-0 z-[100] flex justify-center px-4 sm:inset-x-auto sm:right-6 sm:justify-end"
         >
           <div className="w-full max-w-[26rem] rounded-[var(--radius-6)] border border-border bg-background/95 p-4 shadow-[var(--shadow-4)] backdrop-blur-xl">
             <div className="flex items-start gap-3">

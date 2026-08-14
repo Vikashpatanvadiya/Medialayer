@@ -1,9 +1,17 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { getPwaState, subscribeToPwa, type PwaState } from "@/lib/pwa";
+import { getPwaState, setInstallSuppressed, subscribeToPwa, type PwaState } from "@/lib/pwa";
 
 /** Live PWA install / update / display-mode state. */
 export function usePwa(): PwaState {
   return useSyncExternalStore(subscribeToPwa, getPwaState, getPwaState);
+}
+
+/** Hides the install card while this component is mounted. */
+export function useHideInstallPrompt(): void {
+  useEffect(() => {
+    setInstallSuppressed(true);
+    return () => setInstallSuppressed(false);
+  }, []);
 }
 
 /** `navigator.onLine`, kept in sync with the online/offline events. */

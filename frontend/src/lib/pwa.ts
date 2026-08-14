@@ -20,6 +20,8 @@ export interface PwaState {
   isIosSafari: boolean;
   /** A new service worker is waiting to take over. */
   updateReady: boolean;
+  /** A screen is asking not to be covered by the install card. */
+  installSuppressed: boolean;
 }
 
 const listeners = new Set<Listener>();
@@ -31,7 +33,17 @@ let state: PwaState = {
   isStandalone: detectStandalone(),
   isIosSafari: detectIosSafari(),
   updateReady: false,
+  installSuppressed: false,
 };
+
+/**
+ * Full-screen flows (onboarding, sign-in) claim the bottom of the screen for
+ * their own primary action, so the install card steps aside while they're up.
+ */
+export function setInstallSuppressed(suppressed: boolean): void {
+  if (state.installSuppressed === suppressed) return;
+  setState({ installSuppressed: suppressed });
+}
 
 function detectStandalone(): boolean {
   if (typeof window === "undefined") return false;

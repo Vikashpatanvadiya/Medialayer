@@ -18,7 +18,7 @@ export function UpdateBanner() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 12 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-[100] sm:left-6"
+          className="pwa-bottom-overlay fixed bottom-0 left-4 z-[100] sm:left-6"
         >
           <div className="flex items-center gap-3 rounded-full border border-border bg-background/95 py-2 pl-4 pr-2 shadow-[var(--shadow-3)] backdrop-blur-xl">
             <span className="text-sm text-foreground">New version available</span>

@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend-preview",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd frontend && npx vite preview --config vite.config.ts --port 4173"
+      ],
+      "port": 4173
+    }
+  ]
+}

@@ -179,9 +179,15 @@ router.get("/:id", requireAuth, async (req, res) => {
 
   const [creator] = await db.select().from(usersTable).where(eq(usersTable.id, video.creatorId)).limit(1);
   const [editor] = await db.select().from(usersTable).where(eq(usersTable.id, video.editorId)).limit(1);
-  const receipt = video.status === "approved" || video.status === "uploaded"
-    ? await getLatestApprovalReceipt(video.id)
-    : null;
+  let receipt = null;
+  if (video.status === "approved" || video.status === "uploaded") {
+    try {
+      receipt = await getLatestApprovalReceipt(video.id);
+    } catch (err) {
+      // Don't block video detail if the Solana receipt table isn't migrated yet.
+      console.warn("[videos] Could not load approval receipt:", err);
+    }
+  }
 
   res.json(formatVideo(video, creator, editor, receipt));
 });

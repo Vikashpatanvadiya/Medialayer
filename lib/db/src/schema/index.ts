@@ -4,3 +4,4 @@ export * from "./notifications";
 export * from "./editor-creators";
 export * from "./logs";
 export * from "./approval-receipts";
+export * from "./instagram";

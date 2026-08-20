@@ -11,6 +11,7 @@ import logsRouter from "./logs.js";
 import streamRouter from "./stream.js";
 import feedbackRouter from "./feedback.js";
 import paymentsRouter from "./payments.js";
+import instagramRouter, { instagramPublishRouter } from "./instagram.js";
 
 const router: IRouter = Router();
 
@@ -19,6 +20,9 @@ router.use("/auth", authRouter);
 router.use("/auth", authGoogleRouter);
 router.use("/users", usersRouter);
 router.use("/videos", videosRouter);
+// Instagram publish endpoints live under /api/videos/:id/... alongside the rest.
+router.use("/videos", instagramPublishRouter);
+router.use("/integrations/instagram", instagramRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/youtube", youtubeRouter);
 router.use("/upload", uploadRouter);

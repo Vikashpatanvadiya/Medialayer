@@ -6,6 +6,7 @@ import { apiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InstagramConnectCard } from "@/components/integrations/instagram-connect-card";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { PublicKey } from "@solana/web3.js";
@@ -264,6 +265,9 @@ export default function ProfilePage() {
             </div>
             <Button variant="outline" size="sm">Connect</Button>
           </div>
+
+          {/* Instagram — publishing target for approved videos */}
+          <InstagramConnectCard isCreator={user?.role === "creator"} />
 
           {/* Solana Wallet — for receiving editor payments */}
           <div className="p-4 border border-border rounded-[var(--radius-5)] bg-card shadow-[var(--shadow-1)] space-y-3">

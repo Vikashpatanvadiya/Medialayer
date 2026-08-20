@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { apiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { InstagramPublishCard } from "@/components/integrations/instagram-publish-card";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
@@ -628,6 +629,16 @@ export default function VideoDetail() {
               )}
             </div>
           )}
+
+          {/* Instagram card — creators publish; editors see status only */}
+          <InstagramPublishCard
+            videoId={video.id}
+            videoStatus={video.status}
+            videoTitle={video.title}
+            videoTags={video.tags}
+            thumbnailUrl={video.thumbnailUrl}
+            isCreator={!!isCreator}
+          />
 
           {/* Pay Editor card — creators only, on approved/uploaded videos */}
           {isCreator && (video.status === "approved" || video.status === "uploaded") && (

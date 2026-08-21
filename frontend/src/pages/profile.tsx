@@ -17,7 +17,13 @@ export default function ProfilePage() {
   const { user, refetchUser } = useAuth();
   const { toast } = useToast();
   const { publicKey, connected } = useWallet();
-  const [activeTab, setActiveTab] = useState("My account");
+  // Instagram's callback returns here with ?instagram=… — open the tab that
+  // shows the result instead of the default one.
+  const [activeTab, setActiveTab] = useState(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("instagram")
+      ? "Integrations"
+      : "My account",
+  );
   const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
   const [walletInput, setWalletInput] = useState(user?.solanaWalletAddress || "");

@@ -1,164 +1,160 @@
 # Instagram publishing
 
-Creators can publish an **approved** video to Instagram as a **Reel** or a **feed
-post**, alongside the existing YouTube flow. Editors see publish status but can
-never connect an account or publish.
+MediaLayer publishes approved videos to Instagram as **Reels** or **feed posts**
+using the **Instagram API with Instagram Login** (Instagram Business Login).
 
-## 1. Meta app setup
-
-At <https://developers.facebook.com/> create an app (type: **Business**) and add
-both products:
-
-- **Instagram** → Instagram API setup with Facebook Login
-- **Facebook Login**
-
-Configure:
-
-| Setting | Value |
-| --- | --- |
-| Valid OAuth Redirect URIs | `https://layer-1.onrender.com/api/integrations/instagram/callback` |
-| | `http://localhost:3000/api/integrations/instagram/callback` (dev) |
-| App domains | `layer-1.onrender.com` |
-| Site URL | `https://medialayer.app` |
-
-**The callback must point at the backend host, not `medialayer.app`.** The Vercel
-config rewrites every path to `index.html`, so `https://medialayer.app/api/...`
-serves the React app rather than the API and the OAuth callback would land on a
-blank page. `layer-1.onrender.com` is the API origin (it's what `VITE_API_URL`
-points to in the deployed frontend).
-
-Each URI must match `INSTAGRAM_REDIRECT_URI` **character for character**,
-including the trailing path. Meta permits `http://localhost` for development;
-any other host must be HTTPS.
-
-### Permissions requested
-
-`instagram_basic`, `instagram_content_publish`, `pages_show_list`,
-`pages_read_engagement` — the minimum needed to list a creator's Pages, find the
-linked Instagram account, and publish to it. While the app is in development
-mode these work for users with a role on the app (admin/developer/tester); going
-live requires App Review for `instagram_content_publish`.
-
-### Account requirements
-
-The creator's Instagram account must be **Business** or **Creator** (not
-personal) and must be linked to a Facebook Page they administer. Otherwise the
-connect flow ends with "No Instagram Business or Creator account was found."
-
-## 2. Server configuration
-
-Local development — `backend/.env`:
+The creator signs in on instagram.com and authorizes MediaLayer directly. There
+is **no Facebook Login, no Facebook Page, and no Page access token** anywhere in
+this flow.
 
 ```
-META_APP_ID=<app id>
-META_APP_SECRET=<app secret>
-INSTAGRAM_REDIRECT_URI=http://localhost:3000/api/integrations/instagram/callback
+MediaLayer → Connect Instagram → Instagram login → authorize
+          → account connected → publish from an approved video
+```
+
+## Requirements
+
+- An Instagram **Professional** account (Business or Creator).
+- A Meta app with **Use cases → Instagram → API setup with Instagram login**.
+- An **HTTPS** redirect URI. Instagram rejects `http://`, including localhost,
+  so local development needs a tunnel (ngrok, Cloudflare Tunnel, …).
+
+## Environment variables
+
+| Variable | Purpose |
+| --- | --- |
+| `INSTAGRAM_CLIENT_ID` | Instagram App ID (Meta dashboard → Instagram → API setup) |
+| `INSTAGRAM_CLIENT_SECRET` | Instagram App Secret |
+| `INSTAGRAM_REDIRECT_URI` | Must exactly match the Meta dashboard entry |
+| `FRONTEND_URL` | Where the callback sends the creator back to |
+| `INSTAGRAM_RETURN_PATH` | Optional; defaults to `/dashboard/profile` |
+
+Local (`backend/.env`):
+
+```
+INSTAGRAM_CLIENT_ID=<instagram app id>
+INSTAGRAM_CLIENT_SECRET=<instagram app secret>
+INSTAGRAM_REDIRECT_URI=https://<your-tunnel>.ngrok-free.app/api/integrations/instagram/callback
 FRONTEND_URL=http://localhost:5173
 ```
 
-Production — set the same keys in the Render service's **Environment** tab
-(`.env` is not deployed), with:
+Production (Render → service → Environment; `.env` is not deployed):
 
 ```
-INSTAGRAM_REDIRECT_URI=https://layer-1.onrender.com/api/integrations/instagram/callback
+INSTAGRAM_CLIENT_ID=<instagram app id>
+INSTAGRAM_CLIENT_SECRET=<instagram app secret>
+INSTAGRAM_REDIRECT_URI=https://<your-backend-host>/api/integrations/instagram/callback
 FRONTEND_URL=https://medialayer.app
 ```
 
-`FRONTEND_URL` is what the OAuth popup posts its result back to; if it is wrong
-the popup still closes and the UI recovers on the next poll, but the connection
-won't appear instantly.
+`INSTAGRAM_APP_ID` / `INSTAGRAM_APP_SECRET` are accepted as aliases.
+`META_APP_ID` / `META_APP_SECRET` are **not** used: those are the Facebook app's
+credentials, which Instagram Login rejects. The Instagram App ID and Secret come
+from the Instagram product page and are different numbers from the Facebook App ID.
 
-Restart the backend after adding these. Until they are set, the API returns 503
-with a clear message and the UI shows "Instagram publishing isn't configured on
-this server yet." Verify with:
+Watch the startup log to confirm which values won — `.env` silently keeps the
+**last** definition of a duplicated key:
 
-```bash
-curl -s -H "Authorization: Bearer $TOKEN" http://localhost:3000/api/integrations/instagram/accounts
+```
+[instagram] Ready. Redirect URI: https://abc123.ngrok-free.app/api/integrations/instagram/callback
+[instagram] ⚠️  Redirect URI is invalid: …
+[instagram] Not configured — set INSTAGRAM_CLIENT_ID and INSTAGRAM_CLIENT_SECRET…
 ```
 
-`{"configured":true,"accounts":[]}` means the server is ready to connect accounts.
+The redirect URI is validated at connect time: a non-HTTPS URL, a duplicated
+scheme (`https://https://…`), or a wrong path fails fast with a clear message
+instead of an opaque Instagram error page.
 
-## 3. Database
+## Meta dashboard settings
 
-Tables `instagram_accounts` and `instagram_posts` — see
-`lib/db/drizzle/0003_instagram.sql` (already applied to the current database).
+In **Instagram → API setup with Instagram login**:
 
-Access tokens are stored **encrypted at rest** with the same AES-256-CBC helper
-used for YouTube tokens (`backend/src/lib/crypto.ts`, keyed off `JWT_SECRET`),
-and are never returned to the client.
-
-## 4. Flow
-
-**Connecting** (`Settings → Integrations`, creators only)
-
-1. `GET /api/integrations/instagram/connect` returns the Facebook OAuth URL. The
-   `state` is a JWT signed with `JWT_SECRET`, valid 10 minutes, so a callback
-   can't be replayed or forged.
-2. The creator approves in a popup; Meta redirects to
-   `GET /api/integrations/instagram/callback`.
-3. The server exchanges the code, upgrades to a long-lived token, then walks
-   `/me/accounts` to find every Page with a linked Instagram account and stores
-   the **Page access token** for each (these don't expire while the user keeps
-   the permission).
-4. The popup posts the result back to the app and closes.
-
-**Publishing** (video detail page, approved videos only)
-
-`POST /api/videos/:id/publish/instagram` with
-`{ instagramAccountId, postType: "REELS" | "FEED", caption, coverUrl? }`.
-
-The endpoint validates ownership and approval, writes a `PENDING` row, and
-returns `202` immediately. In the background it:
-
-1. builds a signed Cloudinary URL for the video file,
-2. creates a media container,
-3. polls the container until Instagram finishes ingesting it (up to 8 minutes),
-4. publishes the container and fetches the permalink,
-5. marks the row `PUBLISHED`, writes a `published_to_instagram` log entry, and
-   notifies the editor.
-
-Any failure marks the row `FAILED` with a readable message and logs
-`instagram_publish_failed`. The UI polls `GET /api/videos/:id/instagram-posts`
-every 5s while a publish is pending.
-
-### Reel vs. feed post
-
-Both use a `REELS` container. Meta retired standalone feed video posts
-(`media_type=VIDEO`), so `share_to_feed` is what decides placement:
-
-| UI choice | Container | `share_to_feed` |
-| --- | --- | --- |
-| Reel | `REELS` | `false` |
-| Feed post | `REELS` | `true` |
-
-## 5. Limits and errors
-
-Instagram allows **25 published posts per rolling 24 hours** per account. Reels
-must be MP4/MOV, 3–900 seconds, up to 1GB, aspect ratio between 0.01:1 and 10:1.
-
-Graph errors are translated in `backend/src/lib/instagram.ts`:
-
-| Condition | What the creator sees |
+| Setting | Value |
 | --- | --- |
-| Token expired/revoked (code 190) | "Instagram connection expired. Please reconnect…" |
-| Rate limited (4, 17, 32, 613) | "Instagram rate limit reached. Please try again later." |
-| Publishing limit (9007) | "Instagram publishing limit reached (25 posts per 24 hours)." |
-| Bad format (2207026) | The format rules above |
-| Media fetch failed (2207020/3) | "Instagram could not download the video file…" |
+| OAuth Redirect URI | the exact `INSTAGRAM_REDIRECT_URI` value |
+| Permissions | `instagram_business_basic`, `instagram_business_content_publish` |
 
-Server-side failures are logged with video and user context via `logAction`.
+Add the Instagram account under **Instagram Tester** (and accept the invite from
+the Instagram app's settings) while the app is in development.
 
-## 6. Testing without Instagram
+## Scopes
 
-The Graph client can be pointed at a stub server with `META_GRAPH_BASE`, which
-is what the bundled test does — container creation, status polling, publish,
-permalink, and every error translation:
+Only two, both required for connect-and-publish:
 
-```bash
-cd backend && pnpm test:instagram
+- `instagram_business_basic` — account id, username, account type, profile picture
+- `instagram_business_content_publish` — create and publish media
+
+Comment, message, and insights permissions are deliberately not requested.
+
+## OAuth flow
+
+1. `GET /api/integrations/instagram/connect` (creator, Bearer auth) generates a
+   32-byte random `state`, stores it in `instagram_oauth_states` with the user id
+   and a 10-minute expiry, and returns the Instagram authorize URL. The frontend
+   navigates to it. (`?redirect=1` returns a 302 instead.)
+2. The creator logs into Instagram and authorizes MediaLayer.
+3. `GET /api/integrations/instagram/callback` consumes the `state` — a single
+   `UPDATE … WHERE used_at IS NULL` makes replay impossible — and recovers the
+   user id from the database, never from the request.
+4. The code is exchanged at `api.instagram.com/oauth/access_token`, upgraded to a
+   60-day long-lived token, and the profile is read from `graph.instagram.com`.
+5. The token is encrypted (`backend/src/lib/crypto.ts`) and stored on
+   `instagram_accounts`; the creator is redirected to
+   `FRONTEND_URL/dashboard/profile?instagram=connected&username=…`.
+
+Failures redirect with `?instagram=error&reason=…` (`cancelled`, `denied`,
+`missing_code`, `invalid_state`, `exchange_failed`), which the UI turns into a
+human-readable message. Tokens, codes and secrets are never logged.
+
+## Publishing flow
+
+```
+approved video → Cloudinary signed HTTPS URL
+              → POST /{ig-user-id}/media          (container)
+              → poll status_code until FINISHED    (Instagram transcodes)
+              → POST /{ig-user-id}/media_publish   (publish)
+              → permalink stored on instagram_posts
 ```
 
-## 7. Not included in this phase
+Endpoints:
 
-Scheduling, analytics ingestion, multi-account fan-out in one click, carousels,
-image-only posts, stories, and any AI or brand-collaboration features.
+- `POST /api/integrations/instagram/publish` — `{ instagramAccountId, postType, caption, videoId? | mediaUrl?, coverUrl? }`
+- `POST /api/videos/:id/publish/instagram` — same core, video-scoped (used by the video page)
+- `GET /api/videos/:id/instagram-posts` — publish history; readable by the creator **and** the editor
+
+Both return `202` immediately and move the `instagram_posts` row from `PENDING`
+to `PUBLISHED` or `FAILED` in the background; the UI polls while anything is
+pending. `REELS` posts to Reels only; `FEED` sets `share_to_feed`, which also
+places it on the profile grid (Meta retired standalone feed video posts).
+
+Media comes from the existing Cloudinary integration as a signed HTTPS URL —
+Instagram downloads it server-side. Nothing is uploaded from the browser.
+
+## Security
+
+- Access tokens are encrypted at rest and never returned to the frontend; the
+  accounts endpoint exposes only id, username, account type and timestamps.
+- Every publish and disconnect re-checks `instagram_accounts.user_id` against the
+  authenticated user, so changing an id in the URL cannot touch another user's
+  account.
+- `state` is single-use, expiring, and bound to the user server-side.
+- Connect, publish and disconnect are `requireRole("creator")`; editors can read
+  publish status only.
+
+## Testing
+
+```bash
+pnpm --filter @workspace/api-server test:instagram
+```
+
+Runs the full flow against a stub Instagram API — authorize URL, code exchange,
+long-lived token, refresh, profile, container/poll/publish, error translation —
+and asserts that no `graph.facebook.com` endpoint is ever called.
+
+## App Review
+
+Development mode covers the app's own testers. Publishing on behalf of other
+creators needs Advanced Access for `instagram_business_basic` and
+`instagram_business_content_publish`, which requires App Review — screencast of
+the flow, a privacy policy URL, and business verification. Nothing in the code
+changes for that.

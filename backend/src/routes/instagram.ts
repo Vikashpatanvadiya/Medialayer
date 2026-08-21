@@ -1,9 +1,10 @@
 import { Router, type IRouter } from "express";
-import jwt from "jsonwebtoken";
-import { and, desc, eq } from "drizzle-orm";
+import { randomBytes } from "crypto";
+import { and, desc, eq, isNull, lt } from "drizzle-orm";
 import {
   db,
   instagramAccountsTable,
+  instagramOauthStatesTable,
   instagramPostsTable,
   notificationsTable,
   videosTable,
@@ -15,63 +16,99 @@ import { getSignedUrl, getSignedUrlFromPublicId } from "../lib/cloudinary.js";
 import {
   InstagramApiError,
   createMediaContainer,
-  discoverInstagramAccounts,
   exchangeCodeForToken,
   exchangeForLongLivedToken,
   getInstagramAuthUrl,
+  getInstagramProfile,
   getMediaPermalink,
   isInstagramConfigured,
+  instagramConfig,
   publishContainer,
-  revokeInstagramAccess,
+  validateRedirectUri,
   waitForContainer,
   type PostType,
 } from "../lib/instagram.js";
 
 const router: IRouter = Router();
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-const MAX_CAPTION_LENGTH = 2200;
-
-/** Signed, short-lived OAuth state — proves the callback belongs to this user. */
-function createState(userId: string): string {
-  return jwt.sign({ userId, purpose: "instagram_oauth" }, JWT_SECRET, { expiresIn: "10m" });
-}
-
-function readState(state: string): string | null {
-  try {
-    const payload = jwt.verify(state, JWT_SECRET) as { userId?: string; purpose?: string };
-    if (payload.purpose !== "instagram_oauth" || !payload.userId) return null;
-    return payload.userId;
-  } catch {
-    return null;
+// Surface the effective Instagram config once at boot — misconfiguration is far
+// easier to spot in the startup log than after a failed click.
+(function reportInstagramConfig() {
+  const { redirectUri } = instagramConfig();
+  if (!isInstagramConfigured()) {
+    console.warn(
+      "[instagram] Not configured — set INSTAGRAM_CLIENT_ID and INSTAGRAM_CLIENT_SECRET to enable publishing.",
+    );
+    return;
   }
+  const problem = validateRedirectUri(redirectUri);
+  console.log(
+    problem
+      ? `[instagram] ⚠️  Redirect URI is invalid: ${problem}`
+      : `[instagram] Ready. Redirect URI: ${redirectUri}`,
+  );
+})();
+
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+/** Where the creator lands after the Instagram round trip. */
+const RETURN_PATH = process.env.INSTAGRAM_RETURN_PATH || "/dashboard/profile";
+const MAX_CAPTION_LENGTH = 2200;
+const STATE_TTL_MS = 10 * 60 * 1000;
+
+// ── OAuth state (server-side, single use) ────────────────────────────────────
+
+async function createState(userId: string): Promise<string> {
+  const state = randomBytes(32).toString("hex");
+  await db.insert(instagramOauthStatesTable).values({
+    state,
+    userId,
+    expiresAt: new Date(Date.now() + STATE_TTL_MS),
+  });
+  // Opportunistic cleanup so the table can't grow without bound.
+  await db
+    .delete(instagramOauthStatesTable)
+    .where(lt(instagramOauthStatesTable.expiresAt, new Date(Date.now() - STATE_TTL_MS)))
+    .catch(() => {});
+  return state;
 }
 
-/** Small page that hands the result back to the opener window and closes. */
-function popupResponse(ok: boolean, detail: string): string {
-  const payload = JSON.stringify({ type: "INSTAGRAM_CONNECTED", ok, detail });
-  return `<!doctype html><html><body style="font-family:system-ui;padding:32px">
-  <p>${ok ? "Instagram connected." : "Instagram connection failed."} You can close this window.</p>
-  <p style="color:#666;font-size:13px">${detail.replace(/</g, "&lt;")}</p>
-  <script>
-    try { window.opener && window.opener.postMessage(${payload}, ${JSON.stringify(FRONTEND_URL)}); } catch (e) {}
-    setTimeout(function () { window.close(); }, ${ok ? 600 : 4000});
-  </script>
-</body></html>`;
+/** Consumes a state exactly once; returns the user it was issued to. */
+async function consumeState(state: string): Promise<string | null> {
+  if (!state) return null;
+  const [row] = await db
+    .update(instagramOauthStatesTable)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(instagramOauthStatesTable.state, state),
+        // Single use: only an unconsumed row is updated, so a replayed
+        // callback matches nothing and returns null.
+        isNull(instagramOauthStatesTable.usedAt),
+      ),
+    )
+    .returning();
+
+  if (!row) return null;
+  if (row.expiresAt.getTime() < Date.now()) return null;
+  return row.userId;
+}
+
+function frontendRedirect(params: Record<string, string>): string {
+  const url = new URL(RETURN_PATH, FRONTEND_URL);
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  return url.toString();
 }
 
 function publicAccount(row: typeof instagramAccountsTable.$inferSelect) {
   // Never expose the access token to the client.
   return {
     id: row.id,
-    instagramId: row.instagramId,
+    instagramUserId: row.instagramId,
     username: row.username,
     profilePictureUrl: row.profilePictureUrl,
-    fbPageId: row.fbPageId,
-    fbPageName: row.fbPageName,
+    accountType: row.accountType,
+    connectedAt: row.createdAt,
     tokenExpiresAt: row.tokenExpiresAt,
-    createdAt: row.createdAt,
   };
 }
 
@@ -79,18 +116,31 @@ function publicAccount(row: typeof instagramAccountsTable.$inferSelect) {
 
 /**
  * GET /api/integrations/instagram/connect
- * Returns the Facebook OAuth URL (default, for the popup flow), or 302-redirects
- * to it when called with ?redirect=1.
+ * Builds the Instagram authorization URL (state issued server-side). Returns
+ * JSON by default so the Bearer-authenticated frontend can navigate to it;
+ * ?redirect=1 issues a 302 for non-XHR callers.
  */
-router.get("/connect", requireAuth, requireRole("creator"), (req, res) => {
+router.get("/connect", requireAuth, requireRole("creator"), async (req, res) => {
   if (!isInstagramConfigured()) {
     res.status(503).json({
-      error: "Instagram publishing is not configured on this server (META_APP_ID / META_APP_SECRET).",
+      error:
+        "Instagram publishing is not configured on this server (INSTAGRAM_CLIENT_ID / INSTAGRAM_CLIENT_SECRET).",
     });
     return;
   }
 
-  const url = getInstagramAuthUrl(createState(req.user!.userId));
+  const { redirectUri } = instagramConfig();
+  const problem = validateRedirectUri(redirectUri);
+  if (problem) {
+    console.error(`[instagram] Invalid redirect URI: ${problem}`);
+    res.status(500).json({ error: problem });
+    return;
+  }
+
+  const state = await createState(req.user!.userId);
+  const url = getInstagramAuthUrl(state);
+  console.log(`[instagram] OAuth started for user ${req.user!.userId}`);
+
   if (req.query.redirect === "1") {
     res.redirect(url);
     return;
@@ -100,89 +150,105 @@ router.get("/connect", requireAuth, requireRole("creator"), (req, res) => {
 
 /**
  * GET /api/integrations/instagram/callback
- * Meta redirects the creator here after they approve the permissions.
+ * Instagram redirects the creator here. Always ends in a redirect back to the
+ * frontend so the user never sees a bare API response.
  */
 router.get("/callback", async (req, res) => {
-  const { code, state, error_description: errorDescription, error: oauthError } =
+  const { code, state, error_description: errorDescription, error, error_reason: errorReason } =
     req.query as Record<string, string | undefined>;
 
-  if (oauthError) {
-    res.status(400).send(popupResponse(false, errorDescription || oauthError));
-    return;
-  }
-  if (!code || !state) {
-    res.status(400).send(popupResponse(false, "Missing authorization code."));
+  console.log("[instagram] OAuth callback received");
+
+  if (error || errorReason) {
+    const cancelled = /denied|cancel/i.test(`${error}${errorReason}${errorDescription}`);
+    res.redirect(
+      frontendRedirect({
+        instagram: "error",
+        reason: cancelled ? "cancelled" : "denied",
+      }),
+    );
     return;
   }
 
-  const userId = readState(state);
+  if (!code || !state) {
+    res.redirect(frontendRedirect({ instagram: "error", reason: "missing_code" }));
+    return;
+  }
+
+  let userId: string | null;
+  try {
+    userId = await consumeState(state);
+  } catch (err: any) {
+    // A database problem must still land the creator back in the app.
+    console.error(`[instagram] State lookup failed: ${err?.message || "database error"}`);
+    res.redirect(frontendRedirect({ instagram: "error", reason: "server_error" }));
+    return;
+  }
+
   if (!userId) {
-    res.status(400).send(popupResponse(false, "This connection link expired. Please try again."));
+    console.warn("[instagram] Rejected callback with invalid or reused state");
+    res.redirect(frontendRedirect({ instagram: "error", reason: "invalid_state" }));
     return;
   }
 
   try {
     const shortLived = await exchangeCodeForToken(code);
-    const { token: longLived, expiresAt } = await exchangeForLongLivedToken(shortLived);
-    const { accounts, pageNames } = await discoverInstagramAccounts(longLived);
+    const { token, expiresAt } = await exchangeForLongLivedToken(shortLived.accessToken);
+    const profile = await getInstagramProfile(token);
 
-    if (accounts.length === 0) {
-      const detail =
-        pageNames.length === 0
-          ? "Facebook granted login but returned no Pages to the API. Reconnect, click Edit settings, select your Page (B1clicks), and allow business/page access."
-          : `Found Facebook Page(s) (${pageNames.join(", ")}) but no linked Instagram Business account on those Pages. In Instagram, confirm @b1_clicks is Business/Creator and linked to that Page.`;
-      res.status(400).send(popupResponse(false, detail));
-      return;
+    const instagramId = profile.instagramId || shortLived.instagramId;
+
+    const [existing] = await db
+      .select({ id: instagramAccountsTable.id })
+      .from(instagramAccountsTable)
+      .where(
+        and(
+          eq(instagramAccountsTable.userId, userId),
+          eq(instagramAccountsTable.instagramId, instagramId),
+        ),
+      )
+      .limit(1);
+
+    const values = {
+      userId,
+      instagramId,
+      username: profile.username,
+      profilePictureUrl: profile.profilePictureUrl,
+      accountType: profile.accountType,
+      permissions: shortLived.permissions,
+      accessToken: encrypt(token),
+      tokenExpiresAt: expiresAt,
+      updatedAt: new Date(),
+    };
+
+    if (existing) {
+      await db
+        .update(instagramAccountsTable)
+        .set(values)
+        .where(eq(instagramAccountsTable.id, existing.id));
+    } else {
+      await db.insert(instagramAccountsTable).values(values);
     }
 
-    for (const account of accounts) {
-      const [existing] = await db
-        .select({ id: instagramAccountsTable.id })
-        .from(instagramAccountsTable)
-        .where(
-          and(
-            eq(instagramAccountsTable.userId, userId),
-            eq(instagramAccountsTable.instagramId, account.instagramId),
-          ),
-        )
-        .limit(1);
+    await logAction(userId, "instagram_connected", undefined, { username: profile.username });
+    console.log(`[instagram] Account connected: @${profile.username}`);
 
-      const values = {
-        userId,
-        instagramId: account.instagramId,
-        username: account.username,
-        profilePictureUrl: account.profilePictureUrl,
-        fbPageId: account.fbPageId,
-        fbPageName: account.fbPageName,
-        accessToken: encrypt(account.pageAccessToken),
-        tokenExpiresAt: expiresAt,
-        updatedAt: new Date(),
-      };
-
-      if (existing) {
-        await db
-          .update(instagramAccountsTable)
-          .set(values)
-          .where(eq(instagramAccountsTable.id, existing.id));
-      } else {
-        await db.insert(instagramAccountsTable).values(values);
-      }
-    }
-
-    await logAction(userId, "instagram_connected", undefined, {
-      accounts: accounts.map((a) => a.username),
-    });
-
-    res.send(popupResponse(true, `Connected @${accounts.map((a) => a.username).join(", @")}`));
+    res.redirect(frontendRedirect({ instagram: "connected", username: profile.username }));
   } catch (err: any) {
-    console.error("[instagram] OAuth callback failed:", err?.message || err);
-    res
-      .status(500)
-      .send(popupResponse(false, err instanceof InstagramApiError ? err.message : "Connection failed."));
+    // Never leak tokens, codes or secrets into logs or the redirect.
+    const message = err instanceof InstagramApiError ? err.message : "connection_failed";
+    console.error(`[instagram] OAuth callback failed: ${message}`);
+    res.redirect(
+      frontendRedirect({
+        instagram: "error",
+        reason: "exchange_failed",
+        message: message.slice(0, 200),
+      }),
+    );
   }
 });
 
-/** GET /api/integrations/instagram/accounts — connected accounts for this creator. */
+/** GET /api/integrations/instagram/accounts */
 router.get("/accounts", requireAuth, requireRole("creator"), async (req, res) => {
   const rows = await db
     .select()
@@ -190,64 +256,329 @@ router.get("/accounts", requireAuth, requireRole("creator"), async (req, res) =>
     .where(eq(instagramAccountsTable.userId, req.user!.userId))
     .orderBy(desc(instagramAccountsTable.createdAt));
 
-  res.json({ configured: isInstagramConfigured(), accounts: rows.map(publicAccount) });
+  res.json({
+    configured: isInstagramConfigured(),
+    connected: rows.length > 0,
+    accounts: rows.map(publicAccount),
+  });
 });
 
-/** POST /api/integrations/instagram/accounts/:id/disconnect */
+/** Removes a connection after proving it belongs to the caller. */
+async function disconnectAccount(userId: string, accountId: string): Promise<boolean> {
+  const [account] = await db
+    .select()
+    .from(instagramAccountsTable)
+    .where(
+      and(eq(instagramAccountsTable.id, accountId), eq(instagramAccountsTable.userId, userId)),
+    )
+    .limit(1);
+
+  if (!account) return false;
+
+  await db.delete(instagramAccountsTable).where(eq(instagramAccountsTable.id, account.id));
+  await logAction(userId, "instagram_disconnected", undefined, { username: account.username });
+  console.log(`[instagram] Account disconnected: @${account.username}`);
+  return true;
+}
+
+/** DELETE /api/integrations/instagram/accounts/:id */
+router.delete("/accounts/:id", requireAuth, requireRole("creator"), async (req, res) => {
+  const ok = await disconnectAccount(req.user!.userId, (req.params as { id: string }).id);
+  if (!ok) {
+    res.status(404).json({ error: "Instagram account not found" });
+    return;
+  }
+  res.json({ success: true });
+});
+
+/** POST .../accounts/:id/disconnect — same operation, kept for the existing UI. */
 router.post(
   "/accounts/:id/disconnect",
   requireAuth,
   requireRole("creator"),
   async (req, res) => {
-    const { id } = req.params as { id: string };
-    const [account] = await db
-      .select()
-      .from(instagramAccountsTable)
-      .where(
-        and(eq(instagramAccountsTable.id, id), eq(instagramAccountsTable.userId, req.user!.userId)),
-      )
-      .limit(1);
-
-    if (!account) {
+    const ok = await disconnectAccount(req.user!.userId, (req.params as { id: string }).id);
+    if (!ok) {
       res.status(404).json({ error: "Instagram account not found" });
       return;
     }
-
-    // Best effort — the local record is removed either way.
-    try {
-      await revokeInstagramAccess(account.instagramId, decrypt(account.accessToken));
-    } catch (err: any) {
-      console.warn("[instagram] Token revoke failed:", err?.message || err);
-    }
-
-    await db.delete(instagramAccountsTable).where(eq(instagramAccountsTable.id, account.id));
-    await logAction(req.user!.userId, "instagram_disconnected", undefined, {
-      username: account.username,
-    });
-
     res.json({ success: true });
   },
 );
 
-export default router;
+// ── Publishing ───────────────────────────────────────────────────────────────
 
-// ── Publishing (mounted under /api/videos) ───────────────────────────────────
-
-export const instagramPublishRouter: IRouter = Router();
-
-/** Signed Cloudinary URL Instagram can fetch server-side (needs a long TTL). */
+/** Signed Cloudinary URL Instagram can fetch server-side. */
 function resolveVideoUrl(video: typeof videosTable.$inferSelect): string | null {
   if (video.storedFilename) return getSignedUrl(video.storedFilename);
   if (video.videoUrl?.includes("cloudinary.com")) {
     const match = video.videoUrl.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
     if (match?.[1]) return getSignedUrlFromPublicId(match[1]);
   }
-  if (video.videoUrl?.startsWith("http")) return video.videoUrl;
+  if (video.videoUrl?.startsWith("https://")) return video.videoUrl;
   return null;
 }
 
-async function postsForVideo(videoId: string) {
-  const rows = await db
+interface PublishRequest {
+  userId: string;
+  instagramAccountId: string;
+  postType: PostType;
+  caption: string;
+  coverUrl?: string | null;
+  /** Either a MediaLayer video… */
+  videoId?: string | null;
+  /** …or a public HTTPS media URL. */
+  mediaUrl?: string | null;
+}
+
+type PublishOutcome =
+  | { ok: true; postId: string }
+  | { ok: false; status: number; error: string };
+
+/**
+ * Validates ownership and inputs, records a PENDING row, and kicks off the
+ * container → poll → publish sequence in the background.
+ */
+async function startPublish(input: PublishRequest): Promise<PublishOutcome> {
+  if (!isInstagramConfigured()) {
+    return { ok: false, status: 503, error: "Instagram publishing is not configured on this server." };
+  }
+  if (!input.instagramAccountId) {
+    return { ok: false, status: 400, error: "instagramAccountId is required" };
+  }
+  if (input.postType !== "REELS" && input.postType !== "FEED") {
+    return { ok: false, status: 400, error: "postType must be REELS or FEED" };
+  }
+  if (input.caption.length > MAX_CAPTION_LENGTH) {
+    return {
+      ok: false,
+      status: 400,
+      error: `Caption must be ${MAX_CAPTION_LENGTH} characters or fewer`,
+    };
+  }
+
+  // The account must belong to the caller — never trust the id alone.
+  const [account] = await db
+    .select()
+    .from(instagramAccountsTable)
+    .where(
+      and(
+        eq(instagramAccountsTable.id, input.instagramAccountId),
+        eq(instagramAccountsTable.userId, input.userId),
+      ),
+    )
+    .limit(1);
+
+  if (!account) return { ok: false, status: 404, error: "Instagram account not connected" };
+
+  let mediaUrl: string | null = null;
+  let video: typeof videosTable.$inferSelect | null = null;
+
+  if (input.videoId) {
+    const [row] = await db
+      .select()
+      .from(videosTable)
+      .where(eq(videosTable.id, input.videoId))
+      .limit(1);
+    if (!row) return { ok: false, status: 404, error: "Video not found" };
+    if (row.creatorId !== input.userId) return { ok: false, status: 403, error: "Forbidden" };
+    if (row.status !== "approved" && row.status !== "uploaded") {
+      return {
+        ok: false,
+        status: 400,
+        error: "Video must be approved before publishing to Instagram",
+      };
+    }
+    video = row;
+    mediaUrl = resolveVideoUrl(row);
+    if (!mediaUrl) {
+      return {
+        ok: false,
+        status: 400,
+        error: "No video file available to publish. Ask the editor to re-upload.",
+      };
+    }
+  } else if (input.mediaUrl) {
+    if (!/^https:\/\//i.test(input.mediaUrl)) {
+      return { ok: false, status: 400, error: "mediaUrl must be a public HTTPS URL" };
+    }
+    mediaUrl = input.mediaUrl;
+  } else {
+    return { ok: false, status: 400, error: "Either videoId or mediaUrl is required" };
+  }
+
+  // Don't queue a second attempt while one is still running.
+  if (input.videoId) {
+    const [inFlight] = await db
+      .select({ id: instagramPostsTable.id })
+      .from(instagramPostsTable)
+      .where(
+        and(
+          eq(instagramPostsTable.videoId, input.videoId),
+          eq(instagramPostsTable.instagramAccountId, account.id),
+          eq(instagramPostsTable.status, "PENDING"),
+        ),
+      )
+      .limit(1);
+    if (inFlight) {
+      return { ok: false, status: 409, error: "This video is already being published to Instagram." };
+    }
+  }
+
+  const [post] = await db
+    .insert(instagramPostsTable)
+    .values({
+      videoId: input.videoId ?? null,
+      instagramAccountId: account.id,
+      publishedById: input.userId,
+      postType: input.postType,
+      caption: input.caption,
+      coverUrl: input.coverUrl || null,
+      status: "PENDING",
+    })
+    .returning();
+
+  await logAction(input.userId, "instagram_publish_started", input.videoId ?? undefined, {
+    postType: input.postType,
+    username: account.username,
+  });
+  console.log(`[instagram] Publish started for @${account.username}`);
+
+  const accessToken = decrypt(account.accessToken);
+  const isImage = /\.(jpe?g|png)(\?|$)/i.test(mediaUrl);
+
+  void (async () => {
+    try {
+      const containerId = await createMediaContainer({
+        instagramUserId: account.instagramId,
+        accessToken,
+        mediaUrl: mediaUrl!,
+        caption: input.caption,
+        coverUrl: input.coverUrl || null,
+        postType: input.postType,
+        isImage,
+      });
+
+      await waitForContainer(containerId, accessToken);
+
+      const instagramPostId = await publishContainer({
+        instagramUserId: account.instagramId,
+        containerId,
+        accessToken,
+      });
+
+      const permalink =
+        (await getMediaPermalink(instagramPostId, accessToken)) ??
+        `https://www.instagram.com/${account.username}/`;
+
+      await db
+        .update(instagramPostsTable)
+        .set({
+          status: "PUBLISHED",
+          instagramPostId,
+          permalink,
+          publishedAt: new Date(),
+          errorMessage: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(instagramPostsTable.id, post.id));
+
+      await logAction(input.userId, "published_to_instagram", input.videoId ?? undefined, {
+        postType: input.postType,
+        username: account.username,
+        permalink,
+        instagramPostId,
+      });
+
+      if (video) {
+        await db.insert(notificationsTable).values({
+          userId: video.editorId,
+          title:
+            input.postType === "REELS" ? "Published as an Instagram Reel" : "Published to Instagram",
+          message: `"${video.title}" is live on @${account.username}: ${permalink}`,
+          type: "video_published_instagram",
+          videoId: video.id,
+        });
+      }
+
+      console.log(`[instagram] Publish completed for @${account.username}`);
+    } catch (err: any) {
+      const message =
+        err instanceof InstagramApiError ? err.message : err?.message || "Instagram publishing failed.";
+
+      await db
+        .update(instagramPostsTable)
+        .set({ status: "FAILED", errorMessage: message, updatedAt: new Date() })
+        .where(eq(instagramPostsTable.id, post.id))
+        .catch(() => {});
+
+      await logAction(input.userId, "instagram_publish_failed", input.videoId ?? undefined, {
+        postType: input.postType,
+        username: account.username,
+        error: message,
+      });
+      console.error(`[instagram] Publish failed for @${account.username}: ${message}`);
+
+      if (err instanceof InstagramApiError && err.needsReconnect) {
+        await db
+          .update(instagramAccountsTable)
+          .set({ tokenExpiresAt: new Date(), updatedAt: new Date() })
+          .where(eq(instagramAccountsTable.id, account.id))
+          .catch(() => {});
+      }
+    }
+  })();
+
+  return { ok: true, postId: post.id };
+}
+
+/**
+ * POST /api/integrations/instagram/publish
+ * Body: { instagramAccountId, postType, caption, mediaUrl? | videoId?, coverUrl? }
+ */
+router.post("/publish", requireAuth, requireRole("creator"), async (req, res) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const result = await startPublish({
+    userId: req.user!.userId,
+    instagramAccountId: String(body.instagramAccountId ?? ""),
+    postType: (body.postType as PostType) ?? "REELS",
+    caption: String(body.caption ?? ""),
+    coverUrl: (body.coverUrl as string) ?? null,
+    videoId: (body.videoId as string) ?? null,
+    mediaUrl: (body.mediaUrl as string) ?? null,
+  });
+
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+  res.status(202).json({ success: true, post: { id: result.postId, status: "PENDING" } });
+});
+
+export default router;
+
+// ── Video-scoped endpoints (mounted under /api/videos) ───────────────────────
+
+export const instagramPublishRouter: IRouter = Router();
+
+/**
+ * GET /api/videos/:id/instagram-posts
+ * Readable by both roles — editors can see publish state but never publish.
+ */
+instagramPublishRouter.get("/:id/instagram-posts", requireAuth, async (req, res) => {
+  const { id } = req.params as { id: string };
+  const [video] = await db.select().from(videosTable).where(eq(videosTable.id, id)).limit(1);
+
+  if (!video) {
+    res.status(404).json({ error: "Video not found" });
+    return;
+  }
+  if (video.creatorId !== req.user!.userId && video.editorId !== req.user!.userId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const posts = await db
     .select({
       id: instagramPostsTable.id,
       videoId: instagramPostsTable.videoId,
@@ -271,230 +602,32 @@ async function postsForVideo(videoId: string) {
       instagramAccountsTable,
       eq(instagramPostsTable.instagramAccountId, instagramAccountsTable.id),
     )
-    .where(eq(instagramPostsTable.videoId, videoId))
+    .where(eq(instagramPostsTable.videoId, id))
     .orderBy(desc(instagramPostsTable.createdAt));
-  return rows;
-}
 
-/**
- * GET /api/videos/:id/instagram-posts
- * Readable by both roles — editors can see publish state but never publish.
- */
-instagramPublishRouter.get("/:id/instagram-posts", requireAuth, async (req, res) => {
-  const { id } = req.params as { id: string };
-  const [video] = await db.select().from(videosTable).where(eq(videosTable.id, id)).limit(1);
-
-  if (!video) {
-    res.status(404).json({ error: "Video not found" });
-    return;
-  }
-  if (video.creatorId !== req.user!.userId && video.editorId !== req.user!.userId) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-
-  res.json({ posts: await postsForVideo(id) });
+  res.json({ posts });
 });
 
-/**
- * POST /api/videos/:id/publish/instagram
- * Creators only. Returns immediately; the container upload runs in the
- * background and the post row moves PENDING → PUBLISHED | FAILED.
- */
+/** POST /api/videos/:id/publish/instagram — same core, video-scoped. */
 instagramPublishRouter.post(
   "/:id/publish/instagram",
   requireAuth,
   requireRole("creator"),
   async (req, res) => {
-    const { id: videoId } = req.params as { id: string };
-    const {
-      instagramAccountId,
-      postType,
-      caption = "",
-      coverUrl,
-    } = (req.body ?? {}) as {
-      instagramAccountId?: string;
-      postType?: PostType;
-      caption?: string;
-      coverUrl?: string;
-    };
-
-    if (!isInstagramConfigured()) {
-      res.status(503).json({ error: "Instagram publishing is not configured on this server." });
-      return;
-    }
-    if (!instagramAccountId) {
-      res.status(400).json({ error: "instagramAccountId is required" });
-      return;
-    }
-    if (postType !== "REELS" && postType !== "FEED") {
-      res.status(400).json({ error: "postType must be REELS or FEED" });
-      return;
-    }
-    if (caption.length > MAX_CAPTION_LENGTH) {
-      res.status(400).json({ error: `Caption must be ${MAX_CAPTION_LENGTH} characters or fewer` });
-      return;
-    }
-
-    const [video] = await db.select().from(videosTable).where(eq(videosTable.id, videoId)).limit(1);
-    if (!video) {
-      res.status(404).json({ error: "Video not found" });
-      return;
-    }
-    if (video.creatorId !== req.user!.userId) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    if (video.status !== "approved" && video.status !== "uploaded") {
-      res.status(400).json({ error: "Video must be approved before publishing to Instagram" });
-      return;
-    }
-
-    const [account] = await db
-      .select()
-      .from(instagramAccountsTable)
-      .where(
-        and(
-          eq(instagramAccountsTable.id, instagramAccountId),
-          eq(instagramAccountsTable.userId, req.user!.userId),
-        ),
-      )
-      .limit(1);
-
-    if (!account) {
-      res.status(404).json({ error: "Instagram account not connected" });
-      return;
-    }
-
-    const videoUrl = resolveVideoUrl(video);
-    if (!videoUrl) {
-      res.status(400).json({ error: "No video file available to publish. Ask the editor to re-upload." });
-      return;
-    }
-
-    // Don't queue a second attempt while one is still running.
-    const [inFlight] = await db
-      .select({ id: instagramPostsTable.id })
-      .from(instagramPostsTable)
-      .where(
-        and(
-          eq(instagramPostsTable.videoId, videoId),
-          eq(instagramPostsTable.instagramAccountId, account.id),
-          eq(instagramPostsTable.status, "PENDING"),
-        ),
-      )
-      .limit(1);
-
-    if (inFlight) {
-      res.status(409).json({ error: "This video is already being published to Instagram." });
-      return;
-    }
-
-    const [post] = await db
-      .insert(instagramPostsTable)
-      .values({
-        videoId,
-        instagramAccountId: account.id,
-        publishedById: req.user!.userId,
-        postType,
-        caption,
-        coverUrl: coverUrl || null,
-        status: "PENDING",
-      })
-      .returning();
-
-    await logAction(req.user!.userId, "instagram_publish_started", videoId, {
-      postType,
-      username: account.username,
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const result = await startPublish({
+      userId: req.user!.userId,
+      instagramAccountId: String(body.instagramAccountId ?? ""),
+      postType: (body.postType as PostType) ?? "REELS",
+      caption: String(body.caption ?? ""),
+      coverUrl: (body.coverUrl as string) ?? null,
+      videoId: (req.params as { id: string }).id,
     });
 
-    res.status(202).json({ success: true, post: { id: post.id, status: post.status, postType } });
-
-    // ── Background publish ──
-    const accessToken = decrypt(account.accessToken);
-
-    (async () => {
-      const fail = async (message: string) => {
-        await db
-          .update(instagramPostsTable)
-          .set({ status: "FAILED", errorMessage: message, updatedAt: new Date() })
-          .where(eq(instagramPostsTable.id, post.id))
-          .catch(() => {});
-        await logAction(video.creatorId, "instagram_publish_failed", videoId, {
-          postType,
-          username: account.username,
-          error: message,
-        });
-        console.error(`[instagram] Publish failed for video ${videoId}: ${message}`);
-      };
-
-      try {
-        const containerId = await createMediaContainer({
-          instagramUserId: account.instagramId,
-          accessToken,
-          videoUrl,
-          caption,
-          coverUrl: coverUrl || null,
-          postType,
-        });
-
-        await waitForContainer(containerId, accessToken);
-
-        const instagramPostId = await publishContainer({
-          instagramUserId: account.instagramId,
-          containerId,
-          accessToken,
-        });
-
-        const permalink =
-          (await getMediaPermalink(instagramPostId, accessToken)) ??
-          `https://www.instagram.com/${account.username}/`;
-
-        await db
-          .update(instagramPostsTable)
-          .set({
-            status: "PUBLISHED",
-            instagramPostId,
-            permalink,
-            publishedAt: new Date(),
-            errorMessage: null,
-            updatedAt: new Date(),
-          })
-          .where(eq(instagramPostsTable.id, post.id));
-
-        await logAction(video.creatorId, "published_to_instagram", videoId, {
-          postType,
-          username: account.username,
-          permalink,
-          instagramPostId,
-        });
-
-        await db.insert(notificationsTable).values({
-          userId: video.editorId,
-          title: postType === "REELS" ? "Published as an Instagram Reel" : "Published to Instagram",
-          message: `"${video.title}" is live on @${account.username}: ${permalink}`,
-          type: "video_published_instagram",
-          videoId: video.id,
-        });
-
-        console.log(`[instagram] Published video ${videoId} → ${permalink}`);
-      } catch (err: any) {
-        const message =
-          err instanceof InstagramApiError
-            ? err.message
-            : err?.message || "Instagram publishing failed.";
-        await fail(message);
-
-        // An expired token can't be recovered from — surface it on the account.
-        if (err instanceof InstagramApiError && err.needsReconnect) {
-          await db
-            .update(instagramAccountsTable)
-            .set({ tokenExpiresAt: new Date(), updatedAt: new Date() })
-            .where(eq(instagramAccountsTable.id, account.id))
-            .catch(() => {});
-        }
-      }
-    })();
+    if (!result.ok) {
+      res.status(result.status).json({ error: result.error });
+      return;
+    }
+    res.status(202).json({ success: true, post: { id: result.postId, status: "PENDING" } });
   },
 );
-

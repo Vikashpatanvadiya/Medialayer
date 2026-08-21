@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import {
   useConnectInstagram,
+  useDisconnectInstagram,
   useInstagramAccounts,
   useInstagramPosts,
   usePublishToInstagram,
@@ -114,6 +115,7 @@ export function InstagramPublishCard({
   const { data: accountData, isLoading: accountsLoading } = useInstagramAccounts(isCreator);
   const { data: postData } = useInstagramPosts(videoId, true);
   const { connect, isConnecting } = useConnectInstagram();
+  const disconnect = useDisconnectInstagram();
   const publish = usePublishToInstagram(videoId);
 
   const accounts = accountData?.accounts ?? [];
@@ -194,9 +196,26 @@ export function InstagramPublishCard({
 
   return (
     <div className="bg-card border border-border rounded-[var(--radius-4)] p-5 shadow-[var(--shadow-2)] space-y-4">
-      <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2 pb-3 border-b border-border">
-        <Instagram className="w-4 h-4 text-primary" /> Instagram
-      </h3>
+      <div className="flex items-center justify-between pb-3 border-b border-border">
+        <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2">
+          <Instagram className="w-4 h-4 text-primary" /> Instagram
+        </h3>
+        {accounts.length > 0 && (
+          <button
+            onClick={() => {
+              disconnect.mutate(accountId, {
+                onSuccess: () => toast({ title: "Instagram disconnected" }),
+                onError: () =>
+                  toast({ title: "Could not disconnect", variant: "destructive" }),
+              });
+            }}
+            disabled={disconnect.isPending}
+            className="text-xs text-muted-foreground hover:text-[var(--red-4)] transition-colors disabled:opacity-60"
+          >
+            {disconnect.isPending ? "Disconnecting…" : "Disconnect"}
+          </button>
+        )}
+      </div>
 
       <PublishHistory posts={posts} />
 
@@ -220,21 +239,19 @@ export function InstagramPublishCard({
       ) : accounts.length === 0 ? (
         <>
           <p className="text-sm text-muted-foreground">
-            Connect an Instagram Business or Creator account to publish this video as a Reel or feed
-            post.
+            Connect your Instagram Professional account to publish this video as a Reel or feed
+            post. You'll sign in on Instagram — no Facebook Page needed.
           </p>
           <button
             onClick={async () => {
               const result = await connect();
-              toast(
-                result.ok
-                  ? { title: "Instagram connected", description: result.detail }
-                  : {
-                      title: "Instagram not connected",
-                      description: result.detail,
-                      variant: "destructive",
-                    },
-              );
+              if (!result.ok) {
+                toast({
+                  title: "Could not start Instagram login",
+                  description: result.detail,
+                  variant: "destructive",
+                });
+              }
             }}
             disabled={isConnecting}
             className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-[var(--radius-4)] border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-60"

@@ -1,7 +1,9 @@
-import { Instagram, Loader2, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Instagram, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
+  readConnectOutcome,
   useConnectInstagram,
   useDisconnectInstagram,
   useInstagramAccounts,
@@ -10,20 +12,38 @@ import {
 /** Instagram section for Settings → Integrations. Creators only. */
 export function InstagramConnectCard({ isCreator }: { isCreator: boolean }) {
   const { toast } = useToast();
-  const { data, isLoading } = useInstagramAccounts(isCreator);
+  const { data, isLoading, refetch } = useInstagramAccounts(isCreator);
   const { connect, isConnecting } = useConnectInstagram();
   const disconnect = useDisconnectInstagram();
 
   const accounts = data?.accounts ?? [];
   const configured = data?.configured ?? true;
 
-  const handleConnect = async () => {
-    const result = await connect();
+  // Instagram sends the creator back here with ?instagram=connected|error.
+  useEffect(() => {
+    const outcome = readConnectOutcome();
+    if (!outcome) return;
     toast(
-      result.ok
-        ? { title: "Instagram connected", description: result.detail }
-        : { title: "Instagram not connected", description: result.detail, variant: "destructive" },
+      outcome.status === "connected"
+        ? { title: "Instagram connected", description: outcome.message }
+        : { title: "Instagram not connected", description: outcome.message, variant: "destructive" },
     );
+    if (outcome.status === "connected") refetch();
+  }, [toast, refetch]);
+
+  const [redirecting, setRedirecting] = useState(false);
+
+  const handleConnect = async () => {
+    setRedirecting(true);
+    const result = await connect();
+    if (!result.ok) {
+      setRedirecting(false);
+      toast({
+        title: "Could not start Instagram login",
+        description: result.detail,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDisconnect = async (id: string, username: string) => {
@@ -39,6 +59,8 @@ export function InstagramConnectCard({ isCreator }: { isCreator: boolean }) {
     }
   };
 
+  const busy = isConnecting || redirecting;
+
   return (
     <div className="p-4 border border-border rounded-[var(--radius-5)] bg-card shadow-[var(--shadow-1)] space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -50,20 +72,20 @@ export function InstagramConnectCard({ isCreator }: { isCreator: boolean }) {
             <p className="text-sm font-semibold text-foreground">Instagram</p>
             <p className="text-xs text-muted-foreground">
               {isCreator
-                ? "Publish approved videos as Reels or feed posts"
+                ? "Connect your Instagram Professional account and publish directly from MediaLayer."
                 : "Only creators can connect publishing accounts"}
             </p>
           </div>
         </div>
 
         {isCreator && configured && (
-          <Button variant="outline" size="sm" onClick={handleConnect} disabled={isConnecting}>
-            {isConnecting ? (
+          <Button variant="outline" size="sm" onClick={handleConnect} disabled={busy}>
+            {busy ? (
               <Loader2 className="w-3 h-3 animate-spin" />
             ) : accounts.length > 0 ? (
               "Connect another"
             ) : (
-              "Connect"
+              "Connect Instagram"
             )}
           </Button>
         )}
@@ -72,8 +94,7 @@ export function InstagramConnectCard({ isCreator }: { isCreator: boolean }) {
       {!isCreator ? null : !configured ? (
         <p className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-[var(--radius-4)] px-3 py-2">
           <AlertCircle className="w-3.5 h-3.5 mt-px shrink-0" />
-          Instagram publishing isn't configured on this server yet. Add the Meta app credentials to
-          enable it.
+          Instagram publishing isn't configured on this server yet.
         </p>
       ) : isLoading ? (
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -81,9 +102,9 @@ export function InstagramConnectCard({ isCreator }: { isCreator: boolean }) {
         </p>
       ) : accounts.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          Connect an Instagram <span className="font-medium text-foreground">Business</span> or{" "}
-          <span className="font-medium text-foreground">Creator</span> account that is linked to a
-          Facebook Page.
+          You'll sign in on Instagram and authorize MediaLayer. Requires a{" "}
+          <span className="font-medium text-foreground">Professional</span> account (Business or
+          Creator) — no Facebook Page needed.
         </p>
       ) : (
         <ul className="space-y-2">
@@ -105,11 +126,14 @@ export function InstagramConnectCard({ isCreator }: { isCreator: boolean }) {
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    @{account.username}
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
+                    <CheckCircle2 className="size-3.5 shrink-0 text-[var(--green-4)]" />@
+                    {account.username}
                   </p>
-                  {account.fbPageName && (
-                    <p className="truncate text-xs text-muted-foreground">{account.fbPageName}</p>
+                  {account.accountType && (
+                    <p className="truncate text-xs capitalize text-muted-foreground">
+                      {account.accountType.toLowerCase().replace("_", " ")} account
+                    </p>
                   )}
                 </div>
               </div>

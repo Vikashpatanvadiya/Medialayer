@@ -1,37 +1,38 @@
 /**
- * Instagram Graph API client (content publishing via Facebook Login).
+ * Instagram API with Instagram Login (Instagram Business Login).
  *
- * Publishing is a two-step process: create a media container, wait for Instagram
- * to finish ingesting the video, then publish the container.
- * Docs: https://developers.facebook.com/docs/instagram-platform/content-publishing
+ * The creator authenticates directly with Instagram — no Facebook Login, no
+ * Facebook Page, no Page access token. We receive an Instagram-scoped user id
+ * and an Instagram user access token, and publish with the same two-step
+ * container → publish flow, on graph.instagram.com.
+ *
+ * Docs: https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login
  */
 
-const GRAPH_VERSION = process.env.META_GRAPH_VERSION || "v21.0";
-// META_GRAPH_BASE exists so tests can point the client at a stub Graph server.
-const GRAPH_HOST = process.env.META_GRAPH_BASE || "https://graph.facebook.com";
-const GRAPH = `${GRAPH_HOST}/${GRAPH_VERSION}`;
-const OAUTH_DIALOG = `https://www.facebook.com/${GRAPH_VERSION}/dialog/oauth`;
+const API_VERSION = process.env.INSTAGRAM_API_VERSION || "v21.0";
 
-/** Minimum scopes needed to list Pages and publish to their IG accounts. */
-export const INSTAGRAM_SCOPES = [
-  "instagram_basic",
-  "instagram_content_publish",
-  "pages_show_list",
-  "pages_read_engagement",
-  // Pages under a Meta Business are omitted from /me/accounts without this.
-  "business_management",
-];
+// Overridable so tests can point the client at a stub server.
+const AUTH_HOST = process.env.INSTAGRAM_AUTH_HOST || "https://www.instagram.com";
+const OAUTH_HOST = process.env.INSTAGRAM_OAUTH_HOST || "https://api.instagram.com";
+const GRAPH_HOST = process.env.INSTAGRAM_GRAPH_HOST || "https://graph.instagram.com";
+
+const AUTHORIZE_URL = `${AUTH_HOST}/oauth/authorize`;
+const TOKEN_URL = `${OAUTH_HOST}/oauth/access_token`;
+const GRAPH = `${GRAPH_HOST}/${API_VERSION}`;
+
+/**
+ * Minimum scopes for "connect an account and publish to it".
+ * Deliberately excludes comment/message/insights permissions.
+ */
+export const INSTAGRAM_SCOPES = ["instagram_business_basic", "instagram_business_content_publish"];
 
 export type PostType = "REELS" | "FEED";
 
-export interface DiscoveredAccount {
+export interface InstagramProfile {
   instagramId: string;
   username: string;
+  accountType: string | null;
   profilePictureUrl: string | null;
-  fbPageId: string;
-  fbPageName: string | null;
-  /** Page access token — the credential used for publishing. */
-  pageAccessToken: string;
 }
 
 export class InstagramApiError extends Error {
@@ -49,31 +50,64 @@ export class InstagramApiError extends Error {
 }
 
 export function instagramConfig() {
-  const appId = process.env.META_APP_ID || process.env.INSTAGRAM_APP_ID;
-  const appSecret = process.env.META_APP_SECRET || process.env.INSTAGRAM_APP_SECRET;
+  // Deliberately NOT falling back to META_APP_ID/META_APP_SECRET: those belong
+  // to the Facebook app and are rejected by Instagram Login, which fails later
+  // and much less clearly than a missing-credentials error here.
+  const clientId = process.env.INSTAGRAM_CLIENT_ID || process.env.INSTAGRAM_APP_ID;
+  const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET || process.env.INSTAGRAM_APP_SECRET;
   const redirectUri =
     process.env.INSTAGRAM_REDIRECT_URI ||
     `${process.env.BACKEND_URL || "http://localhost:3000"}/api/integrations/instagram/callback`;
-  // Set only for "Facebook Login for Business" apps, where the permission set
-  // lives in a dashboard configuration instead of a `scope` parameter.
-  const loginConfigId = process.env.META_LOGIN_CONFIG_ID;
-  return { appId, appSecret, redirectUri, loginConfigId };
+  return { clientId, clientSecret, redirectUri };
 }
 
 export function isInstagramConfigured(): boolean {
-  const { appId, appSecret } = instagramConfig();
-  return Boolean(appId && appSecret);
+  const { clientId, clientSecret } = instagramConfig();
+  return Boolean(clientId && clientSecret);
 }
 
-/** Turns a Graph API error payload into something a creator can act on. */
-function toApiError(payload: any, fallback: string): InstagramApiError {
-  const err = payload?.error ?? {};
-  const code: number | null = typeof err.code === "number" ? err.code : null;
-  const subcode: number | null = typeof err.error_subcode === "number" ? err.error_subcode : null;
-  const raw = err.error_user_msg || err.message || fallback;
+/**
+ * Instagram rejects anything but HTTPS (and, unlike Facebook Login, does not
+ * make an exception for localhost). Surfaced early so misconfiguration shows up
+ * as a clear message instead of an opaque Instagram error page.
+ */
+export function validateRedirectUri(uri: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(uri);
+  } catch {
+    return `INSTAGRAM_REDIRECT_URI is not a valid URL: "${uri}"`;
+  }
+  if (uri.split("://").length > 2) {
+    return `INSTAGRAM_REDIRECT_URI contains a duplicated scheme: "${uri}"`;
+  }
+  if (parsed.protocol !== "https:") {
+    return "Instagram requires an HTTPS redirect URI. Use an HTTPS tunnel (e.g. ngrok) for local development.";
+  }
+  if (!parsed.hostname.includes(".")) {
+    return `INSTAGRAM_REDIRECT_URI has an invalid host: "${parsed.hostname}"`;
+  }
+  if (!parsed.pathname.endsWith("/api/integrations/instagram/callback")) {
+    return `INSTAGRAM_REDIRECT_URI must end with /api/integrations/instagram/callback (got "${parsed.pathname}")`;
+  }
+  return null;
+}
 
-  // 190 = access token invalid/expired/revoked.
-  const needsReconnect = code === 190 || code === 102 || code === 463;
+/** Turns an Instagram API error payload into something a creator can act on. */
+function toApiError(payload: any, fallback: string): InstagramApiError {
+  // Instagram Login returns both Graph-style {error:{...}} and OAuth-style bodies.
+  const err = payload?.error ?? {};
+  const code: number | null =
+    typeof err.code === "number" ? err.code : typeof payload?.code === "number" ? payload.code : null;
+  const subcode: number | null = typeof err.error_subcode === "number" ? err.error_subcode : null;
+  const raw =
+    err.error_user_msg ||
+    err.message ||
+    payload?.error_message ||
+    payload?.error_description ||
+    fallback;
+
+  const needsReconnect = code === 190 || code === 102 || code === 463 || err.type === "OAuthException";
 
   let message = raw;
   if (needsReconnect) {
@@ -86,7 +120,7 @@ function toApiError(payload: any, fallback: string): InstagramApiError {
     message =
       "Instagram rejected this video's format. Reels must be MP4/MOV, 3–900s, up to 1GB, aspect ratio 0.01:1–10:1.";
   } else if (subcode === 2207020 || subcode === 2207003) {
-    message = "Instagram could not download the video file. Please try publishing again.";
+    message = "Instagram could not download the media file. Please try publishing again.";
   } else if (subcode === 2207032) {
     message = "Instagram failed to create the media container. Please try again.";
   }
@@ -94,10 +128,7 @@ function toApiError(payload: any, fallback: string): InstagramApiError {
   return new InstagramApiError(message, code, subcode, needsReconnect, err);
 }
 
-async function graphRequest<T>(
-  url: string,
-  init: RequestInit & { fallback: string },
-): Promise<T> {
+async function request<T>(url: string, init: RequestInit & { fallback: string }): Promise<T> {
   const { fallback, ...requestInit } = init;
   let res: Response;
   try {
@@ -120,17 +151,19 @@ async function graphRequest<T>(
     payload = { raw: text };
   }
 
-  if (!res.ok || payload?.error) throw toApiError(payload, fallback);
+  if (!res.ok || payload?.error || payload?.error_type) throw toApiError(payload, fallback);
   return payload as T;
 }
 
 function graphGet<T>(path: string, params: Record<string, string>, fallback: string): Promise<T> {
-  const url = `${GRAPH}${path}?${new URLSearchParams(params).toString()}`;
-  return graphRequest<T>(url, { method: "GET", fallback });
+  return request<T>(`${GRAPH}${path}?${new URLSearchParams(params).toString()}`, {
+    method: "GET",
+    fallback,
+  });
 }
 
 function graphPost<T>(path: string, body: Record<string, unknown>, fallback: string): Promise<T> {
-  return graphRequest<T>(`${GRAPH}${path}`, {
+  return request<T>(`${GRAPH}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -138,59 +171,66 @@ function graphPost<T>(path: string, body: Record<string, unknown>, fallback: str
   });
 }
 
-// ── OAuth ────────────────────────────────────────────────────────────────────
+// ── OAuth: Instagram Business Login ──────────────────────────────────────────
 
+/** Step 1 — the Instagram (not Facebook) authorization screen. */
 export function getInstagramAuthUrl(state: string): string {
-  const { appId, redirectUri, loginConfigId } = instagramConfig();
+  const { clientId, redirectUri } = instagramConfig();
   const params = new URLSearchParams({
-    client_id: appId!,
+    client_id: clientId!,
     redirect_uri: redirectUri,
-    state,
+    scope: INSTAGRAM_SCOPES.join(","),
     response_type: "code",
-    // Force Facebook to re-ask for Pages instead of reusing an old grant.
-    auth_type: "rerequest",
+    state,
+  });
+  return `${AUTHORIZE_URL}?${params.toString()}`;
+}
+
+/** Step 2 — swap the authorization code for a short-lived Instagram token. */
+export async function exchangeCodeForToken(
+  code: string,
+): Promise<{ accessToken: string; instagramId: string; permissions: string | null }> {
+  const { clientId, clientSecret, redirectUri } = instagramConfig();
+  const body = new URLSearchParams({
+    client_id: clientId!,
+    client_secret: clientSecret!,
+    grant_type: "authorization_code",
+    redirect_uri: redirectUri,
+    code,
   });
 
-  if (loginConfigId) {
-    // Facebook Login for Business: the configuration carries the permissions.
-    params.set("config_id", loginConfigId);
-  } else {
-    params.set("scope", INSTAGRAM_SCOPES.join(","));
-  }
+  const data = await request<{
+    access_token: string;
+    user_id: number | string;
+    permissions?: string[] | string;
+  }>(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+    fallback: "Could not exchange the Instagram authorization code.",
+  });
 
-  return `${OAUTH_DIALOG}?${params.toString()}`;
+  return {
+    accessToken: data.access_token,
+    instagramId: String(data.user_id),
+    permissions: Array.isArray(data.permissions)
+      ? data.permissions.join(",")
+      : (data.permissions ?? null),
+  };
 }
 
-/** Exchanges the OAuth code for a short-lived user access token. */
-export async function exchangeCodeForToken(code: string): Promise<string> {
-  const { appId, appSecret, redirectUri } = instagramConfig();
-  const data = await graphGet<{ access_token: string }>(
-    "/oauth/access_token",
-    {
-      client_id: appId!,
-      client_secret: appSecret!,
-      redirect_uri: redirectUri,
-      code,
-    },
-    "Could not exchange the Instagram authorization code.",
-  );
-  return data.access_token;
-}
-
-/** Upgrades a short-lived user token to a ~60 day long-lived token. */
+/** Step 3 — upgrade to a 60-day long-lived token. */
 export async function exchangeForLongLivedToken(
   shortLivedToken: string,
 ): Promise<{ token: string; expiresAt: Date | null }> {
-  const { appId, appSecret } = instagramConfig();
-  const data = await graphGet<{ access_token: string; expires_in?: number }>(
-    "/oauth/access_token",
-    {
-      grant_type: "fb_exchange_token",
-      client_id: appId!,
-      client_secret: appSecret!,
-      fb_exchange_token: shortLivedToken,
-    },
-    "Could not extend the Instagram access token.",
+  const { clientSecret } = instagramConfig();
+  const data = await request<{ access_token: string; expires_in?: number }>(
+    `${GRAPH_HOST}/access_token?${new URLSearchParams({
+      grant_type: "ig_exchange_token",
+      client_secret: clientSecret!,
+      access_token: shortLivedToken,
+    })}`,
+    { method: "GET", fallback: "Could not extend the Instagram access token." },
   );
   return {
     token: data.access_token,
@@ -198,203 +238,80 @@ export async function exchangeForLongLivedToken(
   };
 }
 
-type GraphIgAccount = {
-  id: string;
-  username?: string;
-  profile_picture_url?: string;
-};
-
-type GraphPage = {
-  id: string;
-  name?: string;
-  access_token?: string;
-  instagram_business_account?: GraphIgAccount;
-  connected_instagram_account?: GraphIgAccount;
-};
-
-const PAGE_FIELDS =
-  "id,name,access_token,instagram_business_account{id,username,profile_picture_url},connected_instagram_account{id,username,profile_picture_url}";
-
-function mapPageToAccount(page: GraphPage): DiscoveredAccount | null {
-  const ig = page.instagram_business_account ?? page.connected_instagram_account;
-  if (!ig?.id || !page.access_token) return null;
+/**
+ * Refreshes a long-lived token for another 60 days. Valid for tokens that are
+ * at least 24 hours old and not yet expired.
+ */
+export async function refreshLongLivedToken(
+  longLivedToken: string,
+): Promise<{ token: string; expiresAt: Date | null }> {
+  const data = await request<{ access_token: string; expires_in?: number }>(
+    `${GRAPH_HOST}/refresh_access_token?${new URLSearchParams({
+      grant_type: "ig_refresh_token",
+      access_token: longLivedToken,
+    })}`,
+    { method: "GET", fallback: "Could not refresh the Instagram access token." },
+  );
   return {
-    instagramId: ig.id,
-    username: ig.username || "instagram",
-    profilePictureUrl: ig.profile_picture_url ?? null,
-    fbPageId: page.id,
-    fbPageName: page.name ?? null,
-    pageAccessToken: page.access_token,
+    token: data.access_token,
+    expiresAt: data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : null,
   };
 }
 
-async function listPages(
-  path: string,
-  userAccessToken: string,
-): Promise<GraphPage[]> {
-  try {
-    const data = await graphGet<{ data?: GraphPage[] }>(
-      path,
-      { fields: PAGE_FIELDS, limit: "50", access_token: userAccessToken },
-      "Could not read your Facebook Pages.",
-    );
-    return data.data ?? [];
-  } catch (err: any) {
-    console.warn(`[instagram] ${path} failed:`, err?.message || err);
-    return [];
-  }
-}
-
-async function loadPageById(
-  pageId: string,
-  userAccessToken: string,
-): Promise<GraphPage | null> {
-  try {
-    return await graphGet<GraphPage>(
-      `/${pageId}`,
-      { fields: PAGE_FIELDS, access_token: userAccessToken },
-      "Could not read the Facebook Page.",
-    );
-  } catch (err: any) {
-    console.warn(`[instagram] Page ${pageId} lookup failed:`, err?.message || err);
-    return null;
-  }
-}
-
-/**
- * Facebook Login for Business stores granted Pages on the token as
- * granular_scopes.target_ids. /me/accounts is often empty for those Pages.
- */
-async function pageIdsFromToken(userAccessToken: string): Promise<string[]> {
-  const { appId, appSecret } = instagramConfig();
-  if (!appId || !appSecret) return [];
-
-  try {
-    const data = await graphGet<{
-      data?: {
-        scopes?: string[];
-        granular_scopes?: Array<{ scope?: string; target_ids?: string[] }>;
-      };
-    }>(
-      "/debug_token",
-      {
-        input_token: userAccessToken,
-        access_token: `${appId}|${appSecret}`,
-      },
-      "Could not inspect the Facebook access token.",
-    );
-
-    const granted = data.data ?? {};
-    console.log(`[instagram] token scopes: ${(granted.scopes ?? []).join(", ") || "(none)"}`);
-
-    const pageIds = new Set<string>();
-    for (const entry of granted.granular_scopes ?? []) {
-      const scope = entry.scope ?? "";
-      if (!scope.startsWith("pages_") && scope !== "business_management") continue;
-      for (const id of entry.target_ids ?? []) pageIds.add(id);
-    }
-    console.log(
-      `[instagram] granular Page IDs: ${[...pageIds].join(", ") || "(none)"}`,
-    );
-    return [...pageIds];
-  } catch (err: any) {
-    console.warn("[instagram] debug_token failed:", err?.message || err);
-    return [];
-  }
-}
-
-export interface InstagramDiscoveryResult {
-  accounts: DiscoveredAccount[];
-  /** Facebook Pages the token can actually see. */
-  pageNames: string[];
-}
-
-/**
- * Lists every Instagram Business/Creator account reachable from the user's
- * Facebook Pages. Page tokens derived from a long-lived user token do not
- * expire, so they are what we store for publishing.
- */
-export async function discoverInstagramAccounts(
-  userAccessToken: string,
-): Promise<InstagramDiscoveryResult> {
-  const byId = new Map<string, GraphPage>();
-
-  for (const page of [
-    ...(await listPages("/me/accounts", userAccessToken)),
-    ...(await listPages("/me/assigned_pages", userAccessToken)),
-  ]) {
-    if (page.id) byId.set(page.id, page);
-  }
-
-  console.log(
-    `[instagram] listed ${byId.size} page(s): ${[...byId.values()].map((p) => p.name || p.id).join(", ") || "(none)"}`,
+/** Step 4 — who did we just connect? */
+export async function getInstagramProfile(accessToken: string): Promise<InstagramProfile> {
+  const data = await graphGet<{
+    user_id?: string;
+    id?: string;
+    username: string;
+    account_type?: string;
+    profile_picture_url?: string;
+  }>(
+    "/me",
+    {
+      fields: "user_id,username,account_type,profile_picture_url",
+      access_token: accessToken,
+    },
+    "Could not read your Instagram profile.",
   );
 
-  if (byId.size === 0) {
-    for (const pageId of await pageIdsFromToken(userAccessToken)) {
-      const page = await loadPageById(pageId, userAccessToken);
-      if (page?.id) byId.set(page.id, page);
-    }
-  }
-
-  const pages = [...byId.values()];
-  const pageNames = pages.map((page) => page.name || page.id);
-  let accounts = pages.map(mapPageToAccount).filter((a): a is DiscoveredAccount => a !== null);
-
-  if (accounts.length === 0) {
-    for (const page of pages) {
-      const token = page.access_token || userAccessToken;
-      const detail = await loadPageById(page.id, token);
-      const mapped = mapPageToAccount({
-        ...detail,
-        id: page.id,
-        access_token: detail?.access_token || page.access_token,
-      });
-      if (mapped) accounts.push(mapped);
-    }
-  }
-
-  return { accounts, pageNames };
-}
-
-/** Revokes the app's permissions for this account (best effort). */
-export async function revokeInstagramAccess(
-  instagramUserId: string,
-  accessToken: string,
-): Promise<void> {
-  await graphRequest(`${GRAPH}/${instagramUserId}/permissions`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ access_token: accessToken }),
-    fallback: "Could not revoke Instagram access.",
-  });
+  return {
+    instagramId: String(data.user_id ?? data.id ?? ""),
+    username: data.username,
+    accountType: data.account_type ?? null,
+    profilePictureUrl: data.profile_picture_url ?? null,
+  };
 }
 
 // ── Publishing ───────────────────────────────────────────────────────────────
 
 /**
- * Creates a media container for a video.
+ * Creates a media container.
  *
  * Both post types use the REELS container: Meta retired standalone feed video
- * posts, and `share_to_feed` is now what decides whether the reel also appears
- * on the profile feed grid.
+ * posts, and `share_to_feed` decides whether the reel also appears on the
+ * profile grid. Images use the IMAGE container.
  */
 export async function createMediaContainer(opts: {
   instagramUserId: string;
   accessToken: string;
-  videoUrl: string;
+  mediaUrl: string;
   caption: string;
   coverUrl?: string | null;
   postType: PostType;
+  isImage?: boolean;
 }): Promise<string> {
-  const body: Record<string, unknown> = {
-    media_type: "REELS",
-    video_url: opts.videoUrl,
-    caption: opts.caption,
-    share_to_feed: opts.postType === "FEED",
-    access_token: opts.accessToken,
-  };
-  if (opts.coverUrl) body.cover_url = opts.coverUrl;
+  const body: Record<string, unknown> = opts.isImage
+    ? { image_url: opts.mediaUrl, caption: opts.caption, access_token: opts.accessToken }
+    : {
+        media_type: "REELS",
+        video_url: opts.mediaUrl,
+        caption: opts.caption,
+        share_to_feed: opts.postType === "FEED",
+        access_token: opts.accessToken,
+      };
+
+  if (!opts.isImage && opts.coverUrl) body.cover_url = opts.coverUrl;
 
   const data = await graphPost<{ id: string }>(
     `/${opts.instagramUserId}/media`,
@@ -415,12 +332,15 @@ export async function getContainerStatus(
     { fields: "status_code,status", access_token: accessToken },
     "Could not read the Instagram upload status.",
   );
-  return { status: (data.status_code ?? "IN_PROGRESS") as ContainerStatus, detail: data.status ?? null };
+  return {
+    status: (data.status_code ?? "IN_PROGRESS") as ContainerStatus,
+    detail: data.status ?? null,
+  };
 }
 
 /**
- * Polls until Instagram has finished ingesting the video. Videos are fetched
- * and transcoded server-side by Instagram, so this can take a few minutes.
+ * Polls until Instagram has finished ingesting the media. Instagram downloads
+ * and transcodes server-side, so this can take a few minutes for video.
  */
 export async function waitForContainer(
   containerId: string,
@@ -438,7 +358,7 @@ export async function waitForContainer(
     if (status === "FINISHED" || status === "PUBLISHED") return;
     if (status === "ERROR") {
       throw new InstagramApiError(
-        `Instagram could not process this video${detail ? ` (${detail})` : ""}. Check the format: MP4/MOV, 3–900s, up to 1GB.`,
+        `Instagram could not process this media${detail ? ` (${detail})` : ""}. Check the format: MP4/MOV, 3–900s, up to 1GB.`,
         null,
         null,
         false,
@@ -456,7 +376,7 @@ export async function waitForContainer(
   }
 
   throw new InstagramApiError(
-    "Instagram is still processing this video. It may still publish — check your Instagram account before retrying.",
+    "Instagram is still processing this media. It may still publish — check your Instagram account before retrying.",
     null,
     null,
     false,

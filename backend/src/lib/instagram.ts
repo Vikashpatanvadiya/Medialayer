@@ -49,14 +49,38 @@ export class InstagramApiError extends Error {
   }
 }
 
+/**
+ * Reads an env var, tolerating case differences in the key.
+ *
+ * Env names are case-sensitive, and a dashboard entry like `Instagram_APP_ID`
+ * silently reads as "not configured" — a confusing failure that costs real time.
+ * We accept it and say so loudly instead.
+ */
+function readEnv(...names: string[]): string | undefined {
+  for (const name of names) {
+    const exact = process.env[name];
+    if (exact) return exact;
+  }
+  const wanted = new Set(names.map((n) => n.toLowerCase()));
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value && wanted.has(key.toLowerCase())) {
+      console.warn(
+        `[instagram] Using env var "${key}" — rename it to "${names[0]}" (env names are case-sensitive).`,
+      );
+      return value;
+    }
+  }
+  return undefined;
+}
+
 export function instagramConfig() {
   // Deliberately NOT falling back to META_APP_ID/META_APP_SECRET: those belong
   // to the Facebook app and are rejected by Instagram Login, which fails later
   // and much less clearly than a missing-credentials error here.
-  const clientId = process.env.INSTAGRAM_CLIENT_ID || process.env.INSTAGRAM_APP_ID;
-  const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET || process.env.INSTAGRAM_APP_SECRET;
+  const clientId = readEnv("INSTAGRAM_CLIENT_ID", "INSTAGRAM_APP_ID");
+  const clientSecret = readEnv("INSTAGRAM_CLIENT_SECRET", "INSTAGRAM_APP_SECRET");
   const redirectUri =
-    process.env.INSTAGRAM_REDIRECT_URI ||
+    readEnv("INSTAGRAM_REDIRECT_URI") ||
     `${process.env.BACKEND_URL || "http://localhost:3000"}/api/integrations/instagram/callback`;
   return { clientId, clientSecret, redirectUri };
 }

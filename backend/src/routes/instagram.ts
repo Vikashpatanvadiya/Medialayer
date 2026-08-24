@@ -191,9 +191,14 @@ router.get("/callback", async (req, res) => {
     return;
   }
 
+  // Named so a failure says which of the three Instagram calls died; they fail
+  // in very different ways and the error text alone does not distinguish them.
+  let step = "code exchange";
   try {
     const shortLived = await exchangeCodeForToken(code);
+    step = "long-lived token exchange";
     const { token, expiresAt } = await exchangeForLongLivedToken(shortLived.accessToken);
+    step = "profile read";
     const profile = await getInstagramProfile(token);
 
     const instagramId = profile.instagramId || shortLived.instagramId;
@@ -243,8 +248,9 @@ router.get("/callback", async (req, res) => {
     const message = apiErr?.message ?? "connection_failed";
     const detail = apiErr?.detail && apiErr.detail !== message ? apiErr.detail : null;
     console.error(
-      `[instagram] OAuth callback failed: ${message}` +
+      `[instagram] OAuth callback failed during ${step}: ${message}` +
         (detail ? ` | Instagram said: ${detail}` : "") +
+        (apiErr?.endpoint ? ` | ${apiErr.endpoint}` : "") +
         (apiErr?.code != null ? ` | code=${apiErr.code}` : "") +
         (apiErr?.subcode != null ? ` subcode=${apiErr.subcode}` : ""),
     );
@@ -252,7 +258,7 @@ router.get("/callback", async (req, res) => {
       frontendRedirect({
         instagram: "error",
         reason: "exchange_failed",
-        message: (detail ?? message).slice(0, 200),
+        message: `[${step}] ${detail ?? message}`.slice(0, 200),
       }),
     );
   }

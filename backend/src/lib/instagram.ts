@@ -49,6 +49,8 @@ export class InstagramApiError extends Error {
      * OAuth-style bodies, where `raw` is an empty object.
      */
     readonly detail?: string,
+    /** Method + URL that failed, with secrets stripped. Safe to log. */
+    readonly endpoint?: string,
   ) {
     super(message);
     this.name = "InstagramApiError";
@@ -123,8 +125,24 @@ export function validateRedirectUri(uri: string): string | null {
   return null;
 }
 
+/**
+ * Method + URL with every credential stripped, so a failure can name the exact
+ * request without ever putting a token, code or secret in a log.
+ */
+function safeEndpoint(url: string, method: string): string {
+  try {
+    const u = new URL(url);
+    for (const key of ["access_token", "client_secret", "client_id", "code"]) {
+      if (u.searchParams.has(key)) u.searchParams.set(key, "…");
+    }
+    return `${method.toUpperCase()} ${u.origin}${u.pathname}${u.search}`;
+  } catch {
+    return `${method.toUpperCase()} (unparseable url)`;
+  }
+}
+
 /** Turns an Instagram API error payload into something a creator can act on. */
-function toApiError(payload: any, fallback: string): InstagramApiError {
+function toApiError(payload: any, fallback: string, endpoint?: string): InstagramApiError {
   // Instagram Login returns both Graph-style {error:{...}} and OAuth-style bodies.
   const err = payload?.error ?? {};
   const code: number | null =
@@ -162,7 +180,7 @@ function toApiError(payload: any, fallback: string): InstagramApiError {
     message = "Instagram failed to create the media container. Please try again.";
   }
 
-  return new InstagramApiError(message, code, subcode, needsReconnect, err, raw);
+  return new InstagramApiError(message, code, subcode, needsReconnect, err, raw, endpoint);
 }
 
 async function request<T>(url: string, init: RequestInit & { fallback: string }): Promise<T> {
@@ -188,7 +206,9 @@ async function request<T>(url: string, init: RequestInit & { fallback: string })
     payload = { raw: text };
   }
 
-  if (!res.ok || payload?.error || payload?.error_type) throw toApiError(payload, fallback);
+  if (!res.ok || payload?.error || payload?.error_type) {
+    throw toApiError(payload, fallback, safeEndpoint(url, requestInit.method ?? "GET"));
+  }
   return payload as T;
 }
 

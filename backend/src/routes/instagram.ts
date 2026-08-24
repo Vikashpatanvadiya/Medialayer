@@ -47,6 +47,13 @@ const router: IRouter = Router();
       ? `[instagram] ⚠️  Redirect URI is invalid: ${problem}`
       : `[instagram] Ready. Redirect URI: ${redirectUri}`,
   );
+  // App IDs are public. Printing it is the fastest way to catch the documented
+  // failure mode: the Facebook App ID sitting in INSTAGRAM_CLIENT_ID.
+  console.log(
+    `[instagram] Using client_id: ${instagramConfig().clientId} ` +
+      "(must be the Instagram app ID from Instagram → API setup with Instagram login, " +
+      "NOT the Meta/Facebook App ID)",
+  );
 })();
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";

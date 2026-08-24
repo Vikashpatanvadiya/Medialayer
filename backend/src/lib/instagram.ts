@@ -243,6 +243,21 @@ export function getInstagramAuthUrl(state: string): string {
   return `${AUTHORIZE_URL}?${params.toString()}`;
 }
 
+/**
+ * Classifies a token by its prefix so a wrong-credentials setup is obvious in
+ * the log. Deliberately returns a label, never the token or any part of it:
+ * Instagram Login issues `IGAA…` tokens, Facebook/Meta issues `EAA…`, and
+ * putting the Facebook App ID in INSTAGRAM_CLIENT_ID yields the latter — which
+ * graph.instagram.com rejects as "Unsupported request" rather than as a bad
+ * token, making it otherwise almost impossible to spot.
+ */
+export function classifyToken(token: string | undefined): string {
+  if (!token) return "MISSING";
+  if (token.startsWith("IGAA")) return "IGAA (Instagram Login — correct)";
+  if (token.startsWith("EAA")) return "EAA (Facebook/Meta — wrong app credentials)";
+  return `unrecognised prefix (${token.length} chars)`;
+}
+
 /** Step 2 — swap the authorization code for a short-lived Instagram token. */
 export async function exchangeCodeForToken(
   code: string,
@@ -266,6 +281,15 @@ export async function exchangeCodeForToken(
     body: body.toString(),
     fallback: "Could not exchange the Instagram authorization code.",
   });
+
+  // Shape + token class only; no values. This is the single most useful line
+  // for telling "wrong app credentials" apart from "wrong response shape".
+  console.log(
+    `[instagram] Code exchange OK — response keys: [${Object.keys(data).join(", ")}], ` +
+      `token: ${classifyToken(data.access_token)}, ` +
+      `user_id: ${data.user_id ? "present" : "MISSING"}, ` +
+      `permissions: ${data.permissions ? JSON.stringify(data.permissions) : "none"}`,
+  );
 
   return {
     accessToken: data.access_token,

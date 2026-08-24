@@ -169,6 +169,49 @@ Runs the full flow against a stub Instagram API — authorize URL, code exchange
 long-lived token, refresh, profile, container/poll/publish, error translation —
 and asserts that no `graph.facebook.com` endpoint is ever called.
 
+## Troubleshooting: "Unsupported request - method type: get" (code 100)
+
+Every `graph.instagram.com` call fails for one account while other accounts
+connect and publish normally.
+
+```
+[instagram] Code exchange OK — token: IGAA (Instagram Login — correct),
+            permissions: ["instagram_business_basic","instagram_business_content_publish"]
+[instagram] Long-lived upgrade skipped: Unsupported request - method type: get
+[instagram] OAuth callback failed during profile read: Unsupported request - method type: get | code=100
+```
+
+**This is not a URL, version or credentials bug.** Meta returns code 100 for the
+*account*, not the request, and the literal wording sends you hunting for a
+malformed URL that does not exist. Things worth ruling out once, so they are
+never re-litigated:
+
+- Every malformed token (empty, `undefined`, garbage, wrong prefix) returns code
+  **190**, never 100 — so a code 100 means the token parsed fine.
+- A known-good stored token succeeds against the exact same URL, on `v21.0`,
+  `v22.0`, `v23.0` and unversioned, with the identical field list.
+- The failure survives changing the MediaLayer user, so it is bound to the
+  Instagram account.
+
+Check, in order:
+
+1. **Instagram Tester role.** While the permissions are on Standard Access, only
+   accounts holding a role on the app can be served. Add the account under
+   **App roles → Roles → Instagram Testers**, then accept the invite *as that
+   account* under **Settings and privacy → Apps and websites → Tester invites**.
+   A non-role account still passes the consent screen and still receives a token
+   listing both scopes — the token simply does not work.
+2. **Account type.** Accounts reporting `MEDIA_CREATOR` are known to work. A
+   Business account linked to a Facebook Page may be served through
+   `graph.facebook.com` (Instagram API with *Facebook* Login) instead.
+3. **Recently converted.** Instagram takes a while to enable API access on an
+   account just switched to Professional.
+4. **Stale grant.** Remove the app under **Apps and websites** on instagram.com
+   and re-authorize cleanly.
+
+Advanced Access, granted at the end of App Review, removes the role requirement
+in step 1 for everyone.
+
 ## App Review
 
 Development mode covers the app's own testers. Publishing on behalf of other

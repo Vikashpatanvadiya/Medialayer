@@ -226,7 +226,7 @@ router.get("/callback", async (req, res) => {
     }
 
     step = "profile read";
-    const profile = await getInstagramProfile(token);
+    const profile = await getInstagramProfile(token, shortLived.instagramId);
 
     const instagramId = profile.instagramId || shortLived.instagramId;
 

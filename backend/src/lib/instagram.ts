@@ -167,6 +167,15 @@ function toApiError(payload: any, fallback: string, endpoint?: string): Instagra
   let message = raw;
   if (expired) {
     message = "Instagram connection expired. Please reconnect your Instagram account.";
+  } else if (code === 100 && /unsupported request/i.test(String(raw))) {
+    // Meta's wording for "this account is not served by the Instagram API".
+    // It is returned for the *account*, not the request, so the literal text
+    // sends people hunting for a URL bug that does not exist.
+    message =
+      "Instagram will not serve this account through its API. The account must be a " +
+      "Professional (Business or Creator) account, and while our permissions are still " +
+      "in Standard Access it must also hold a role on the app. Newly converted accounts " +
+      "can take a while before Instagram enables API access.";
   } else if (code === 4 || code === 17 || code === 32 || code === 613) {
     message = "Instagram rate limit reached. Please try again later.";
   } else if (code === 9007 || subcode === 2207042) {
@@ -339,22 +348,46 @@ export async function refreshLongLivedToken(
   };
 }
 
-/** Step 4 — who did we just connect? */
-export async function getInstagramProfile(accessToken: string): Promise<InstagramProfile> {
-  const data = await graphGet<{
-    user_id?: string;
-    id?: string;
-    username: string;
-    account_type?: string;
-    profile_picture_url?: string;
-  }>(
-    "/me",
-    {
-      fields: "user_id,username,account_type,profile_picture_url",
-      access_token: accessToken,
-    },
-    "Could not read your Instagram profile.",
-  );
+type ProfilePayload = {
+  user_id?: string;
+  id?: string;
+  username: string;
+  account_type?: string;
+  profile_picture_url?: string;
+};
+
+const PROFILE_FIELDS = "user_id,username,account_type,profile_picture_url";
+
+/**
+ * Step 4 — who did we just connect?
+ *
+ * `userId` comes from the code exchange. When `/me` fails we retry against that
+ * id directly: `/me` has to resolve the token to a node first, and addressing
+ * the node explicitly skips that step. Costs one extra call only on a path that
+ * was already failing.
+ */
+export async function getInstagramProfile(
+  accessToken: string,
+  userId?: string,
+): Promise<InstagramProfile> {
+  let data: ProfilePayload;
+  try {
+    data = await graphGet<ProfilePayload>(
+      "/me",
+      { fields: PROFILE_FIELDS, access_token: accessToken },
+      "Could not read your Instagram profile.",
+    );
+  } catch (err: any) {
+    if (!userId) throw err;
+    console.warn(
+      `[instagram] /me failed (${err?.message || "unknown"}); retrying as /${userId}.`,
+    );
+    data = await graphGet<ProfilePayload>(
+      `/${userId}`,
+      { fields: PROFILE_FIELDS, access_token: accessToken },
+      "Could not read your Instagram profile.",
+    );
+  }
 
   return {
     instagramId: String(data.user_id ?? data.id ?? ""),

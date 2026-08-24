@@ -196,8 +196,28 @@ router.get("/callback", async (req, res) => {
   let step = "code exchange";
   try {
     const shortLived = await exchangeCodeForToken(code);
+
+    // The 60-day upgrade is an optimisation, not a requirement. Instagram
+    // Business Login can hand back a token that ig_exchange_token refuses with
+    // "Unsupported request - method type: get" (code 100) — it rejects the
+    // route, not the credentials, so there is nothing to retry or reconfigure.
+    // Dropping a working connection over an optional upgrade is the wrong
+    // trade: keep the token we already hold and let the profile read below be
+    // the thing that decides whether it is actually usable.
     step = "long-lived token exchange";
-    const { token, expiresAt } = await exchangeForLongLivedToken(shortLived.accessToken);
+    let token = shortLived.accessToken;
+    let expiresAt: Date | null = null;
+    try {
+      const longLived = await exchangeForLongLivedToken(shortLived.accessToken);
+      token = longLived.token;
+      expiresAt = longLived.expiresAt;
+    } catch (err: any) {
+      console.warn(
+        `[instagram] Long-lived upgrade skipped: ${err?.message || "unknown error"} — ` +
+          "continuing with the token from the code exchange.",
+      );
+    }
+
     step = "profile read";
     const profile = await getInstagramProfile(token);
 

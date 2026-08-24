@@ -29,16 +29,17 @@ router.get("/:videoId/url", requireAuth, async (req, res) => {
   }
 
   let url: string | null = null;
+  const resourceType = video.mediaType === "image" ? "image" : "video";
 
   if (video.storedFilename) {
     // Normal case: use storedFilename to build signed URL
-    url = getSignedUrl(video.storedFilename);
+    url = getSignedUrl(video.storedFilename, resourceType);
   } else if (video.videoUrl?.includes("cloudinary.com")) {
     // Legacy case: extract public_id from the stored Cloudinary URL
     // URL format: https://res.cloudinary.com/<cloud>/video/upload/<transformations>/<public_id>.<ext>
     const match = video.videoUrl.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
     if (match?.[1]) {
-      url = getSignedUrlFromPublicId(match[1]);
+      url = getSignedUrlFromPublicId(match[1], resourceType);
     }
   }
 

@@ -97,6 +97,10 @@ router.post("/upload/:videoId", requireAuth, requireRole("creator"), async (req,
   const [video] = await db.select().from(videosTable).where(eq(videosTable.id, videoId)).limit(1);
   if (!video) { res.status(404).json({ error: "Video not found" }); return; }
   if (video.creatorId !== req.user!.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (video.mediaType === "image") {
+    res.status(400).json({ error: "Photo submissions can't be uploaded to YouTube. Publish them to Instagram instead." });
+    return;
+  }
   if (video.status !== "approved" && video.status !== "uploaded") {
     res.status(400).json({ error: "Video must be approved before uploading to YouTube" });
     return;

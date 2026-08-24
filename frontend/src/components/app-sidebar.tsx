@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useLocation } from "wouter";
 import {
-  LayoutDashboard, Video, Users, Bell, Settings,
+  LayoutDashboard, Video, Users, Bell, Settings, CalendarDays,
   Upload, ChevronDown, LogOut, ChevronsUpDown,
 } from "lucide-react";
 import {
@@ -32,12 +32,14 @@ export function AppSidebar({ user, unreadCount, onLogout, ...props }: AppSidebar
     { title: "Dashboard",     href: "/dashboard/creator",         icon: LayoutDashboard },
     { title: "All Videos",    href: "/dashboard/creator/videos",  icon: Video },
     { title: "My Editors",    href: "/dashboard/creator/editors", icon: Users },
+    { title: "Calendar",      href: "/dashboard/calendar",        icon: CalendarDays },
     { title: "Notifications", href: "/dashboard/notifications",   icon: Bell, badge: unreadCount },
     { title: "Settings",      href: "/dashboard/profile",         icon: Settings },
   ] : [
     { title: "Dashboard",     href: "/dashboard/editor",               icon: LayoutDashboard },
     { title: "My Submissions",href: "/dashboard/editor/submissions",   icon: Video },
     { title: "My Creators",   href: "/dashboard/editor/creators",      icon: Users },
+    { title: "Calendar",      href: "/dashboard/calendar",             icon: CalendarDays },
     { title: "Notifications", href: "/dashboard/notifications",        icon: Bell, badge: unreadCount },
     { title: "Settings",      href: "/dashboard/profile",              icon: Settings },
   ];

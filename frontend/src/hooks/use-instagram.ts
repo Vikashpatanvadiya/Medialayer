@@ -69,7 +69,7 @@ const CONNECT_ERRORS: Record<string, string> = {
   invalid_state:
     "That connection link was already used or expired. Please click Connect Instagram again.",
   exchange_failed:
-    "This Instagram account could not be connected. Make sure you're using a Professional (Business or Creator) account.",
+    "This Instagram account could not be connected. It must be a Professional (Business or Creator) account, and it must have a role on the MediaLayer app while our Instagram permissions are still in Standard Access.",
   server_error: "Something went wrong on our side. Please try connecting again in a moment.",
 };
 
@@ -100,10 +100,20 @@ export function readConnectOutcome(): ConnectOutcome | null {
         }
       : {
           status: "error",
-          message:
-            CONNECT_ERRORS[params.get("reason") ?? ""] ??
-            params.get("message") ??
-            "This Instagram account could not be connected.",
+          // The callback appends `message` with Instagram's own wording on
+          // exchange_failed. That detail is the only thing that distinguishes a
+          // personal account from a missing tester role or a redirect-URI
+          // mismatch, so it must win over the generic copy — otherwise every
+          // cause looks identical to the creator and to us.
+          message: (() => {
+            const reason = params.get("reason") ?? "";
+            const detail = params.get("message");
+            const generic = CONNECT_ERRORS[reason];
+            if (detail && detail !== "connection_failed") {
+              return generic ? `${generic} Instagram said: ${detail}` : detail;
+            }
+            return generic ?? "This Instagram account could not be connected.";
+          })(),
         };
 
   for (const key of ["instagram", "username", "reason", "message"]) params.delete(key);

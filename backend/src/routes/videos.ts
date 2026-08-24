@@ -25,6 +25,11 @@ function formatVideo(
     // Only expose videoUrl if it's a YouTube URL — never expose raw Cloudinary URLs
     videoUrl: video.youtubeUrl || (video.videoUrl?.includes("youtube") ? video.videoUrl : ""),
     thumbnailUrl: video.thumbnailUrl ?? undefined,
+    mediaType: video.mediaType ?? "video",
+    destination: video.destination ?? "youtube",
+    format: video.format ?? "video",
+    scheduledAt: video.scheduledAt ?? undefined,
+    scheduleTimezone: video.scheduleTimezone ?? undefined,
     status: video.status,
     creatorId: video.creatorId,
     editorId: video.editorId,
@@ -111,6 +116,20 @@ router.post("/", requireAuth, requireRole("editor"), async (req, res) => {
   }
 
   const { title, description, tags, thumbnailUrl, fileSize, duration } = parsed.data;
+  // Editors submit either a video (YouTube / Reels) or a photo (IG feed post).
+  const mediaType = req.body.mediaType === "image" ? "image" : "video";
+  // Where it's going, and in what shape. Photos only make sense on Instagram.
+  const destination = req.body.destination === "instagram" || mediaType === "image" ? "instagram" : "youtube";
+  const allowedFormats = destination === "instagram" ? ["reel", "post"] : ["video", "short"];
+  const requestedFormat = String(req.body.format ?? "");
+  const format = allowedFormats.includes(requestedFormat)
+    ? requestedFormat
+    : destination === "instagram"
+      ? (mediaType === "image" ? "post" : "reel")
+      : "video";
+  const scheduledAtRaw = req.body.scheduledAt as string | undefined;
+  const scheduledAt = scheduledAtRaw ? new Date(scheduledAtRaw) : null;
+  const scheduleTimezone = (req.body.scheduleTimezone as string | undefined) ?? null;
   const storedFilename = req.body.storedFilename as string | undefined;
   const cloudinaryUrl = req.body.videoUrl as string | undefined;
 
@@ -135,6 +154,11 @@ router.post("/", requireAuth, requireRole("editor"), async (req, res) => {
       description,
       tags: tags || [],
       videoUrl,
+      mediaType,
+      destination,
+      format,
+      scheduledAt: scheduledAt && !Number.isNaN(scheduledAt.getTime()) ? scheduledAt : null,
+      scheduleTimezone,
       storedFilename: storedFilename ?? null,
       thumbnailUrl: thumbnailUrl ?? null,
       creatorId,

@@ -74,8 +74,26 @@ In **Instagram → API setup with Instagram login**:
 | OAuth Redirect URI | the exact `INSTAGRAM_REDIRECT_URI` value |
 | Permissions | `instagram_business_basic`, `instagram_business_content_publish` |
 
-Add the Instagram account under **Instagram Tester** (and accept the invite from
-the Instagram app's settings) while the app is in development.
+### Instagram testers (development mode)
+
+While the app is in Development mode, only accounts with a role on the app can
+authorize it. Both steps are required:
+
+1. **App roles → Roles → Instagram Testers → Add people** → the Instagram username.
+2. On instagram.com as that account: **Settings and privacy → Apps and websites →
+   Tester invites → Accept**.
+
+Skipping step 2 produces this on Instagram's own error page, before the callback
+is ever reached:
+
+```
+instagram.com/oauth/authorize/third_party/error/?message=Insufficient developer role
+```
+
+The same error appears if the browser is logged into a different Instagram
+account than the invited one, or if the account is personal rather than
+Professional. MediaLayer cannot detect or report these — Instagram stops the
+flow on its side and never redirects back.
 
 ## Scopes
 
@@ -158,3 +176,6 @@ creators needs Advanced Access for `instagram_business_basic` and
 `instagram_business_content_publish`, which requires App Review — screencast of
 the flow, a privacy policy URL, and business verification. Nothing in the code
 changes for that.
+
+See [META_APP_REVIEW.md](./META_APP_REVIEW.md) for the exact dashboard field
+values, permission justifications, screencast script and submission checklist.

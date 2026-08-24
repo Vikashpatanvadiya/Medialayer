@@ -2,10 +2,16 @@ import { Router } from "express";
 import { db, notificationsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../lib/auth.js";
+import { ensureScheduleReminders } from "../lib/schedule-reminders.js";
 
 const router = Router();
 
 router.get("/", requireAuth, async (req, res) => {
+  // Schedule reminders are raised lazily here — no always-on worker needed.
+  await ensureScheduleReminders(req.user!.userId).catch((err) =>
+    console.error("[schedule] Reminder generation failed:", err?.message || err),
+  );
+
   const notifications = await db
     .select()
     .from(notificationsTable)

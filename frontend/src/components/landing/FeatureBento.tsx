@@ -11,7 +11,7 @@ const FEATURE_CARDS: FeatureCard[] = [
   {
     label: "Workflow",
     title: "Your entire pipeline, connected",
-    desc: "From secure upload to in-browser review — every step of the creator–editor workflow lives in one place. No Drive links, no re-uploads.",
+    desc: "From secure upload to in-browser review to publishing on YouTube and Instagram — every step of the creator–editor workflow lives in one place. No Drive links, no re-uploads.",
     image: "/features/cards/c101e223-adb1-41e0-86a3-24f4857f7812.png",
   },
   {
@@ -40,8 +40,8 @@ const FEATURE_CARDS: FeatureCard[] = [
   },
   {
     label: "Publishing",
-    title: "Publish straight to YouTube",
-    desc: "Push approved videos directly to your channel via OAuth. No re-uploading, no extra tools.",
+    title: "Publish to YouTube and Instagram",
+    desc: "Push approved videos straight to your YouTube channel, or post them as an Instagram Reel or feed post. One approval, either destination — no re-uploading, no extra tools.",
     image: "/features/cards/5751e5bd-b1ce-4da8-b79c-dc07a886a4fa.png",
   },
 ];

@@ -12,6 +12,7 @@ import streamRouter from "./stream.js";
 import feedbackRouter from "./feedback.js";
 import paymentsRouter from "./payments.js";
 import instagramRouter, { instagramPublishRouter } from "./instagram.js";
+import scheduleRouter from "./schedule.js";
 
 const router: IRouter = Router();
 
@@ -23,6 +24,7 @@ router.use("/videos", videosRouter);
 // Instagram publish endpoints live under /api/videos/:id/... alongside the rest.
 router.use("/videos", instagramPublishRouter);
 router.use("/integrations/instagram", instagramRouter);
+router.use("/schedule", scheduleRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/youtube", youtubeRouter);
 router.use("/upload", uploadRouter);

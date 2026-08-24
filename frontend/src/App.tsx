@@ -28,8 +28,10 @@ import VideoDetail from "./pages/video-detail";
 import NotFound from "@/pages/not-found";
 import PrivacyPolicy from "@/pages/privacy";
 import TermsOfService from "@/pages/terms";
+import DataDeletion from "@/pages/data-deletion";
 import ProfilePage from "./pages/profile";
 import NotificationsPage from "./pages/notifications";
+import CalendarPage from "./pages/calendar";
 import DesignSystemPage from "./pages/design-system";
 import GoogleAuthSuccess from "@/pages/auth-google-success";
 import CheckoutPage from "@/pages/checkout";
@@ -147,6 +149,10 @@ function Router() {
         <ProtectedRoute component={ProfilePage} />
       </Route>
 
+      <Route path="/dashboard/calendar">
+        <ProtectedRoute component={CalendarPage} />
+      </Route>
+
       <Route path="/dashboard/notifications">
         <ProtectedRoute component={NotificationsPage} />
       </Route>
@@ -172,6 +178,10 @@ function Router() {
 
       <Route path="/terms">
         <TermsOfService />
+      </Route>
+
+      <Route path="/data-deletion">
+        <DataDeletion />
       </Route>
 
       <Route path="/checkout">

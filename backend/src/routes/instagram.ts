@@ -235,14 +235,24 @@ router.get("/callback", async (req, res) => {
 
     res.redirect(frontendRedirect({ instagram: "connected", username: profile.username }));
   } catch (err: any) {
-    // Never leak tokens, codes or secrets into logs or the redirect.
-    const message = err instanceof InstagramApiError ? err.message : "connection_failed";
-    console.error(`[instagram] OAuth callback failed: ${message}`);
+    // Never leak tokens, codes or secrets — but Instagram's own error text is
+    // the only thing that distinguishes "not a Professional account" from
+    // "this account has no role on the app while the permission is still on
+    // Standard Access", so it must reach both the log and the creator.
+    const apiErr = err instanceof InstagramApiError ? err : null;
+    const message = apiErr?.message ?? "connection_failed";
+    const detail = apiErr?.detail && apiErr.detail !== message ? apiErr.detail : null;
+    console.error(
+      `[instagram] OAuth callback failed: ${message}` +
+        (detail ? ` | Instagram said: ${detail}` : "") +
+        (apiErr?.code != null ? ` | code=${apiErr.code}` : "") +
+        (apiErr?.subcode != null ? ` subcode=${apiErr.subcode}` : ""),
+    );
     res.redirect(
       frontendRedirect({
         instagram: "error",
         reason: "exchange_failed",
-        message: message.slice(0, 200),
+        message: (detail ?? message).slice(0, 200),
       }),
     );
   }
@@ -309,11 +319,12 @@ router.post(
 // ── Publishing ───────────────────────────────────────────────────────────────
 
 /** Signed Cloudinary URL Instagram can fetch server-side. */
-function resolveVideoUrl(video: typeof videosTable.$inferSelect): string | null {
-  if (video.storedFilename) return getSignedUrl(video.storedFilename);
+function resolveMediaUrl(video: typeof videosTable.$inferSelect): string | null {
+  const resourceType = video.mediaType === "image" ? "image" : "video";
+  if (video.storedFilename) return getSignedUrl(video.storedFilename, resourceType);
   if (video.videoUrl?.includes("cloudinary.com")) {
     const match = video.videoUrl.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
-    if (match?.[1]) return getSignedUrlFromPublicId(match[1]);
+    if (match?.[1]) return getSignedUrlFromPublicId(match[1], resourceType);
   }
   if (video.videoUrl?.startsWith("https://")) return video.videoUrl;
   return null;
@@ -390,12 +401,12 @@ async function startPublish(input: PublishRequest): Promise<PublishOutcome> {
       };
     }
     video = row;
-    mediaUrl = resolveVideoUrl(row);
+    mediaUrl = resolveMediaUrl(row);
     if (!mediaUrl) {
       return {
         ok: false,
         status: 400,
-        error: "No video file available to publish. Ask the editor to re-upload.",
+        error: `No ${row.mediaType === "image" ? "photo" : "video"} file available to publish. Ask the editor to re-upload.`,
       };
     }
   } else if (input.mediaUrl) {
@@ -425,13 +436,18 @@ async function startPublish(input: PublishRequest): Promise<PublishOutcome> {
     }
   }
 
+  // A photo submission is authoritative; otherwise fall back to the file extension.
+  const isImage = video ? video.mediaType === "image" : /\.(jpe?g|png)(\?|$)/i.test(mediaUrl);
+  // Instagram has no such thing as an image Reel — photos always go to the feed.
+  const postType: PostType = isImage ? "FEED" : input.postType;
+
   const [post] = await db
     .insert(instagramPostsTable)
     .values({
       videoId: input.videoId ?? null,
       instagramAccountId: account.id,
       publishedById: input.userId,
-      postType: input.postType,
+      postType,
       caption: input.caption,
       coverUrl: input.coverUrl || null,
       status: "PENDING",
@@ -439,13 +455,12 @@ async function startPublish(input: PublishRequest): Promise<PublishOutcome> {
     .returning();
 
   await logAction(input.userId, "instagram_publish_started", input.videoId ?? undefined, {
-    postType: input.postType,
+    postType,
     username: account.username,
   });
   console.log(`[instagram] Publish started for @${account.username}`);
 
   const accessToken = decrypt(account.accessToken);
-  const isImage = /\.(jpe?g|png)(\?|$)/i.test(mediaUrl);
 
   void (async () => {
     try {
@@ -455,7 +470,7 @@ async function startPublish(input: PublishRequest): Promise<PublishOutcome> {
         mediaUrl: mediaUrl!,
         caption: input.caption,
         coverUrl: input.coverUrl || null,
-        postType: input.postType,
+        postType,
         isImage,
       });
 
@@ -484,7 +499,7 @@ async function startPublish(input: PublishRequest): Promise<PublishOutcome> {
         .where(eq(instagramPostsTable.id, post.id));
 
       await logAction(input.userId, "published_to_instagram", input.videoId ?? undefined, {
-        postType: input.postType,
+        postType,
         username: account.username,
         permalink,
         instagramPostId,
@@ -494,7 +509,7 @@ async function startPublish(input: PublishRequest): Promise<PublishOutcome> {
         await db.insert(notificationsTable).values({
           userId: video.editorId,
           title:
-            input.postType === "REELS" ? "Published as an Instagram Reel" : "Published to Instagram",
+            postType === "REELS" ? "Published as an Instagram Reel" : "Published to Instagram",
           message: `"${video.title}" is live on @${account.username}: ${permalink}`,
           type: "video_published_instagram",
           videoId: video.id,
@@ -513,7 +528,7 @@ async function startPublish(input: PublishRequest): Promise<PublishOutcome> {
         .catch(() => {});
 
       await logAction(input.userId, "instagram_publish_failed", input.videoId ?? undefined, {
-        postType: input.postType,
+        postType,
         username: account.username,
         error: message,
       });

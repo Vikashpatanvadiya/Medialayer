@@ -6,9 +6,15 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-export async function uploadToCloudinary(filePath: string, filename: string): Promise<string> {
+export type MediaResource = "video" | "image";
+
+export async function uploadToCloudinary(
+  filePath: string,
+  filename: string,
+  resourceType: MediaResource = "video",
+): Promise<string> {
   const result = await cloudinary.uploader.upload(filePath, {
-    resource_type: "video",
+    resource_type: resourceType,
     public_id: filename.replace(/\.[^/.]+$/, ""), // strip extension
     folder: "medialayer",
     overwrite: true,
@@ -17,15 +23,18 @@ export async function uploadToCloudinary(filePath: string, filename: string): Pr
   return result.secure_url;
 }
 
-export function getSignedUrl(filename: string): string {
+export function getSignedUrl(filename: string, resourceType: MediaResource = "video"): string {
   const publicId = `medialayer/${filename.replace(/\.[^/.]+$/, "")}`;
-  return getSignedUrlFromPublicId(publicId);
+  return getSignedUrlFromPublicId(publicId, resourceType);
 }
 
 // Use when you already have the full public_id (e.g. extracted from a legacy videoUrl)
-export function getSignedUrlFromPublicId(publicId: string): string {
+export function getSignedUrlFromPublicId(
+  publicId: string,
+  resourceType: MediaResource = "video",
+): string {
   return cloudinary.url(publicId, {
-    resource_type: "video",
+    resource_type: resourceType,
     type: "authenticated",
     secure: true,
     sign_url: true,
@@ -33,9 +42,12 @@ export function getSignedUrlFromPublicId(publicId: string): string {
   });
 }
 
-export async function deleteFromCloudinary(filename: string): Promise<void> {
+export async function deleteFromCloudinary(
+  filename: string,
+  resourceType: MediaResource = "video",
+): Promise<void> {
   const publicId = `medialayer/${filename.replace(/\.[^/.]+$/, "")}`;
-  await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
+  await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
 }
 
 export async function downloadFromCloudinary(filenameOrUrl: string, destPath: string): Promise<void> {

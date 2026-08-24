@@ -43,6 +43,12 @@ export class InstagramApiError extends Error {
     /** True when the only fix is for the user to reconnect their account. */
     readonly needsReconnect: boolean,
     readonly raw?: unknown,
+    /**
+     * Instagram's own wording, kept even when `message` is replaced with
+     * friendlier copy. Without this the original text is unrecoverable for
+     * OAuth-style bodies, where `raw` is an empty object.
+     */
+    readonly detail?: string,
   ) {
     super(message);
     this.name = "InstagramApiError";
@@ -131,10 +137,17 @@ function toApiError(payload: any, fallback: string): InstagramApiError {
     payload?.error_description ||
     fallback;
 
-  const needsReconnect = code === 190 || code === 102 || code === 463 || err.type === "OAuthException";
+  // 190/102/463 are the genuine "this token is dead" codes. A bare
+  // OAuthException is far broader — insufficient app role, a permission still
+  // on Standard Access, an unapproved scope — and rewriting those as "expired"
+  // during an *initial* connect hides the only sentence that says what is
+  // actually wrong. Keep needsReconnect broad (it drives the reconnect prompt
+  // at publish time) but only replace the wording for real expiry.
+  const expired = code === 190 || code === 102 || code === 463;
+  const needsReconnect = expired || err.type === "OAuthException";
 
   let message = raw;
-  if (needsReconnect) {
+  if (expired) {
     message = "Instagram connection expired. Please reconnect your Instagram account.";
   } else if (code === 4 || code === 17 || code === 32 || code === 613) {
     message = "Instagram rate limit reached. Please try again later.";
@@ -149,7 +162,7 @@ function toApiError(payload: any, fallback: string): InstagramApiError {
     message = "Instagram failed to create the media container. Please try again.";
   }
 
-  return new InstagramApiError(message, code, subcode, needsReconnect, err);
+  return new InstagramApiError(message, code, subcode, needsReconnect, err, raw);
 }
 
 async function request<T>(url: string, init: RequestInit & { fallback: string }): Promise<T> {

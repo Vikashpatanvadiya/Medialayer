@@ -22,6 +22,10 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isSubmittingRef = useRef(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [mediaType, setMediaType] = useState<"video" | "image">("video");
+  const [destination, setDestination] = useState<"youtube" | "instagram">("youtube");
+  const [format, setFormat] = useState<"video" | "short" | "reel" | "post">("video");
+  const [scheduledAt, setScheduledAt] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStage, setUploadStage] = useState<"idle" | "uploading" | "processing" | "done">("idle");
@@ -42,9 +46,21 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("video/")) {
-      toast({ title: "Invalid file", description: "Please select a video file.", variant: "destructive" });
+    const isVideo = file.type.startsWith("video/");
+    const isImage = file.type.startsWith("image/");
+    if (!isVideo && !isImage) {
+      toast({
+        title: "Unsupported file",
+        description: "Select a video (YouTube, Reels) or a photo (Instagram feed post).",
+        variant: "destructive",
+      });
       return;
+    }
+    setMediaType(isImage ? "image" : "video");
+    if (isImage) {
+      // A photo can't be a YouTube upload or a Reel.
+      setDestination("instagram");
+      setFormat("post");
     }
     setSelectedFile(file);
     setUploadedFilename(null);
@@ -63,7 +79,8 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
     return new Promise(async (resolve, reject) => {
       try {
         const token = localStorage.getItem("layer_token");
-        const ext = selectedFile.name.split(".").pop()?.toLowerCase() || "mp4";
+        const isImage = selectedFile.type.startsWith("image/");
+        const ext = selectedFile.name.split(".").pop()?.toLowerCase() || (isImage ? "jpg" : "mp4");
 
         // Step 1 — get signed params (tiny request, no file data)
         const signRes = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/upload/sign`, {
@@ -131,7 +148,11 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           reject(new Error("Network error during upload"));
         });
 
-        xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloud_name}/video/upload`);
+        // Photos and videos are different Cloudinary resource types.
+        xhr.open(
+          "POST",
+          `https://api.cloudinary.com/v1_1/${cloud_name}/${isImage ? "image" : "video"}/upload`,
+        );
         xhr.send(formData);
       } catch (err: any) {
         setIsUploading(false);
@@ -206,7 +227,11 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
 
   const handleRealSubmit = async (data: z.infer<typeof schema>) => {
     if (!selectedFile) {
-      toast({ title: "No video", description: "Please select a video file to upload.", variant: "destructive" });
+      toast({
+        title: "No file selected",
+        description: "Choose a video or a photo to submit.",
+        variant: "destructive",
+      });
       return;
     }
     // Guard against double-submit
@@ -246,6 +271,11 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
           description: data.description,
           tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
           videoUrl: cloudinaryUrl,
+          mediaType,
+          destination,
+          format,
+          scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+          scheduleTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           storedFilename: filename,
           thumbnailUrl: finalThumbnailUrl || undefined,
           fileSize: selectedFile.size,
@@ -292,34 +322,42 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
         <div className="p-6 overflow-y-auto">
           <form id="submission-form" onSubmit={form.handleSubmit(handleRealSubmit)} className="space-y-6">
 
-            {/* Video File Upload */}
+            {/* Media upload — video or photo */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Video File</label>
+              <label className="text-sm font-semibold text-foreground">Video or photo</label>
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className={`relative border-2 border-dashed rounded-[var(--radius-6)] p-8 text-center cursor-pointer transition-colors ${
                   selectedFile ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/50 hover:bg-secondary/50"
                 }`}
               >
-                <input ref={fileInputRef} type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
+                <input ref={fileInputRef} type="file" accept="video/*,image/*" onChange={handleFileSelect} className="hidden" />
                 {!selectedFile ? (
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-14 h-14 rounded-[var(--radius-6)] bg-secondary flex items-center justify-center">
                       <Upload className="w-7 h-7 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">Click to upload video</p>
-                      <p className="text-sm text-muted-foreground mt-1">MP4, MOV — up to 2GB</p>
+                      <p className="font-semibold text-foreground">Click to upload</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Video (MP4, MOV — up to 2GB) or photo (JPG, PNG)
+                      </p>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-14 h-14 rounded-[var(--radius-6)] bg-primary/10 flex items-center justify-center">
-                      <Film className="w-7 h-7 text-primary" />
+                      {mediaType === "image" ? (
+                        <ImageIcon className="w-7 h-7 text-primary" />
+                      ) : (
+                        <Film className="w-7 h-7 text-primary" />
+                      )}
                     </div>
                     <div>
                       <p className="font-semibold text-foreground truncate max-w-xs">{selectedFile.name}</p>
-                      <p className="text-sm text-muted-foreground mt-1">{fileSizeMB} MB — click to change</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {mediaType === "image" ? "Photo" : "Video"} · {fileSizeMB} MB — click to change
+                      </p>
                     </div>
                   </div>
                 )}
@@ -378,9 +416,93 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
               {form.formState.errors.creatorId && <p className="text-sm text-destructive">{form.formState.errors.creatorId.message}</p>}
             </div>
 
+            {/* Destination & format */}
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-foreground">Publish to</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {([
+                    { value: "youtube", label: "YouTube", disabled: mediaType === "image" },
+                    { value: "instagram", label: "Instagram", disabled: false },
+                  ] as const).map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      disabled={option.disabled}
+                      onClick={() => {
+                        setDestination(option.value);
+                        setFormat(option.value === "youtube" ? "video" : mediaType === "image" ? "post" : "reel");
+                      }}
+                      className={`rounded-[var(--radius-5)] border p-3 text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                        destination === option.value
+                          ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                          : "border-border hover:bg-secondary"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                {mediaType === "image" && (
+                  <p className="text-xs text-muted-foreground">
+                    Photos can only be published to Instagram.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-foreground">Format</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(destination === "youtube"
+                    ? ([
+                        { value: "video", label: "Video", hint: "Standard landscape upload" },
+                        { value: "short", label: "Short", hint: "Vertical, under 60s" },
+                      ] as const)
+                    : ([
+                        { value: "reel", label: "Reel", hint: "Vertical video", disabled: mediaType === "image" },
+                        { value: "post", label: "Post", hint: "Appears on the feed grid" },
+                      ] as const)
+                  ).map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      disabled={"disabled" in option ? option.disabled : false}
+                      onClick={() => setFormat(option.value)}
+                      className={`rounded-[var(--radius-5)] border p-3 text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                        format === option.value
+                          ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                          : "border-border hover:bg-secondary"
+                      }`}
+                    >
+                      <span className="block text-sm font-medium">{option.label}</span>
+                      <span className="block text-xs text-muted-foreground">{option.hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-foreground">
+                  Schedule <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  className="w-full px-4 py-3 rounded-[var(--radius-5)] bg-background border border-border text-foreground"
+                />
+                <p className="text-xs text-muted-foreground">
+                  The creator gets a reminder that morning and again at this time. Nothing publishes
+                  automatically.
+                </p>
+              </div>
+            </div>
+
             {/* Title */}
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-foreground">Video Title</label>
+              <label className="text-sm font-semibold text-foreground">
+                {destination === "instagram" ? "Title (internal)" : "Video Title"}
+              </label>
               <input
                 {...form.register("title")}
                 className="w-full px-4 py-3 rounded-[var(--radius-5)] bg-background border border-border text-foreground placeholder:text-muted-foreground"
@@ -396,7 +518,7 @@ export default function NewSubmissionModal({ onClose, linkedCreators }: { onClos
                 {...form.register("description")}
                 rows={3}
                 className="w-full px-4 py-3 rounded-[var(--radius-5)] bg-background border border-border text-foreground placeholder:text-muted-foreground resize-none"
-                placeholder="YouTube description, notes for creator..."
+                placeholder={destination === "instagram" ? "Caption draft, notes for creator..." : "YouTube description, notes for creator..."}
               />
               {form.formState.errors.description && <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>}
             </div>

@@ -13,6 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { apiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { InstagramPublishCard } from "@/components/integrations/instagram-publish-card";
+import { ScheduleCard } from "@/components/schedule-card";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
@@ -304,6 +305,8 @@ export default function VideoDetail() {
 
   const backPath = `/dashboard/${user?.role}`;
   const solanaCluster = import.meta.env.VITE_SOLANA_CLUSTER || import.meta.env.VITE_SOLANA_NETWORK || "devnet";
+  // Photo submissions render as images and can only go to Instagram.
+  const isPhoto = (video as { mediaType?: string }).mediaType === "image";
 
   // ── render ──────────────────────────────────────────────────────────────────
 
@@ -396,19 +399,30 @@ export default function VideoDetail() {
         {/* Left — video + description */}
         <div className="lg:col-span-2 space-y-5">
 
-          {/* Video player — brief: white card, 8px radius, shadow */}
-          <div className="bg-black rounded-[var(--radius-4)] overflow-hidden shadow-[var(--shadow-3)] aspect-video">
+          {/* Player — a photo submission renders as an image, not a video element */}
+          <div
+            className={`bg-black rounded-[var(--radius-4)] overflow-hidden shadow-[var(--shadow-3)] ${
+              isPhoto ? "flex items-center justify-center min-h-[320px] max-h-[70vh]" : "aspect-video"
+            }`}
+          >
             {embedUrl ? (
               <iframe src={embedUrl} className="w-full h-full" allowFullScreen title="Video Player" />
             ) : videoSrcLoading ? (
-              <div className="w-full h-full flex items-center justify-center">
+              <div className="w-full h-full flex items-center justify-center py-24">
                 <Loader2 className="w-7 h-7 text-white animate-spin" />
               </div>
+            ) : videoSrc && isPhoto ? (
+              <img
+                key={videoSrc}
+                src={videoSrc}
+                alt={video.title}
+                className="max-h-[70vh] w-auto max-w-full object-contain"
+              />
             ) : videoSrc ? (
               <video key={videoSrc} src={videoSrc} controls className="w-full h-full" preload="metadata" controlsList="nodownload" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/40 text-sm">
-                No video available
+              <div className="w-full h-full flex items-center justify-center py-24 text-white/40 text-sm">
+                No {isPhoto ? "photo" : "video"} available
               </div>
             )}
           </div>
@@ -518,8 +532,8 @@ export default function VideoDetail() {
             )}
           </div>
 
-          {/* YouTube card — creators only */}
-          {isCreator && (video.status === "approved" || video.status === "uploaded") && (
+          {/* YouTube card — creators only, videos only */}
+          {isCreator && !isPhoto && (video.status === "approved" || video.status === "uploaded") && (
             <div className="bg-card border border-border rounded-[var(--radius-4)] p-5 shadow-[var(--shadow-2)] space-y-4">
               <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2 pb-3 border-b border-border">
                 <Youtube className="w-4 h-4 text-[var(--red-4)]" /> YouTube Upload
@@ -630,6 +644,14 @@ export default function VideoDetail() {
             </div>
           )}
 
+          {/* Schedule — either side may set or change it */}
+          <ScheduleCard
+            videoId={video.id}
+            scheduledAt={(video as { scheduledAt?: string }).scheduledAt ?? null}
+            destination={(video as { destination?: "youtube" | "instagram" }).destination}
+            postFormat={(video as { format?: "video" | "short" | "reel" | "post" }).format}
+          />
+
           {/* Instagram card — creators publish; editors see status only */}
           <InstagramPublishCard
             videoId={video.id}
@@ -637,6 +659,10 @@ export default function VideoDetail() {
             videoTitle={video.title}
             videoTags={video.tags}
             thumbnailUrl={video.thumbnailUrl}
+            isPhoto={isPhoto}
+            defaultPostType={
+              (video as { format?: string }).format === "post" ? "FEED" : "REELS"
+            }
             isCreator={!!isCreator}
           />
 

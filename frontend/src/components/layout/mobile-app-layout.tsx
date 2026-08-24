@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   LogOut,
   Settings,
+  CalendarDays,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -30,6 +31,7 @@ const TITLES: [string, string][] = [
   ["/dashboard/creator/editors", "My editors"],
   ["/dashboard/editor/submissions", "My submissions"],
   ["/dashboard/editor/creators", "My creators"],
+  ["/dashboard/calendar", "Calendar"],
   ["/dashboard/notifications", "Notifications"],
   ["/dashboard/profile", "Settings"],
   ["/dashboard/creator", "Home"],
@@ -137,8 +139,14 @@ export function MobileAppLayout({
                 <p className="truncate text-sm font-semibold text-foreground">{user?.name}</p>
                 <p className="truncate text-xs capitalize text-muted-foreground">{user?.role}</p>
               </div>
-              <Link href="/dashboard/profile">
+              <Link href="/dashboard/calendar">
                 <div className="mt-1 flex items-center gap-2 rounded-[var(--radius-4)] px-3 py-2.5 text-sm text-muted-foreground active:bg-muted">
+                  <CalendarDays className="size-4" />
+                  Calendar
+                </div>
+              </Link>
+              <Link href="/dashboard/profile">
+                <div className="flex items-center gap-2 rounded-[var(--radius-4)] px-3 py-2.5 text-sm text-muted-foreground active:bg-muted">
                   <Settings className="size-4" />
                   Settings
                 </div>

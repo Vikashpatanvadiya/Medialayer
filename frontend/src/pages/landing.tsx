@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion, useInView, useScroll, useTransform, useSpring } from "framer-motion";
-import { Upload, Eye, CheckCircle, Youtube, ArrowRight, ChevronDown, Check, Menu, X } from "lucide-react";
+import { Upload, Eye, CheckCircle, Youtube, Instagram, ArrowRight, ChevronDown, Check, Menu, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { FeatureBento } from "@/components/landing/FeatureBento";
@@ -107,8 +107,9 @@ function Sub({ children }: { children: React.ReactNode }) {
 // ── Marquee ticker ────────────────────────────────────────────────────────────
 const TICKER_ITEMS = [
   "Secure Upload", "In-Browser Review", "Approval Flow",
-  "YouTube Publishing", "Role-Based Access", "Signed Playback",
-  "No Shared Passwords", "Instant Notifications", "Audit Trail",
+  "YouTube Publishing", "Instagram Reels", "Role-Based Access",
+  "Signed Playback", "No Shared Passwords", "Instant Notifications",
+  "Scheduled Posts", "Audit Trail",
 ];
 
 function Ticker() {
@@ -156,7 +157,7 @@ const HERO_FLOW = [
   { label: "Upload Content",   urlSlug: "upload-content",   icon: Upload,      title: "Editor uploads the finished cut",      subtitle: "No Drive links. Uploads go straight into your workspace." },
   { label: "Review & Approve", urlSlug: "review-approve",   icon: Eye,         title: "Creator reviews in-browser",           subtitle: "Signed playback. Leave feedback. Approve or reject instantly." },
   { label: "Request Changes",  urlSlug: "request-changes",  icon: CheckCircle, title: "Request changes with context",         subtitle: "Send notes and get a new version—no messy threads." },
-  { label: "Instant Publish",  urlSlug: "instant-publish",  icon: Youtube,     title: "Publish directly to YouTube",          subtitle: "After approval, push to your channel via OAuth—no re-upload." },
+  { label: "Instant Publish",  urlSlug: "instant-publish",  icon: Send,        title: "Publish to YouTube or Instagram",      subtitle: "After approval, push to your channel or post a Reel—no re-upload." },
 ] as const;
 
 function HeroWorkflow() {
@@ -229,11 +230,15 @@ function HeroWorkflow() {
 
 // ── FAQ ───────────────────────────────────────────────────────────────────────
 const FAQ = [
-  { q: "Do I need to share my YouTube password with my editor?", a: "Never. MediaLayer uses OAuth — your editor never sees your credentials. You connect your YouTube channel once, and MediaLayer handles publishing on your behalf." },
+  { q: "Do I need to share my YouTube or Instagram password with my editor?", a: "Never. MediaLayer uses OAuth — your editor never sees your credentials, and neither do we. You connect your YouTube channel and Instagram account once, and MediaLayer handles publishing on your behalf." },
   { q: "How does the video review process work?", a: "Your editor uploads the finished video directly to MediaLayer. You get notified, watch it securely in the browser (no download needed), then approve or reject with optional feedback." },
   { q: "Is my video stored securely?", a: "Yes. Videos are stored privately on Cloudinary and are never accessible via a public URL. Playback uses signed URLs that expire after 1 hour." },
   { q: "Can I work with multiple editors?", a: "Yes. The Starter plan supports up to 3 editors. The Pro plan supports unlimited editors." },
-  { q: "What happens after I approve a video?", a: "The video is pushed directly to your YouTube channel. Your editor gets notified and can see the YouTube link inside the platform." },
+  { q: "What happens after I approve a video?", a: "You choose the destination — your YouTube channel, or your Instagram account as a Reel or feed post. The video is pushed directly there. Your editor gets notified and can see the resulting link inside the platform." },
+  { q: "How does Instagram publishing work?", a: "Connect your Instagram Professional account with Instagram Login — no Facebook Page needed. Once a video is approved, pick Reel or feed post, write your caption, and publish. Instagram pulls the video from a private signed URL, so nothing is ever re-uploaded from your browser." },
+  { q: "What kind of Instagram account do I need?", a: "A Professional account — Business or Creator. Personal Instagram accounts cannot publish through the Instagram API. Switching is free and takes about 30 seconds inside the Instagram app." },
+  { q: "Can MediaLayer read my DMs, comments, or followers?", a: "No. We request exactly two Instagram permissions: one to read your username and account type so we can show which account you are posting to, and one to publish media you have approved. Messaging, comments, insights, and follower data are never requested." },
+  { q: "Can I delete a post after MediaLayer publishes it?", a: "Deleting a published post has to happen inside Instagram or YouTube — those platforms own the post once it is live. You can disconnect your account from MediaLayer at any time, which erases the stored token immediately." },
   { q: "Is this a subscription or a one-time payment?", a: "One-time payment. Pay once and use MediaLayer forever — no monthly fees, no hidden charges." },
   { q: "What video formats are supported?", a: "MP4 and MOV files up to 2GB. Cloudinary handles transcoding so your editor can upload in either format." },
   { q: "Can I share my dashboard publicly?", a: "No — dashboards are private by default. Only authenticated creators and their linked editors can access the platform." },
@@ -393,7 +398,7 @@ export default function LandingPage() {
 
               <FadeUp delay={0.3}>
                 <p className="max-w-md leading-[1.75] mb-8" style={{ color: "#444", fontSize: "16px" }}>
-                  Your editor uploads. You review securely. One click publishes to YouTube. No downloads, no shared passwords.
+                  Your editor uploads. You review securely. One click publishes to YouTube or Instagram. No downloads, no shared passwords.
                 </p>
               </FadeUp>
 
@@ -425,6 +430,19 @@ export default function LandingPage() {
                       →
                     </motion.span>
                   </a>
+                </div>
+              </FadeUp>
+
+              {/* Integrations strip */}
+              <FadeUp delay={0.45}>
+                <div className="flex items-center gap-3 mb-5">
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground whitespace-nowrap opacity-60">Publishes to</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground">
+                    <Youtube className="h-3.5 w-3.5" style={{ color: "#FF0000" }} /> YouTube
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground">
+                    <Instagram className="h-3.5 w-3.5" style={{ color: "#E1306C" }} /> Instagram
+                  </span>
                 </div>
               </FadeUp>
 
@@ -485,7 +503,7 @@ export default function LandingPage() {
             className="text-center mx-auto mb-12 sm:mb-14"
             style={{ fontSize: "16px", color: "#666", maxWidth: "520px", lineHeight: 1.6 }}
           >
-            From secure uploads to direct YouTube publishing — MediaLayer handles the entire creator–editor pipeline.
+            From secure uploads to direct YouTube and Instagram publishing — MediaLayer handles the entire creator–editor pipeline.
           </p>
 
           <FeatureBento />
@@ -496,13 +514,13 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-32 px-16 bg-background">
         <div className="max-w-[1100px] mx-auto">
           <FadeUp delay={0.05}><H2>Get started in minutes</H2></FadeUp>
-          <FadeUp delay={0.1}><Sub>Setting things up is as simple as inviting your editor and connecting YouTube. No complex setup or confusing configuration.</Sub></FadeUp>
+          <FadeUp delay={0.1}><Sub>Setting things up is as simple as inviting your editor and connecting YouTube or Instagram. No complex setup or confusing configuration.</Sub></FadeUp>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
               { num: "01", title: "Invite your editor.", desc: "Share an invite code. Your editor links to your account instantly.", blobs: ["var(--red-3)", "var(--sky-3)"], icon: <img src="/favicon.svg" alt="MediaLayer" className="w-6 h-6 brightness-0 invert" /> },
               { num: "02", title: "Editor uploads.", desc: "Your editor uploads the finished video directly. No file sharing needed.", blobs: ["var(--purple-3)", "var(--green-3)"], icon: <Upload className="w-5 h-5 text-white" /> },
-              { num: "03", title: "Review & publish.", desc: "Approve or reject with feedback. One click publishes to YouTube.", blobs: ["var(--amber-3)", "var(--purple-3)"], icon: <CheckCircle className="w-5 h-5 text-white" /> },
+              { num: "03", title: "Review & publish.", desc: "Approve or reject with feedback. One click publishes to YouTube or Instagram.", blobs: ["var(--amber-3)", "var(--purple-3)"], icon: <CheckCircle className="w-5 h-5 text-white" /> },
             ].map((step, i) => (
               <FadeUp key={step.num} delay={i * 0.08}>
                 <motion.div
@@ -562,7 +580,7 @@ export default function LandingPage() {
               className="text-center mx-auto mb-12"
               style={{ fontSize: "16px", color: "#666", maxWidth: "520px", lineHeight: 1.6 }}
             >
-              Watch how MediaLayer makes video collaboration effortless — from upload to YouTube in a few clicks.
+              Watch how MediaLayer makes video collaboration effortless — from upload to a published YouTube video or Instagram Reel in a few clicks.
             </p>
           </FadeUp>
 
@@ -639,7 +657,7 @@ export default function LandingPage() {
                 </div>
                 <p className="mb-6 leading-relaxed" style={{ color: "#666", fontSize: "14px" }}>Perfect for solo creators working with one editor.</p>
                 <ul className="space-y-3 mb-8 flex-1">
-                  {["1 creator account", "Up to 3 editors", "Unlimited video reviews", "Direct YouTube publishing", "Email notifications", "Lifetime access"].map(f => (
+                  {["1 creator account", "Up to 3 editors", "Unlimited video reviews", "Direct YouTube publishing", "Instagram Reels & feed posts", "Email notifications", "Lifetime access"].map(f => (
                     <li key={f} className="flex items-center gap-2.5 text-foreground" style={{ fontSize: "14px" }}>
                       <Check className="w-4 h-4 shrink-0" style={{ color: "var(--green-4)" }} /> {f}
                     </li>
@@ -666,7 +684,7 @@ export default function LandingPage() {
                 </div>
                 <p className="mb-6 leading-relaxed" style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px" }}>For growing channels with multiple editors.</p>
                 <ul className="space-y-3 mb-8 flex-1">
-                  {["Unlimited creator accounts", "Unlimited editors", "Unlimited video reviews", "Direct YouTube publishing", "Priority email support", "Audit logs & analytics", "Lifetime access"].map(f => (
+                  {["Unlimited creator accounts", "Unlimited editors", "Unlimited video reviews", "Direct YouTube publishing", "Instagram Reels & feed posts", "Post scheduling", "Priority email support", "Audit logs & analytics", "Lifetime access"].map(f => (
                     <li key={f} className="flex items-center gap-2.5 text-white" style={{ fontSize: "14px" }}>
                       <Check className="w-4 h-4 shrink-0" style={{ color: "rgba(255,255,255,0.7)" }} /> {f}
                     </li>
@@ -706,7 +724,7 @@ export default function LandingPage() {
               See what's driving your video workflow
             </h2>
             <p className="mb-8 leading-[1.75]" style={{ color: "#4c1d95", fontSize: "16px" }}>
-              Start reviewing and publishing videos today. No downloads, no shared passwords.
+              Start reviewing and publishing to YouTube and Instagram today. No downloads, no shared passwords.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/register">
@@ -758,7 +776,7 @@ export default function LandingPage() {
                 </span>
               </Link>
               <p className="mb-6 max-w-sm text-sm leading-relaxed text-white/50">
-                Video collaboration for creators and editors — upload, review, approve, and publish to YouTube without the chaos.
+                Video collaboration for creators and editors — upload, review, approve, and publish to YouTube and Instagram without the chaos.
               </p>
               <div className="space-y-3">
                 <a
@@ -798,6 +816,7 @@ export default function LandingPage() {
                 <li><span>Secure upload</span></li>
                 <li><span>In-browser review</span></li>
                 <li><span>YouTube publishing</span></li>
+                <li><span>Instagram Reels &amp; posts</span></li>
                 <li><span>Role-based access</span></li>
               </ul>
             </div>
@@ -807,6 +826,7 @@ export default function LandingPage() {
               <ul className="space-y-3 text-sm text-white/50">
                 <li><Link href="/privacy" className="transition-colors hover:text-white">Privacy policy</Link></li>
                 <li><Link href="/terms" className="transition-colors hover:text-white">Terms of service</Link></li>
+                <li><Link href="/data-deletion" className="transition-colors hover:text-white">Data deletion</Link></li>
                 <li>
                   <a
                     href="mailto:medialayer.app@gmail.com"

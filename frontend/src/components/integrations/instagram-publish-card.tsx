@@ -28,6 +28,10 @@ interface Props {
   videoTitle: string;
   videoTags?: string[] | null;
   thumbnailUrl?: string | null;
+  /** Photo submissions can only be feed posts — Instagram has no image Reels. */
+  isPhoto?: boolean;
+  /** What the editor picked at submission time. */
+  defaultPostType?: InstagramPostType;
   isCreator: boolean;
 }
 
@@ -107,6 +111,8 @@ export function InstagramPublishCard({
   videoTitle,
   videoTags,
   thumbnailUrl,
+  isPhoto = false,
+  defaultPostType = "REELS",
   isCreator,
 }: Props) {
   const { toast } = useToast();
@@ -123,7 +129,7 @@ export function InstagramPublishCard({
   const posts = useMemo(() => postData?.posts ?? [], [postData]);
 
   const [accountId, setAccountId] = useState<string>("");
-  const [postType, setPostType] = useState<InstagramPostType>("REELS");
+  const [postType, setPostType] = useState<InstagramPostType>(isPhoto ? "FEED" : defaultPostType);
   const [caption, setCaption] = useState(videoTitle);
   const [coverUrl, setCoverUrl] = useState(thumbnailUrl ?? "");
 
@@ -166,7 +172,7 @@ export function InstagramPublishCard({
         instagramAccountId: accountId,
         postType,
         caption,
-        coverUrl: postType === "REELS" && coverUrl.trim() ? coverUrl.trim() : null,
+        coverUrl: !isPhoto && postType === "REELS" && coverUrl.trim() ? coverUrl.trim() : null,
       });
       toast({
         title: "Publishing to Instagram…",
@@ -225,7 +231,7 @@ export function InstagramPublishCard({
           title="Video must be approved before publishing."
         >
           <AlertCircle className="w-3.5 h-3.5 mt-px shrink-0" />
-          Video must be approved before publishing to Instagram.
+          {isPhoto ? "Photo" : "Video"} must be approved before publishing to Instagram.
         </p>
       ) : !configured ? (
         <p className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-[var(--radius-4)] px-3 py-2">
@@ -239,8 +245,9 @@ export function InstagramPublishCard({
       ) : accounts.length === 0 ? (
         <>
           <p className="text-sm text-muted-foreground">
-            Connect your Instagram Professional account to publish this video as a Reel or feed
-            post. You'll sign in on Instagram — no Facebook Page needed.
+            Connect your Instagram Professional account to publish this{" "}
+            {isPhoto ? "photo to your feed" : "video as a Reel or feed post"}. You'll sign in on
+            Instagram — no Facebook Page needed.
           </p>
           <button
             onClick={async () => {
@@ -289,6 +296,12 @@ export function InstagramPublishCard({
             </div>
           )}
 
+          {isPhoto ? (
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Photos are published as feed posts.
+            </p>
+          ) : (
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Post type</p>
             <div className="grid grid-cols-2 gap-2">
@@ -318,6 +331,7 @@ export function InstagramPublishCard({
                 : "Posted to Reels and shown on your profile feed."}
             </p>
           </div>
+          )}
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -351,7 +365,7 @@ export function InstagramPublishCard({
             )}
           </div>
 
-          {postType === "REELS" && (
+          {!isPhoto && postType === "REELS" && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground" htmlFor="ig-cover">
                 Cover image URL (optional)
